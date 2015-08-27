@@ -7,12 +7,6 @@
     "type": "git",
     "url": "https://github.com/mark-hahn/hvac2"
   },
-  "keywords": [
-    "hvac2",
-    "plex",
-    "roku",
-    "mobile"
-  ],
   "author": "Mark Hahn",
   "license": "MIT",
   "bugs": {
@@ -20,5 +14,7 @@
   },
   "homepage": "https://github.com/mark-hahn/hvac2",
   "dependencies": {
+    "rx": "^3.1.1",
+    "serialport": "^1.7.4"
   }
 }

@@ -1,78 +1,19 @@
-###
-log = (args...) -> console.log 'SNSOR:', args...
 
-rx = require 'rx-node'
+log = (args...) -> console.log 'XBEE:', args...
+
+Rx = require 'rx'
 SerialPort = require('serialport').SerialPort
+eventEmitter = new (require('events').EventEmitter)
 
-voltsAtZeroC = 1.05
-voltsAt25C   = 0.83
-voltsPerC    = (voltsAtZeroC - voltsAt25C) / 25
-
-class Sensor
-  constructor: (@name, @v2tFunc) -> 
-    @temp = 75
-    
-    
-  rawReport: (v) ->
-    
-  getTempObs: 
-
-
-sensorByXbeeAddr: (xbeeAddr) ->
-
-
-sensors = 
-  tvRoom : new Sensor 'TV Room',        0x0013a20040c33695
-  kitchen: new Sensor 'Kitchen',        0x0013a20040b3a592
-  master:  new Sensor 'Master Bedroom', 0x0013a20040b3a903
-  guest:   new Sensor 'Guest Bedroom',  0x0013a20040b3a954
-  acLine:  new Sensor 'AC Return Line', 0x0013A20040BD2529
-
+exports.setAllObservables = (allObservables) -> 
+  allObservables.xbeePackets$ = Rx.Observable.fromEvent eventEmitter, 'newPacket'
+  
 xbeeSerialPort = new SerialPort '/dev/xbee',
   baudrate: 9600,
   databits: 8,
   stopbits: 1,
   parity: 0,
   flowcontrol: 0,
-
-newTemp = (data) ->
-	srcAddr = 0
-	for idx in [4...12] by 1
-		srcAddr *= 256
-		srcAddr += data[idx]
-  
-	sensor = switch srcAddr
-		when 0x0013a20040c33695 then 'tvsensor' 
-		when 0x0013a20040b3a592 then 'kitchen' 
-		when 0x0013a20040b3a903 then 'master'  
-		when 0x0013a20040b3a954 then 'guest'
-		when 0x0013A20040BD2529 then 'acLine'  
-		else null
-	if not sensor then return
-  
-	volts  = ((data[19] * 256 + data[20]) / 1024) * 1.2
-
-	if sensor is 'acLine'
-		if data.length isnt 24
-			console.log 'acLine frame len error', data
-			return
-
-		temp   = ((voltsAtZeroC - volts ) / voltsPerC) * 9/5 + 32
-		serial.xBeeCb? 'intake', temp
-
-		volts = ((data[21] * 256 + data[22]) / 1024) * 1.2
-		temp   =  (voltsAtZeroC - volts) / voltsPerC
-		serial.xBeeCb? 'acLine', temp
-
-	else
-		if data.length isnt 22
-			console.log 'frame len error', data
-			return
-
-		temp  = volts * 100
-		serial.xBeeCb? sensor, temp
-    
-		# console.log 'got xbee', {sensor, temp}
 
 frameBuf = []
 
@@ -98,7 +39,7 @@ assembleFrame = (data) ->
 				console.log 'xBee checksum error', frame
 				frameBuf = []
 			else
-				newTemp frame
+        eventEmitter.emit 'newPacket', frame
 		else
 			break
 
@@ -108,23 +49,18 @@ assembleFrame = (data) ->
 			break
 
 xbeeSerialPort.on 'open', ->
-	dbg 'XBee Port open'
+	log 'Port open'
 	xbeeSerialPort.on 'data', assembleFrame
 
 xbeeSerialPort.on 'error', (err) ->
-	console.log 'ERROR from xBee port', err
+	log 'ERROR: from port', err
 
-
-
-module.exports =
-  getUnfilteredTempObs: (sensor) ->
-    Observable.create
-    
-
+###
 contents of /etc/udev/rules.d/99-home-serial-usb.rules
 SUBSYSTEMS=="usb-serial", DRIVERS=="cp210x", ATTRS{port_number}=="0", SYMLINK+="davis"
 SUBSYSTEMS=="usb", ATTRS{serial}=="A6028N89", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="insteon"
 SUBSYSTEMS=="usb", ATTRS{serial}=="A5025MT6", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="xbee"
+###
 
 # sensors
 # function set ZigBee Router AT
@@ -153,4 +89,3 @@ SUBSYSTEMS=="usb", ATTRS{serial}=="A5025MT6", ATTRS{idVendor}=="0403", ATTRS{idP
 # ID 6392
 # SC 40
 
-###

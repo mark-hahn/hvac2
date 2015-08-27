@@ -1,14 +1,18 @@
 #   -*-  grammar-ext: sh  -*-
 
 if [ $(pwd) == "/root/dev/apps/hvac2" ]; then isdev=true; else isdev=false; fi
+
+echo "killing all hvac(2) apps"
+pkill -f /root/apps/hvac/lib/hvac        > /dev/null 2>&1
+pkill -f /root/apps/hvac2/js/main.js     > /dev/null 2>&1
+pkill -f /root/dev/apps/hvac/lib/hvac    > /dev/null 2>&1
+pkill -f /root/dev/apps/hvac2/js/main.js > /dev/null 2>&1
   
 if $isdev
   then 
     echo "Running hvac2 in debug mode"
-    pkill -f /root/dev/apps/hvac2/js/main.js > /dev/null 2>&1
   else 
     echo "Running hvac2 in normal mode"
-    pkill -f /root/apps/hvac2/js/main.js > /dev/null 2>&1
     rsync -av /root/dev/apps/hvac2/ /root/apps/hvac2/
 fi
 
@@ -21,8 +25,10 @@ fi
 set -e
 
 coffee -co js src/*.coffee
+coffee -co js src/drivers/*.coffee
+
 export DEBUG=*
 if $isdev
-  then   node /root/dev/apps/hvac2/js/main.js >> hvac2.log 2>&1 &
+  then       node /root/dev/apps/hvac2/js/main.js >> hvac2.log 2>&1 &
   else nohup node /root/apps/hvac2/js/main.js >> hvac2.log 2>&1 &
 fi
