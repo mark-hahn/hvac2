@@ -1,13 +1,20 @@
 
-log = (args...) -> console.log 'XBEE:', args...
+log = (args...) -> console.log ' XBEE:', args...
 
 Rx = require 'rx'
 SerialPort = require('serialport').SerialPort
-eventEmitter = new (require('events').EventEmitter)
+emitSrc = new (require('events').EventEmitter)
 
-exports.setAllObservables = (allObservables) -> 
-  allObservables.xbeePackets$ = Rx.Observable.fromEvent eventEmitter, 'newPacket'
+module.exports =
+  init:  (@obs$) -> 
+    @obs$.allXbeePackets$ = 
+      Rx.Observable.fromEvent emitSrc, 'newPacket', (addr, packet) -> {addr, packet}
   
+  getPacketsByAddr$: (name, addr) ->
+    @obs$['xbeePackets_' + name + '$'] =
+      @obs$.allXbeePackets$
+        .filter (item) -> addr is item.addr
+
 xbeeSerialPort = new SerialPort '/dev/xbee',
   baudrate: 9600,
   databits: 8,
@@ -18,42 +25,46 @@ xbeeSerialPort = new SerialPort '/dev/xbee',
 frameBuf = []
 
 getFrameLen = (index) ->
-	if frameBuf.length < index+4 then return 0
-	if frameBuf[index+0] is 0x7e and
-			(frameLen = frameBuf[index+1]*256 + frameBuf[index+2] + 4) and
-			frameLen in [22,24] and frameBuf[index+3] is 0x92
-		frameLen
-	else 0
+  if frameBuf.length < index+4 then return 0
+  if frameBuf[index+0] is 0x7e and
+      (frameLen = frameBuf[index+1]*256 + frameBuf[index+2] + 4) and
+      frameLen in [22,24] and frameBuf[index+3] is 0x92
+    frameLen
+  else 0
 
 assembleFrame = (data) ->
-	# console.log 'assembleFrame', utils.arr2hexStr data, yes
-	for i in [0...data.length] then frameBuf.push data[i]
+  # log 'assembleFrame', utils.arr2hexStr data, yes
+  for i in [0...data.length] then frameBuf.push data[i]
 
-	loop
-		if (frameLen = getFrameLen 0) and frameBuf.length >= frameLen
-			frame = frameBuf.splice 0, frameLen
-			cksum = 0
-			for byte in frame[3..frameLen-2] then cksum += byte
-			cksum &= 0xff
-			if (0xff - cksum) isnt frame[frameLen-1]
-				console.log 'xBee checksum error', frame
-				frameBuf = []
-			else
-        eventEmitter.emit 'newPacket', frame
-		else
-			break
+  loop
+    if (frameLen = getFrameLen 0) and frameBuf.length >= frameLen
+      frame = frameBuf.splice 0, frameLen
+      cksum = 0
+      for byte in frame[3..frameLen-2] then cksum += byte
+      cksum &= 0xff
+      if (0xff - cksum) isnt frame[frameLen-1]
+        log 'xBee checksum error', frame
+        frameBuf = []
+      else
+        srcAddr = 0
+        for idx in [4...12] by 1
+          srcAddr *= 256
+          srcAddr += frame[idx]
+        emitSrc.emit 'newPacket', srcAddr, frame 
+    else
+      break
 
-	for index in [0..frameBuf.length-4]
-		if (frameLen = getFrameLen index)
-			frameBuf.splice 0, index
-			break
+  for index in [0..frameBuf.length-4]
+    if (frameLen = getFrameLen index)
+      frameBuf.splice 0, index
+      break
 
 xbeeSerialPort.on 'open', ->
-	log 'Port open'
-	xbeeSerialPort.on 'data', assembleFrame
+  log 'Port open'
+  xbeeSerialPort.on 'data', assembleFrame
 
 xbeeSerialPort.on 'error', (err) ->
-	log 'ERROR: from port', err
+  log 'ERROR: from port', err
 
 ###
 contents of /etc/udev/rules.d/99-home-serial-usb.rules

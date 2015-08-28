@@ -1,14 +1,13 @@
 
 log = (args...) -> console.log ' MAIN:', args...
-
-log 'Starting ...'
-
-# all observables in the app
-allObservables = {}
+console.log ''
 
 mods = [
   './xbee', 
+  './temp'
   './debug'
 ]
-
-for mod in mods then require(mod).setAllObservables allObservables
+obs$ = {}
+for mod in mods 
+  log 'starting', mod
+  require(mod).init obs$

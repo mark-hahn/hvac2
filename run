@@ -19,8 +19,8 @@ fi
 killall tail > /dev/null 2>&1
 
 if $isdev
-  then tail -fn 0 /root/dev/apps/hvac2/hvac2.log &
-  else tail -fn 0     /root/apps/hvac2/hvac2.log &
+  then tail -fn 0 ~/logs/hvac2-dev.log &
+  else tail -fn 0 ~/logs/hvac2.log     &
 fi
 set -e
 
@@ -29,6 +29,6 @@ coffee -co js src/drivers/*.coffee
 
 export DEBUG=*
 if $isdev
-  then       node /root/dev/apps/hvac2/js/main.js >> hvac2.log 2>&1 &
-  else nohup node /root/apps/hvac2/js/main.js >> hvac2.log 2>&1 &
+  then       node /root/dev/apps/hvac2/js/main.js >> ~/logs/hvac2-dev.log 2>&1 &
+  else nohup node /root/apps/hvac2/js/main.js     >> ~/logs/hvac2.log     2>&1 &
 fi

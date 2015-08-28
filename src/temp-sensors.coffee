@@ -21,12 +21,8 @@ class Sensor
 sensorByXbeeAddr: (xbeeAddr) ->
 
 
-sensors = 
-  tvRoom : new Sensor 'TV Room',        0x0013a20040c33695
-  kitchen: new Sensor 'Kitchen',        0x0013a20040b3a592
-  master:  new Sensor 'Master Bedroom', 0x0013a20040b3a903
-  guest:   new Sensor 'Guest Bedroom',  0x0013a20040b3a954
-  acLine:  new Sensor 'AC Return Line', 0x0013A20040BD2529
+
+
 
 xbeeSerialPort = new SerialPort '/dev/xbee',
   baudrate: 9600,
