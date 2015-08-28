@@ -19,7 +19,7 @@ voltsAt25C   = 0.83
 voltsPerC    = (voltsAtZeroC - voltsAt25C) / 25
   
 histories = {}
-for name of xbeeRadios
+for name of xbeeRadios when name isnt 'closet'
   histories[name] = []
 histories.acReturn = []
 histories.airIn    = []

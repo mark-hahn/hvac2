@@ -1,5 +1,10 @@
 #   -*-  grammar-ext: sh  -*-
 
+if [ $LOCATION != "server" ]; then 
+  echo "hvac2 can only run on the server"
+  exit
+fi
+
 if [ $(pwd) == "/root/dev/apps/hvac2" ]; then isdev=true; else isdev=false; fi
 
 echo "killing all hvac(2) apps"

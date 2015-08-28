@@ -4,6 +4,7 @@ console.log ''
 
 mods = [
   './xbee', 
+  './wx-station'
   './temp'
   './debug'
 ]

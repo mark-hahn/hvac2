@@ -14,7 +14,9 @@
   },
   "homepage": "https://github.com/mark-hahn/hvac2",
   "dependencies": {
+    "moment": "^2.10.6",
     "rx": "^3.1.1",
-    "serialport": "^1.7.4"
+    "serialport": "^1.7.4",
+    "sqlite3": "^3.0.10"
   }
 }
