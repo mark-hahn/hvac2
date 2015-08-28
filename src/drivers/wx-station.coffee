@@ -1,10 +1,15 @@
+###
+  src/wx-station.coffee
+  polled weewx weather station db -> wx and wx.temp streams
+  xbee packet stream -> filtered/rounded temp streams for each sensor
+###
 
-log = (args...) -> console.log ' WXSTA:', args...
+log = (args...) -> console.log 'WXSTA:', args...
 
 Rx = require 'rx'
 sqlite3 = require("sqlite3").verbose()
 
-wx = outTemp: 70
+wx = outTemp: 0
 
 db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (err) ->
   if err then log 'Error opening weewx db', err; cb? err; return
@@ -15,7 +20,7 @@ db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (er
         log 'Error reading weewx db', err
         db.close()
         return
-      wx.outTemp = +res.outTemp
+      wx = res
   , 4000
 
 module.exports =
@@ -25,8 +30,9 @@ module.exports =
         .interval 4000
         .map -> wx
     
-    @obs$.wxTemp$ = 
+    @obs$.temp_outside$ = 
       @obs$.wxStation$
         .map (wx) -> wx.outTemp
         .distinctUntilChanged()
-    
+        .skip 1
+

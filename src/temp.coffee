@@ -1,3 +1,7 @@
+###
+  src/temp.coffee
+  xbee packet stream -> filtered/rounded/unique temp streams for each sensor
+###
 
 log = (args...) -> console.log 'TEMP:', args...
 
@@ -5,7 +9,10 @@ Rx      = require 'rx'
 xbee    = require './xbee'
 emitSrc = new (require('events').EventEmitter)
 
-tempResolution = 10
+tempResolution = 1
+tempHysterisis = 0.025
+numHistory     = 10
+dampening      = 30000
 
 xbeeRadios = 
   tvRoom : 0x0013a20040c33695
@@ -19,46 +26,48 @@ voltsAt25C   = 0.83
 voltsPerC    = (voltsAtZeroC - voltsAt25C) / 25
   
 histories = {}
-for name of xbeeRadios when name isnt 'closet'
-  histories[name] = []
-histories.acReturn = []
-histories.airIn    = []
-  
-filterTemp = (name, temp) ->
-  history = histories[name]
-  history.push temp
-  if history.length > 10 then history.shift()
-  sum = 0
-  for temp in history
-    sum += temp
-  Math.round((sum / history.length)*tempResolution)/tempResolution
-  
+lastTemps = {}
+
 module.exports =
   init: (@obs$) -> 
     
-    @obs$.temp_airIn$ = 
-      Rx.Observable.fromEvent emitSrc, 'airIn'
-        .map (temp) -> filterTemp 'airIn', temp
-        .distinctUntilChanged()
-    @obs$.temp_acReturn$ = 
-      Rx.Observable.fromEvent emitSrc, 'acReturn'
-        .map (temp) -> filterTemp 'acReturn', temp
-        .distinctUntilChanged()
-    
-    for name, addr of xbeeRadios then do (name, addr) =>
-      
-      if name isnt 'closet'
-        @obs$['temp_' + name + '$'] = 
+    addObs = (name) =>
+      @obs$['temp_' + name + '$'] = 
+        Rx.Observable.create (observer) ->
           Rx.Observable.fromEvent emitSrc, name
-            .map (temp) -> filterTemp name, temp
-            .distinctUntilChanged()
-        
+            .forEach (rawTemp) ->
+              now = Date.now()
+              history = histories[name] ?= []
+              history.unshift [rawTemp, now]
+              weightSum = weightedTempSum = 0
+              for oldHist in history
+                [histTemp, histTime] = oldHist
+                histWeight = Math.max 0, 
+                  Math.sin(Math.PI/2 + ((now - histTime)/dampening))
+                weightSum       += histWeight
+                weightedTempSum += histWeight * histTemp 
+              temp            = weightedTempSum / weightSum
+              rndedTemp       = +temp.toFixed tempResolution
+              lastTemp        = (lastTemps[name] ?= temp)
+              lastRndedTemp   = +lastTemp.toFixed tempResolution
+              lastTemps[name] = temp
+              if Math.abs(temp - lastTemp) < tempHysterisis and
+                  rndedTemp isnt lastRndedTemp
+                rndedTemp = lastRndedTemp
+              if history.length > numHistory then history.pop()
+              observer.onNext rndedTemp
+        .distinctUntilChanged()
+  
+    for name of xbeeRadios when name isnt 'closet' then addObs name
+    for name in ['airIntake', 'acReturn'] then addObs name
+
+    for name, addr of xbeeRadios then do (name, addr) ->        
       xbee.getPacketsByAddr$(name, addr).forEach (item) ->
         {packet} = item
         volts  = ((packet[19] * 256 + packet[20]) / 1024) * 1.2
         if name is 'closet'
           temp = ((voltsAtZeroC - volts ) / voltsPerC) * 9/5 + 32
-          emitSrc.emit 'airIn', temp
+          emitSrc.emit 'airIntake', temp
           volts = ((packet[21] * 256 + packet[22]) / 1024) * 1.2
           temp =  (voltsAtZeroC - volts) / voltsPerC
           emitSrc.emit 'acReturn', temp
