@@ -10,7 +10,7 @@ xbee    = require './xbee'
 emitSrc = new (require('events').EventEmitter)
 
 tempResolution = 1
-tempHysterisis = 0.025
+tempHysterisis = 0.05
 numHistory     = 10
 dampening      = 30000
 

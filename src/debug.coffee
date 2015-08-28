@@ -12,7 +12,7 @@ obsNames = [
   'temp_kitchen$'
   'temp_master$'
   'temp_guest$'
-  'temp_acReturn$'
+  # 'temp_acReturn$'
   # 'temp_airIntake$'
   # 'temp_outside$'
 ]
