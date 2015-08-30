@@ -5,7 +5,9 @@ console.log ''
 mods = [
   './xbee', 
   './wx-station'
+  './websocket'
   './temp'
+  './tstat'
   './debug'
 ]
 obs$ = {}
