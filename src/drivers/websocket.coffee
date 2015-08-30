@@ -26,7 +26,15 @@ module.exports =
             fan:  'off'
             mode: 'cool'
             setPoint: 74
-        , 1000
+        , 2000
+        setTimeout ->
+          observer.onNext
+            type: 'tstat'
+            room: 'kitchen'
+            fan:  'on'
+            mode: 'cool'
+            setPoint: 76
+        , 4000
         
         # srvr = http.createServer (req, res) ->
         # 	console.log 'req:', req.url
