@@ -5,8 +5,8 @@ console.log ''
 mods = [
   './xbee', 
   './wx-station'
-  './websocket'
   './temp'
+  './websocket'
   './tstat'
   './debug'
 ]

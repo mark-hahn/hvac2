@@ -12,26 +12,35 @@ obsNames = [
   'temp_kitchen$'
   'temp_master$'
   'temp_guest$'
-  # 'temp_acReturn$'
-  # 'temp_airIntake$'
-  # 'temp_outside$'
+  'temp_acReturn$'
+  'temp_airIntake$'
+  'temp_outside$'
+  'allWebSocketIn$'
+  'tstat_tvRoom$'
+  'tstat_kitchen$'
+  'tstat_master$'
+  'tstat_guest$'
 ]
 
 pad = (str, len) ->
   while str.length < len then str += ' '
   str
   
-padPfx = (val, len, precision) ->
-  if not isNaN val
-    val = (+val).toFixed precision
-  val = val.toString()
-  while val.length < len
-    val = ' ' + val
+padPfx = (val, len, precision = 1) ->
+  if typeof val is 'number'
+    val = val.toFixed precision
+    while val.length < len
+      val = ' ' + val
+  else
+    val = util.inspect val, depth: null
   val
   
 module.exports =
   init: (@obs$) -> 
     for obsName in obsNames then do (obsName) =>
       @obs$[obsName].forEach (item) -> 
-        item = padPfx item, 6, 1
-        log pad(obsName,15), item.replace(/\n/g, ' ')[0..100]
+        log pad(obsName,15), 
+          padPfx(item)
+            .replace /['"{}\s\n]/g, ''
+            .replace(/,/g, ', ')[0..100]
+        

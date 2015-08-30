@@ -18,12 +18,15 @@ module.exports =
   init:  (@obs$) -> 
     @obs$.allWebSocketIn$ = 
       Rx.Observable.create (observer) ->
-        
-        observer.onNext
-          type: 'tstat'
-          room: 'tvRoom'
-          setPoint: 74
-          mode: 'cool'
+        # debug
+        setTimeout ->
+          observer.onNext
+            type: 'tstat'
+            room: 'tvRoom'
+            fan:  'off'
+            mode: 'cool'
+            setPoint: 74
+        , 1000
         
         # srvr = http.createServer (req, res) ->
         # 	console.log 'req:', req.url
