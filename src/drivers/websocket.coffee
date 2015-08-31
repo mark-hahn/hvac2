@@ -23,7 +23,7 @@ module.exports =
           observer.onNext
             type: 'tstat'
             room: 'tvRoom'
-            fan:  'off'
+            fan:  off
             mode: 'cool'
             setPoint: 74
         , 2000
@@ -31,7 +31,7 @@ module.exports =
           observer.onNext
             type: 'tstat'
             room: 'kitchen'
-            fan:  'on'
+            fan:  on
             mode: 'cool'
             setPoint: 76
         , 4000

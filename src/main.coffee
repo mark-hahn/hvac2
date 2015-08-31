@@ -8,6 +8,7 @@ mods = [
   './temp'
   './websocket'
   './tstat'
+  './control'
   './debug'
 ]
 obs$ = {}

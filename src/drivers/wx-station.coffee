@@ -6,10 +6,9 @@
 
 log = (args...) -> console.log 'WXSTA:', args...
 
-Rx = require 'rx'
+Rx      = require 'rx'
 sqlite3 = require("sqlite3").verbose()
-
-wx = outTemp: 0
+emitSrc = new (require('events').EventEmitter)
 
 db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (err) ->
   if err then log 'Error opening weewx db', err; cb? err; return
@@ -20,19 +19,18 @@ db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (er
         log 'Error reading weewx db', err
         db.close()
         return
-      wx = res
+      emitSrc.emit 'wx', res
   , 4000
 
 module.exports =
+  
   init:  (@obs$) -> 
     @obs$.wxStation$ = 
-      Rx.Observable
-        .interval 4000
-        .map -> wx
+      Rx.Observable.fromEvent emitSrc, 'wx'
     
     @obs$.temp_outside$ = 
       @obs$.wxStation$
         .map (wx) -> wx.outTemp
         .distinctUntilChanged()
-        .skip 1
+        # .skip 1
 

@@ -4,14 +4,10 @@
 ###
 
 log = (args...) -> console.log 'TSTAT:', args...
-
-Rx      = require 'rx'
-emitSrc = new (require('events').EventEmitter)
+Rx  = require 'rx'
 
 hysterisis = 0.25
-
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
-
 observers  = {}
 modes      = {}; lastModes  = {}
 fans       = {}; lastFans   = {}; lastDeltas = {}
@@ -43,7 +39,6 @@ module.exports =
     @obs$.allWebSocketIn$.forEach (data) ->
       {type, room, mode, fan, setPoint} = data
       if type is 'tstat'
-        # log 'newTstatSetting', {room, setPoint, mode}
         modes[room]     ?= mode
         fans[room]      ?= fan
         setPoints[room] ?= setPoint
@@ -51,7 +46,6 @@ module.exports =
         
     for room in rooms then do (room) =>
       @obs$['temp_' + room + '$'].forEach (temp) ->
-        # log 'newTemp', {room, temp}
         temps[room] ?= temp
         check room
 

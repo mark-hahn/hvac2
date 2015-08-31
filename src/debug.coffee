@@ -9,17 +9,20 @@ Rx   = require 'rx'
 
 obsNames = [
   'temp_tvRoom$'
-  'temp_kitchen$'
-  'temp_master$'
-  'temp_guest$'
-  'temp_acReturn$'
+  # 'temp_kitchen$'
+  # 'temp_master$'
+  # 'temp_guest$'
+  # 'temp_acReturn$'
   'temp_airIntake$'
+  # 'allWebSocketIn$'
+  # 'wxStation$'
   'temp_outside$'
-  'allWebSocketIn$'
   'tstat_tvRoom$'
   'tstat_kitchen$'
   'tstat_master$'
   'tstat_guest$'
+  'cntrl_dampers$'
+  'cntrl_hvac$'
 ]
 
 pad = (str, len) ->
