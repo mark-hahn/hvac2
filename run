@@ -33,8 +33,9 @@ set -e
 
 coffee -co js src/*.coffee
 coffee -co js src/drivers/*.coffee
+coffee -co www/js www/*.coffee
 
-export DEBUG=*
+# export DEBUG=*
 if $isdev
   then       node /root/dev/apps/hvac2/js/main.js >> ~/logs/hvac2-dev.log 2>&1 &
   else nohup node /root/apps/hvac2/js/main.js     >> ~/logs/hvac2.log     2>&1 &

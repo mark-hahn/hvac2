@@ -6,7 +6,7 @@ mods = [
   './xbee', 
   './wx-station'
   './temp'
-  './websocket'
+  './websock-server'
   './tstat'
   './control'
   './debug'
@@ -15,3 +15,4 @@ obs$ = {}
 for mod in mods 
   log 'starting', mod
   require(mod).init obs$
+  
