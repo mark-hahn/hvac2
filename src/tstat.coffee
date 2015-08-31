@@ -12,17 +12,17 @@ observers  = {}
 modes      = {}; lastModes  = {}
 fans       = {}; lastFans   = {}; lastDeltas = {}
 temps      = {}
-setPoints  = {}
+setpoints  = {}
 
 check = (room) ->
   if not (mode = modes[room]) or
      not (temp = temps[room]) 
     return
   fan      = fans[room]
-  setPoint = setPoints[room]
+  setpoint = setpoints[room]
   delta = switch
-    when temp <= setPoint - hysterisis then -1
-    when temp >= setPoint + hysterisis then +1
+    when temp <= setpoint - hysterisis then -1
+    when temp >= setpoint + hysterisis then +1
     else 0
   if mode  isnt lastModes[room] or 
      fan   isnt lastFans[room]  or
@@ -37,11 +37,11 @@ module.exports =
   init: (@obs$) -> 
     
     @obs$.allWebSocketIn$.forEach (data) ->
-      {type, room, mode, fan, setPoint} = data
+      {type, room, mode, fan, setpoint} = data
       if type is 'tstat'
         modes[room]     ?= mode
         fans[room]      ?= fan
-        setPoints[room] ?= setPoint
+        setpoints[room] ?= setpoint
         check room
         
     for room in rooms then do (room) =>

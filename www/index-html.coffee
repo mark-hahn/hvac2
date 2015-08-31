@@ -76,4 +76,5 @@ module.exports = ->
         script src: 'js/primus.js'
         script src: 'js/teacup.js'
         script src: 'js/websock-client.js'
+        script src: 'js/events.js'
         script src: 'js/tstat-client.js'

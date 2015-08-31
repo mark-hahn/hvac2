@@ -9,9 +9,12 @@ updateMS  = 10000
 delayMS   = 0
 blinkMS   = 200
     
-glblStats = {}
-delayTo   = null
-curRoom   = localStorage?.getItem('room') ? 'tvRoom'
+curRoom = localStorage?.getItem('room') ? 'tvRoom'
+rooms   = ['tvRoom', 'kitchen', 'master', 'guest']
+
+modes     = {tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'}
+fans      = {tvRoom: off, kitchen: off, master:off, guest: off}
+setpoints = {tvRoom: 70, kitchen: 70, master: 70, guest: 70}
 
 $ ->
   $top       = $ '.top'
@@ -21,121 +24,66 @@ $ ->
   $blinkEles = $rgtTemp.add($top).add($bot)
   changes    = room: curRoom
   
-  updateScreen = ->
-    # console.log 'updateScreen', new Date().toString()[0...24]
+  window.update = ->
     $top.css border:'none', backgroundColor: '#aaa', color: 'gray'
     $('#'+curRoom).css border:'1px solid black', backgroundColor: 'yellow', color: 'black'
-    if curRoom and (stat = glblStats[curRoom]) and stat.avgTemp
-      $lftTemp.text stat.avgTemp.toFixed 1
-      $rgtTemp.text switch stat.mode
-        when 'heat' then stat.heatSetting.toFixed 1
-        when 'cool' then stat.coolSetting.toFixed 1
-        else ''
-      $rgtTemp.css color: (
-        if      stat.cooling then 'blue'
-        else if stat.heating then 'red'
-        else if stat.fanning then $rgtTemp.text 'Fan'; 'gray'
-        else                       'white'
-      )
-      $bot.css border:'none', backgroundColor: '#aaa', color: 'gray'
-      $('#'+stat.mode).css border:'1px solid black', backgroundColor: '#8f8', color: 'black'
+    $rgtTemp.text setpoints[curRoom].toFixed 1
+    $bot.css 
+      border:'none'
+      backgroundColor: '#aaa'
+      color: 'gray'
       
-  waitTimeout = 20
-  waitingForStats = no
-  
-  do doGetStats = ->
-  #   if waitingForStats and (--waitTimeout) > 0 or delayTo
-  #     # console.log 'doGetStats waitingForStats', {waitingForStats, waitTimeout, delayTo}
-  #     setTimeout doGetStats, 100
-  #     return
-  #   waitingForStats = yes
-  #   $.post 'set', '{"nodata":"1"}', (stats) ->
-  #     # console.log 'getStats', stats
-  #     glblStats = stats
-  #     updateScreen()
-  #     waitTimeout = 20
-  #     waitingForStats = no
-  #     setTimeout doGetStats, updateMS
-  # 
-  
-  setStats = window.setStats = -> 
-    # console.log 'setStats', {changes}
-    # if not (changes.mode or changes.coolSetting or changes.heatSetting) then return
-    if delayTo then clearTimeout delayTo; delayTo = null
-    if waitingForStats and (--waitTimeout) > 0 or delayTo
-      # console.log 'setStats waitingForStats', {waitingForStats, waitTimeout, delayTo}
-      setTimeout setStats, 100
-    waitingForStats = yes
-    changesIn = changes
-    changes = room: curRoom
-    $.post 'set', JSON.stringify(changesIn), (stats) ->
-      glblStats = stats
-      updateScreen()
-      $blinkEles.hide()
-      waitTimeout = 20
-      waitingForStats = no
-      setTimeout (-> $blinkEles.show()), blinkMS
-
-  startDelay = ->
-    updateScreen()
-    if delayTo then clearTimeout delayTo
-    delayTo = setTimeout setStats, delayMS
+    if fans[curRoom] 
+      $('#fan').css
+        border:'1px solid black'
+        backgroundColor: '#8f8'
+        color: 'black'
     
+    $('#'+modes[curRoom]).css 
+      border:'1px solid black'
+      backgroundColor: '#8f8'
+      color: 'black'
+
+    wsockSend
+      type:     'tstat'
+      room:     curRoom
+      fan:      fans[curRoom]
+      mode:     modes[curRoom]
+      setpoint: setpoints[curRoom]
+
+  setTimeout ->
+    for curRoom in rooms
+      update()
+    curRoom = localStorage?.getItem('room') ? 'tvRoom'
+    update()
+  , 300
+      
   $top.click (e) ->
     $tgt = $ e.target
     room = $tgt.attr 'room'
     localStorage?.setItem 'room', room
     if curRoom isnt room
-      setStats()
       curRoom = room
-      changes = room: curRoom
-      updateScreen()
+      update()
       
-  $('#rgtPlus').click ->
-    switch glblStats[curRoom].mode
-      when 'cool' 
-        newCoolSetting = Math.round(2 * glblStats[curRoom].coolSetting + 1) / 2
-        changes.coolSetting = glblStats[curRoom].coolSetting = newCoolSetting
-      when 'heat'
-        newHeatSetting = Math.round(2 * glblStats[curRoom].heatSetting + 1) / 2
-        changes.heatSetting = glblStats[curRoom].heatSetting = newHeatSetting
-    startDelay()
-
-  $('#rgtMinus').click ->
-    switch glblStats[curRoom].mode
-      when 'cool' 
-        newCoolSetting = Math.round(2 * glblStats[curRoom].coolSetting - 1) / 2
-        changes.coolSetting = glblStats[curRoom].coolSetting = newCoolSetting
-      when 'heat'
-        newHeatSetting = Math.round(2 * glblStats[curRoom].heatSetting - 1) / 2
-        changes.heatSetting = glblStats[curRoom].heatSetting = newHeatSetting
-    startDelay()
+  $('#rgtPlus').click  -> setpoints[curRoom] += 0.5; update()
+  $('#rgtMinus').click -> setpoints[curRoom] -= 0.5; update()
 
   $bot.click (e) ->
-    setStats()
     $tgt = $ e.target
-    mode = $tgt.attr 'mode'
-    changes.mode = glblStats[curRoom].mode = mode
-    updateScreen()
-    startDelay()
-
-  # debug
-  setTimeout ->
-    wsockSend
-      type: 'tstat'
-      room: 'tvRoom'
-      fan:  off
-      mode: 'cool'
-      setPoint: 74
-  , 2000
-
-  setTimeout ->
-    wsockSend
-      type: 'tstat'
-      room: 'kitchen'
-      fan:  on
-      mode: 'cool'
-      setPoint: 76
-  , 4000
-          
+    btn = $tgt.attr 'mode'
+    if btn is 'off'
+      modes[curRoom] = 'off'
+      fans[curRoom] = off
+    else if btn is 'fan'
+      fans[curRoom] = not fans[curRoom]
+    else
+      if modes[curRoom] is btn
+        modes[curRoom] = (if fans[curRoom] then 'fan' else 'off')
+      else
+        modes[curRoom] = btn
+      if btn is 'off' then fans[curRoom] = off
+    if modes[curRoom] in ['off', 'fan']
+      modes[curRoom] = (if fans[curRoom] then 'fan' else 'off')
+    update()
 
