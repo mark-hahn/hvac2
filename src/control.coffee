@@ -1,9 +1,10 @@
 ###
   src/control.coffee
   per room: tstat in; temp outside in; dampers and hvac out
+  There is nothing timing dependent, that is all in overrides
 ###
 
-log = (args...) -> console.log 'CNTRL:', args...
+log     = (args...) -> console.log 'CNTRL:', args...
 Rx      = require 'rx'
 emitSrc = new (require('events').EventEmitter)
 
@@ -50,30 +51,33 @@ check = ->
         when diff < extAirMinDiff then off
         else lastHvac.extAir
     
-    anyActive = no
-    for room in rooms
-      hvac.fan or= fans[room]
-      if modes[room] isnt sysMode then continue
-      
-      active[room] = switch
-        when sysMode is 'cool' and deltas[room] > 0 then yes
-        when sysMode is 'cool' and deltas[room] < 0 then no
-        when sysMode is 'heat' and deltas[room] > 0 then no
-        when sysMode is 'cool' and deltas[room] < 0 then yes
-        else lastActive[room]
-          
-      if active[room]
-        dampers[room] = on
-        anyActive = yes
-        
-    if anyActive then hvac[sysMode] = on
+    sysActive = no
+    if sysMode in ['heat', 'cool']
+      for room in rooms when modes[room] is sysMode
+        delta = deltas[room]
+        sysActive or= active[room] = switch
+          when sysMode is 'cool' and delta > 0 then yes
+          when sysMode is 'cool' and delta < 0 then no
+          when sysMode is 'heat' and delta > 0 then no
+          when sysMode is 'heat' and delta < 0 then yes
+          else lastActive[room]
+    
+    if sysActive  
+      hvac[sysMode] = on
+      for room in rooms 
+        if modes[room] is sysMode and deltas[room] is 0 
+          active[room] = yes        
+        if active[room] then dampers[room] = on
     else 
-      for room in rooms
-        if fans[room] then dampers[room] = on
+      for room in rooms when fans[room]
+        hvac.fan = on 
+        dampers[room] = on
+
+  for room in rooms
+    lastActive[room] = active[room]
 
   dampersChanged = no
   for room in rooms
-    lastActive[room] = active[room]
     if dampers[room] isnt lastDampers[room]
       dampersChanged = yes
       lastDampers[room] = dampers[room]
@@ -97,7 +101,7 @@ module.exports =
       outsideTemp = temp
       check()
         
-    @obs$['temp_airIntake$'].forEach (airIn) -> 
+    @obs$.temp_airIntake$.forEach (airIn) -> 
       airIntake = airIn
       check()
     
