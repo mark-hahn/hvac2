@@ -15,15 +15,16 @@ rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 
 airIntake   = null
 outsideTemp = null
-modes       = {}
-fans        = {}
-deltas      = {}
+modes       = {tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'}
+fans        = {tvRoom: off, kitchen: off, master:off, guest: off}
+deltas      = {tvRoom: 0, kitchen: 0, master:0, guest: 0}
 
 lastActive  = {tvRoom: no, kitchen: no, master:no, guest: no}
 lastDampers = {tvRoom: off, kitchen: off, master:off, guest: off}
 lastHvac    = {extAir: off, fan: off, heat: off, cool: off}
 
 check = ->
+  # log 'check', airIntake, outsideTemp, modes, fans, deltas
   
   fanCount = heatCount = coolCount = 0
   for room in rooms
@@ -34,7 +35,7 @@ check = ->
   sysMode = switch
     when heatCount > coolCount then 'heat'
     when coolCount             then 'cool'
-    when fanCount > 0          then 'fan'
+    when fanCount              then 'fan'
     else                            'off'
   
   # damper on means air is flowing
@@ -81,7 +82,6 @@ check = ->
     if dampers[room] isnt lastDampers[room]
       dampersChanged = yes
       lastDampers[room] = dampers[room]
-  log 'dampersChanged', dampersChanged, dampers
   if dampersChanged 
     emitSrc.emit 'dampers', dampers
       
@@ -90,7 +90,6 @@ check = ->
     if hvac[out] isnt lastHvac[out]
       hvacChanged = yes
       lastHvac[out] = hvac[out]
-  log 'hvacChanged', hvacChanged, hvac
   if hvacChanged 
     emitSrc.emit 'hvac', hvac
   
