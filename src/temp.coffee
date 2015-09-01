@@ -77,7 +77,7 @@ module.exports =
         else
           emitSrc.emit name, volts * 100 
           
-    for name of xbeeRadios when name isnt 'closet' then addObs name 1e3
+    for name of xbeeRadios when name isnt 'closet' then addObs name, 1e3
     for name in ['airIntake', 'acReturn'] then addObs name, 30e3
 
         

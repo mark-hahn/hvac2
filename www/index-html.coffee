@@ -51,7 +51,7 @@ module.exports = ->
                           color: white; text-align: center;
                           width:100%; height:50%;", ->
                 div '#rgtTemp', style: "clear:both; float:left;
-                            color: white; text-align: center;
+                            color: #808; text-align: center;
                             width:100%;"
 
               div '#rgtBot', style: "clear:both; float:left;

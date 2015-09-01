@@ -4,6 +4,8 @@
     thermostat ui for all rooms
     talks to websocket
 ###
+
+log = (args...) -> console.log 'TSTAT:', args...
  
 updateMS  = 10000
 delayMS   = 0
@@ -15,19 +17,28 @@ rooms   = ['tvRoom', 'kitchen', 'master', 'guest']
 modes     = {tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'}
 fans      = {tvRoom: off, kitchen: off, master:off, guest: off}
 setpoints = {tvRoom: 70, kitchen: 70, master: 70, guest: 70}
+temps     = {}
 
 $ ->
   $top       = $ '.top'
   $lftTemp   = $ '#lftTemp'
   $rgtTemp   = $ '#rgtTemp'
   $bot       = $ '.bot'
-  $blinkEles = $rgtTemp.add($top).add($bot)
-  changes    = room: curRoom
   
-  window.update = ->
+  window.update = (sendData = yes)->
     $top.css border:'none', backgroundColor: '#aaa', color: 'gray'
     $('#'+curRoom).css border:'1px solid black', backgroundColor: 'yellow', color: 'black'
+    $lftTemp.text (if temps[curRoom] then (+temps[curRoom]).toFixed 1 else '')
     $rgtTemp.text setpoints[curRoom].toFixed 1
+    
+    set = Math.min 75, Math.max 65, setpoints[curRoom]
+    red = (((set-65) / 10) * 256).toString(16).split('.')[0]
+    while red.length < 2 then red = '0' + red
+    blu = ((1 - (set-65) / 10) * 256).toString(16).split('.')[0]
+    while blu.length < 2 then blu = '0' + red
+    log red, blu
+    $rgtTemp.css color: '#' + red + '00' + blu
+    
     $bot.css 
       border:'none'
       backgroundColor: '#aaa'
@@ -44,22 +55,13 @@ $ ->
       backgroundColor: '#8f8'
       color: 'black'
 
-    wsockSend
-      type:     'tstat'
-      room:     curRoom
-      fan:      fans[curRoom]
-      mode:     modes[curRoom]
-      setpoint: setpoints[curRoom]
-
-  do init = ->
-    setTimeout ->
-      if window.primusConnected
-        for curRoom in rooms then update()
-        curRoom = localStorage?.getItem('room') ? 'tvRoom'
-        update()
-      else
-        init()
-    , 100
+    if sendData
+      wsockSend
+        type:     'tstat'
+        room:     curRoom
+        fan:      fans[curRoom]
+        mode:     modes[curRoom]
+        setpoint: setpoints[curRoom]
       
   $top.click (e) ->
     $tgt = $ e.target
@@ -69,9 +71,6 @@ $ ->
       curRoom = room
       update()
       
-  $('#rgtPlus').click  -> setpoints[curRoom] += 0.5; update()
-  $('#rgtMinus').click -> setpoints[curRoom] -= 0.5; update()
-
   $bot.click (e) ->
     $tgt = $ e.target
     btn = $tgt.attr 'mode'
@@ -89,4 +88,19 @@ $ ->
     if modes[curRoom] in ['off', 'fan']
       modes[curRoom] = (if fans[curRoom] then 'fan' else 'off')
     update()
+    
+  $('#rgtPlus').click  -> setpoints[curRoom] += 0.5; update()
+  $('#rgtMinus').click -> setpoints[curRoom] -= 0.5; update()
 
+  window.wsockRecv = (data) ->
+    switch data.type
+      when 'tstat'
+        modes[data.room]     = data.mode
+        fans[data.room]      = data.fan
+        setpoints[data.room] = data.setpoint
+        update no
+        
+      when 'temp'
+        temps[data.room] = data.temp
+        update no
+      

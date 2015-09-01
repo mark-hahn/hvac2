@@ -9,23 +9,19 @@ primus = Primus.connect '',
     retries: Infinity
     factor:  1.1
 
-primus.on 'open', (spark) ->
+primus.on 'open', ->
   log 'connected'
   
-  window.primusConnected = yes
+  primus.write type: 'reqAll'
 
-  # primus.on 'data', (data) ->
-  #   log 'received', data
-  #   wsRecv data
-  # 
+  primus.on 'data', (data) ->
+    # log 'received', data
+    if window.wsockRecv 
+      wsockRecv data
+  
   primus.on 'error', (err) ->
     log 'ERROR:', err
 
   window.wsockSend = (data) ->
-    data.type = 'tstat'
-    log 'sent', data
+    # log 'sent', data
     primus.write data
-
-   # wsRecv = (master) ->
-   #  for name, value of master
-   #    $('#' + name).text value

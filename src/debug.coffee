@@ -14,7 +14,7 @@ obsNames = [
   # 'temp_guest$'
   # 'temp_acReturn$'
   # 'temp_airIntake$'
-  'allWebSocketIn$'
+  # 'allWebSocketIn$'
   # 'wxStation$'
   # 'temp_outside$'
   'tstat_tvRoom$'
