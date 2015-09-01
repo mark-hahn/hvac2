@@ -15,6 +15,7 @@ temps      = {}
 setpoints  = {}
 
 check = (room) ->
+  # log 'check', {room, modes, temps, setpoints}
   if not (mode = modes[room]) or
      not (temp = temps[room]) 
     return
@@ -31,17 +32,19 @@ check = (room) ->
     lastFans[room]   = fan
     lastDeltas[room] = delta
 
-    observers[room].onNext {mode, fan, delta}
+    for obs in observers[room]
+      obs.onNext {mode, fan, delta}
 
 module.exports =
   init: (@obs$) -> 
     
     @obs$.allWebSocketIn$.forEach (data) ->
       {type, room, mode, fan, setpoint} = data
+      # log 'allWebSocketIn$', data
       if type is 'tstat'
-        modes[room]     ?= mode
-        fans[room]      ?= fan
-        setpoints[room] ?= setpoint
+        modes[room]     = mode
+        fans[room]      = fan
+        setpoints[room] = setpoint
         check room
         
     for room in rooms then do (room) =>
@@ -51,6 +54,7 @@ module.exports =
 
       @obs$['tstat_' + room + '$'] = 
         Rx.Observable.create (observer) -> 
-          observers[room] = observer
+          observers[room] ?= []
+          observers[room].push observer
       
       

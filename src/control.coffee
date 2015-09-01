@@ -82,6 +82,7 @@ check = ->
     if dampers[room] isnt lastDampers[room]
       dampersChanged = yes
       lastDampers[room] = dampers[room]
+  # log dampersChanged, dampers
   if dampersChanged 
     emitSrc.emit 'dampers', dampers
       
@@ -90,6 +91,7 @@ check = ->
     if hvac[out] isnt lastHvac[out]
       hvacChanged = yes
       lastHvac[out] = hvac[out]
+  # log hvacChanged, hvac
   if hvacChanged 
     emitSrc.emit 'hvac', hvac
   
@@ -98,10 +100,12 @@ module.exports =
     
     @obs$.temp_outside$.forEach (temp) -> 
       outsideTemp = temp
+      # log 'temp_outside$ in', temp
       check()
         
     @obs$.temp_airIntake$.forEach (airIn) -> 
       airIntake = airIn
+      # log 'temp_airIntake$ in', airIn
       check()
     
     for room in rooms then do (room) =>
@@ -110,6 +114,7 @@ module.exports =
         modes[room]  = mode
         fans[room]   = fan
         deltas[room] = delta
+        # log 'tstat_' + room + '$' + ' in', tstatData  
         check()
       
     @obs$.cntrl_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'

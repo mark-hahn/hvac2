@@ -51,12 +51,15 @@ $ ->
       mode:     modes[curRoom]
       setpoint: setpoints[curRoom]
 
-  setTimeout ->
-    for curRoom in rooms
-      update()
-    curRoom = localStorage?.getItem('room') ? 'tvRoom'
-    update()
-  , 300
+  do init = ->
+    setTimeout ->
+      if window.primusConnected
+        for curRoom in rooms then update()
+        curRoom = localStorage?.getItem('room') ? 'tvRoom'
+        update()
+      else
+        init()
+    , 100
       
   $top.click (e) ->
     $tgt = $ e.target

@@ -11,6 +11,8 @@ primus = Primus.connect '',
 
 primus.on 'open', (spark) ->
   log 'connected'
+  
+  window.primusConnected = yes
 
   # primus.on 'data', (data) ->
   #   log 'received', data
