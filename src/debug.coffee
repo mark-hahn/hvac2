@@ -21,8 +21,8 @@ obsNames = [
   # 'tstat_kitchen$'
   # 'tstat_master$'
   # 'tstat_guest$'
-  'cntrl_dampers$'
-  'cntrl_hvac$'
+  'ctrl_dampers$'
+  'ctrl_hvac$'
 ]
 
 pad = (str, len) ->

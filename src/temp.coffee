@@ -33,12 +33,13 @@ observers = {}
 module.exports =
   init: (@obs$) -> 
     
-    addObs = (name) =>
+    addObs = (name, debounceMS) =>
       @obs$['temp_' + name + '$'] = 
         Rx.Observable.create (observer) ->
           observers[name] ?= []
           observers[name].push observer
         .distinctUntilChanged()
+        .debounce debounceMS
 
       emitSrc.on name, (rawTemp) ->
         now = Date.now()
@@ -76,7 +77,7 @@ module.exports =
         else
           emitSrc.emit name, volts * 100 
           
-    for name of xbeeRadios when name isnt 'closet' then addObs name
-    for name in ['airIntake', 'acReturn'] then addObs name
+    for name of xbeeRadios when name isnt 'closet' then addObs name 1e3
+    for name in ['airIntake', 'acReturn'] then addObs name, 30e3
 
         

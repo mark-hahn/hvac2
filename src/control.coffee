@@ -4,7 +4,7 @@
   There is nothing timing dependent, that is all in overrides
 ###
 
-log     = (args...) -> console.log 'CNTRL:', args...
+log     = (args...) -> console.log ' CTRL:', args...
 Rx      = require 'rx'
 emitSrc = new (require('events').EventEmitter)
 
@@ -117,6 +117,6 @@ module.exports =
         # log 'tstat_' + room + '$' + ' in', tstatData  
         check()
       
-    @obs$.cntrl_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
-    @obs$.cntrl_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
+    @obs$.ctrl_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
+    @obs$.ctrl_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
        
