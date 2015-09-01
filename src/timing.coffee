@@ -10,7 +10,7 @@
     don't let ac freeze up
 ###
 
-log     = (args...) -> console.log 'OVERR:', args...
+log     = (args...) -> console.log 'TIMNG:', args...
 Rx      = require 'rx'
 emitSrc = new (require('events').EventEmitter)
 

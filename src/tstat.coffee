@@ -16,15 +16,18 @@ setpoints  = {}
 
 check = (room) ->
   # log 'check', {room, modes, temps, setpoints}
-  if not (mode = modes[room]) or
-     not (temp = temps[room]) 
-    return
+  if not (mode = modes[room]) then return
+  if not (temp = temps[room]) then return
   fan      = fans[room]
   setpoint = setpoints[room]
+  
+  log 'check', {temp, setpoint}
+  
   delta = switch
     when temp <= setpoint - hysterisis then -1
     when temp >= setpoint + hysterisis then +1
     else 0
+
   if mode  isnt lastModes[room] or 
      fan   isnt lastFans[room]  or
      delta isnt lastDeltas[room]

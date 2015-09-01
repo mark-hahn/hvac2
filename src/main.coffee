@@ -14,6 +14,6 @@ mods = [
 ]
 obs$ = {}
 for mod in mods 
-  log 'starting', mod
+  # log 'starting', mod
   require(mod).init obs$
   

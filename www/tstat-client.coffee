@@ -36,7 +36,6 @@ $ ->
     while red.length < 2 then red = '0' + red
     blu = ((1 - (set-65) / 10) * 256).toString(16).split('.')[0]
     while blu.length < 2 then blu = '0' + red
-    log red, blu
     $rgtTemp.css color: '#' + red + '00' + blu
     
     $bot.css 
@@ -102,5 +101,4 @@ $ ->
         
       when 'temp'
         temps[data.room] = data.temp
-        update no
-      
+        update no        

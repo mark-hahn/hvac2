@@ -61,7 +61,8 @@ primus.save 'www/js/primus.js'
 primus.on 'connection', (connection) ->
   connId = connection.id.split('$')[0]
   connections.push {id: connId, connection}
-  log 'new connection', {id: connId, connections, addr: connection.address}
+  log 'new connection', connection.address
+  # log 'new connection', {id: connId, connections, addr: connection.address}
   
   connection.on 'data', (data) ->
     # log 'connection.on data', data
