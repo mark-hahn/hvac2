@@ -1,7 +1,7 @@
 ###
   src/control.coffee
   per room: tstat in; temp outside in; dampers and hvac out
-  There is nothing timing dependent, that is all in overrides
+  There is nothing timing dependent, that is all in timing.coffee
 ###
 
 log     = (args...) -> console.log ' CTRL:', args...
