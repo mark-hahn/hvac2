@@ -16,14 +16,12 @@ emitSrc = new (require('events').EventEmitter)
 
 nextChkAgainTime = 0
 
-extAirDelay     = 10 * 60e3
-minDampCyle     =       5e3
-fanHold         =  2 * 60e3
+minDampCyle       = 5e3
+fanHold           =  2 * 60e3
+extAirDelay       = 10 * 60e3
 lastActiveOffTime = 0
 lastExtAirChgTime = 0
   
-freezeTemp     = -5
-thawedTemp     =  3
 lastFreezeTime = 0
 minThawTime    = 3 * 60e3
 thawing = no
@@ -42,7 +40,6 @@ dampersReq   = {tvRoom: on, kitchen: on, master:on, guest: on}
 lastDampers  = {tvRoom: on, kitchen: on, master:on, guest: on}
 hvacReq      = {extAir: off, fan: off, heat: off, cool: off}
 lastHvac     = {extAir: off, fan: off, heat: off, cool: off}
-acReturnTemp = null
 
 allRoomsEqual = (a, b) ->
   for room in rooms
@@ -82,13 +79,12 @@ check = ->
     checkAgainAt now + delay
   
   # ac freeze
-  if lt(acReturnTemp, freezeTemp)
+  if freezeDelta < 0
     lastFreezeTime = now 
     thawing = yes
-  else if thawing and 
-    ( lt(acReturnTemp, thawedTemp) or 
-      not expired lastFreezeTime, minThawTime )
-    thawing = yes
+  else if freezeDelta = 0 and 
+          not expired lastFreezeTime, minThawTime
+    thawing = lastThawing
   else 
     thawing = no
     lastFreezeTime = 0
@@ -131,11 +127,6 @@ module.exports =
       hvacReq = hvac
       check()
       
-    @obs$.temp_acReturn$.forEach (acReturn) -> 
-      log 'temp_acReturn$ in', acReturn
-      acReturnTemp = acReturn
-      check()
-    
     @obs$.over_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
     @obs$.over_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
        
