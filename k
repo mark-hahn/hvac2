@@ -1,9 +1,9 @@
 #   -*-  grammar-ext: sh  -*-
 
 echo "killing all hvac(1&2) apps"
+kill $(pgrep -f "hvac") 2> /dev/null
 
-pkill -f /root/apps/hvac/lib/hvac        > /dev/null 2>&1
-pkill -f /root/apps/hvac2/js/main.js     > /dev/null 2>&1
-pkill -f /root/dev/apps/hvac/lib/hvac    > /dev/null 2>&1
-pkill -f /root/dev/apps/hvac2/js/main.js > /dev/null 2>&1
-  
+# pkill -f /root/apps/hvac/lib/hvac        > /dev/null 2>&1
+# pkill -f /root/apps/hvac2/js/main.js     > /dev/null 2>&1
+# pkill -f /root/dev/apps/hvac/lib/hvac    > /dev/null 2>&1
+# pkill -f /root/dev/apps/hvac2/js/main.js > /dev/null 2>&1
