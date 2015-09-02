@@ -7,8 +7,8 @@ log = (args...) -> console.log 'TSTAT:', args...
 Rx  = require 'rx'
 
 roomHysterisis  = 0.25
-extDiffHigh     = 6
-extDiffLow      = 3
+extDiffHigh     = 8
+extDiffLow      = 4
 freezeTemp      = -5
 thawedTemp      =  3
 
@@ -46,12 +46,13 @@ check = (name) ->
     return
         
   if name in ['airIntake', 'outside'] 
-    if temps.outside and temps.airIntake
-      diff = temps.outside - temps.airIntake
+    if temps.airIntake and temps.outside
+      diff = temps.airIntake - temps.outside
       delta = switch
         when diff <= extDiffLow  then -1
         when diff >= extDiffHigh then +1
         else 0
+      # log 'diff', diff, temps.outside, temps.airIntake, delta
       if delta isnt lastExtAirInDelta
         for obs in observers.extAirIn
           obs.onNext delta
@@ -85,18 +86,18 @@ module.exports =
     names = rooms.concat 'airIntake', 'outside', 'acReturn'
     
     for name in names then do (name) =>
-      log name
       @obs$['temp_' + name + '$'].forEach (temp) ->
-        temps[name] ?= temp
+        # log 'temp_' + name + '$ in', temp
+        temps[name] = temp
         check name
         
-      switch name
-        when 'airIntake' then return
-        when 'outside'   then name = 'extAirIn' 
-        when 'acReturn'  then name = 'freeze'
-
-      @obs$['tstat_' + name + '$'] = 
-        Rx.Observable.create (observer) -> 
-          observers[name] ?= []
-          observers[name].push observer      
-          
+      if name isnt 'airIntake'
+        nameOut = switch name
+          when 'outside'  then 'extAirIn' 
+          when 'acReturn' then 'freeze'
+          else name
+        @obs$['tstat_' + nameOut + '$'] = 
+          Rx.Observable.create (observer) -> 
+            observers[nameOut] ?= []
+            observers[nameOut].push observer      
+            

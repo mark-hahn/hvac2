@@ -9,7 +9,7 @@ mods = [
   './websock-server'
   './tstat'
   './control'
-  './timing'
+  # './timing'
   './debug'
 ]
 obs$ = {}

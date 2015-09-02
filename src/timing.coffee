@@ -118,12 +118,12 @@ module.exports =
   init: (@obs$) -> 
     
     @obs$.ctrl_dampers$.forEach (dampers) -> 
-      log 'ctrl_dampers$ in', dampers
+      # log 'ctrl_dampers$ in', dampers
       dampersReq = dampers
       check()
         
     @obs$.ctrl_hvac$.forEach (hvac) -> 
-      log 'ctrl_hvac$ in', hvac
+      # log 'ctrl_hvac$ in', hvac
       hvacReq = hvac
       check()
       

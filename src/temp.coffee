@@ -5,6 +5,9 @@
 
 log = (args...) -> console.log 'TEMP:', args...
 
+mockAirIn  = no
+mockFreeze = no
+
 Rx      = require 'rx'
 xbee    = require './xbee'
 emitSrc = new (require('events').EventEmitter)
@@ -34,13 +37,6 @@ module.exports =
   init: (@obs$) -> 
     
     addObs = (name, debounceMS) =>
-      @obs$['temp_' + name + '$'] = 
-        Rx.Observable.create (observer) ->
-          observers[name] ?= []
-          observers[name].push observer
-        .distinctUntilChanged()
-        .debounce debounceMS
-
       emitSrc.on name, (rawTemp) ->
         now = Date.now()
         history = histories[name] ?= []
@@ -52,32 +48,51 @@ module.exports =
             Math.sin(Math.PI/2 + ((now - histTime)/dampening))
           weightSum       += histWeight
           weightedTempSum += histWeight * histTemp 
-        temp            = weightedTempSum / weightSum
-        rndedTemp       = +temp.toFixed tempResolution
-        lastTemp        = (lastTemps[name] ?= temp)
-        lastRndedTemp   = +lastTemp.toFixed tempResolution
-        lastTemps[name] = temp
+        temp               = weightedTempSum / weightSum
+        rndedTemp          = +temp.toFixed tempResolution
+        lastTemp           = (lastTemps[name] ?= temp)
+        lastRndedTemp      = +lastTemp.toFixed tempResolution
+        lastTemps[name]    = temp
         if Math.abs(temp - lastTemp) < tempHysterisis and
             rndedTemp isnt lastRndedTemp
           rndedTemp = lastRndedTemp
         if history.length > numHistory then history.pop()
         for obs in observers[name] ? []
-          obs.onNext rndedTemp
+          obs.onNext (if mockAirIn or mockFreeze then rawTemp else rndedTemp)
   
+      @obs$['temp_' + name + '$'] = 
+        Rx.Observable.create (observer) ->
+          observers[name] ?= []
+          observers[name].push observer
+        .distinctUntilChanged()
+        .debounce debounceMS
+
     for name, addr of xbeeRadios then do (name, addr) ->        
       xbee.getPacketsByAddr$(name, addr).forEach (item) ->
         {packet} = item
         volts  = ((packet[19] * 256 + packet[20]) / 1024) * 1.2
         if name is 'closet'
           temp = ((voltsAtZeroC - volts ) / voltsPerC) * 9/5 + 32
-          emitSrc.emit 'airIntake', temp
+          if not mockAirIn then emitSrc.emit 'airIntake', temp
           volts = ((packet[21] * 256 + packet[22]) / 1024) * 1.2
           temp =  (voltsAtZeroC - volts) / voltsPerC
-          emitSrc.emit 'acReturn', temp
+          if not mockFreeze then emitSrc.emit 'acReturn', temp
         else
           emitSrc.emit name, volts * 100 
           
     for name of xbeeRadios when name isnt 'closet' then addObs name, 1e3
-    for name in ['airIntake', 'acReturn'] then addObs name, 30e3
-
-        
+    for name in ['airIntake', 'acReturn'] 
+      addObs name, (if mockAirIn or mockFreeze then 1e3 else 30e3)
+      
+    if mockAirIn
+      t = 0
+      setInterval ->
+        emitSrc.emit 'airIntake', 70 + Math.sin(t++ * 0.2) * 10
+      , 1000
+    
+    if mockFreeze
+      t = 0
+      setInterval ->
+        emitSrc.emit 'acReturn', 0 + Math.sin(t++ * 0.2) * 10
+      , 1000
+    

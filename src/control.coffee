@@ -8,21 +8,18 @@ log     = (args...) -> console.log ' CTRL:', args...
 Rx      = require 'rx'
 emitSrc = new (require('events').EventEmitter)
 
-extAirMaxDiff = 6
-extAirMinDiff = 3
-
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 
-airIntake   = null
-outsideTemp = null
 modes       = {tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'}
 fans        = {tvRoom: off, kitchen: off, master:off, guest: off}
-deltas      = {tvRoom: 0, kitchen: 0, master:0, guest: 0}
+deltas      = {tvRoom:   0, kitchen: 0, master:0, guest: 0, \
+               extAirIn: 0, freeze:  0}
 
 lastActive  = {tvRoom: no, kitchen: no, master:no, guest: no}
 lastDampers = {tvRoom: off, kitchen: off, master:off, guest: off}
 lastHvac    = {extAir: off, fan: off, heat: off, cool: off}
-
+lastThaw = no
+  
 check = ->
   # log 'check', airIntake, outsideTemp, modes, fans, deltas
   
@@ -42,15 +39,21 @@ check = ->
   dampers = {tvRoom: off, kitchen: off, master: off, guest: off}
   hvac    = {extAir: off, fan: off,     heat: off,   cool: off}
   active  = {tvRoom: no,  kitchen: no,  master: no,  guest: no}
+  thaw    = no
   
   if sysMode isnt 'off'
     
-    if sysMode in ['fan', 'cool'] and outsideTemp and airIntake
-      diff = airIntake - outsideTemp
-      hvac.extAir = switch 
-        when diff > extAirMaxDiff then on
-        when diff < extAirMinDiff then off
+    if sysMode in ['fan', 'cool']
+      hvac.extAir = switch
+        when deltas.extAirIn > 0 then on
+        when deltas.extAirIn < 0 then off
         else lastHvac.extAir
+      
+    if sysMode is 'cool'
+      thaw = switch
+        when deltas.freeze > 0 then on
+        when deltas.freeze < 0 then off
+        else lastThaw
     
     sysActive = no
     if sysMode in ['heat', 'cool']
@@ -73,16 +76,20 @@ check = ->
       for room in rooms when fans[room]
         hvac.fan = on 
         dampers[room] = on
-
+        
+    if thaw
+      hvac.cool = hvac.heat = off
+      hvac.fan  = on
+      
   for room in rooms
     lastActive[room] = active[room]
+  lastThaw = thaw
 
   dampersChanged = no
   for room in rooms
     if dampers[room] isnt lastDampers[room]
       dampersChanged = yes
       lastDampers[room] = dampers[room]
-  # log dampersChanged, dampers
   if dampersChanged 
     emitSrc.emit 'dampers', dampers
       
@@ -91,32 +98,26 @@ check = ->
     if hvac[out] isnt lastHvac[out]
       hvacChanged = yes
       lastHvac[out] = hvac[out]
-  # log hvacChanged, hvac
   if hvacChanged 
     emitSrc.emit 'hvac', hvac
   
 module.exports =
   init: (@obs$) -> 
+    names = rooms.concat 'extAirIn', 'freeze'
     
-    @obs$.temp_outside$.forEach (temp) -> 
-      outsideTemp = temp
-      # log 'temp_outside$ in', temp
-      check()
-        
-    @obs$.temp_airIntake$.forEach (airIn) -> 
-      airIntake = airIn
-      # log 'temp_airIntake$ in', airIn
-      check()
-    
-    for room in rooms then do (room) =>
-      @obs$['tstat_' + room + '$'].forEach (tstatData) ->
-        {mode, fan, delta} = tstatData
-        modes[room]  = mode
-        fans[room]   = fan
-        deltas[room] = delta
-        # log 'tstat_' + room + '$' + ' in', tstatData  
+    for name in names then do (name) =>
+      @obs$['tstat_' + name + '$'].forEach (data) ->
+        if name in rooms
+          room = name
+          {mode, fan, delta} = data
+          modes[room] = mode
+          fans[room]  = fan
+        else
+          delta = data
+        deltas[name] = delta
+        # log 'tstat_' + name + '$' + ' in', data  
         check()
-      
+    
     @obs$.ctrl_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
     @obs$.ctrl_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
        
