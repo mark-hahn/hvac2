@@ -1,61 +1,40 @@
 ###
   src/timing.coffee
-  control(dampers/hvac) and ac-return in, timing(dampers/hvac) out
-  this the timing-related code, not the control module
-  goals:
-    don't wear out dampers
-    always have a damper open when blower on
-      (freeze old damper state)
-    don't start ac too often
-    don't let ac freeze up
+  control(dampers/hvac) in and timing(dampers/hvac) out
 ###
 
 log     = (args...) -> console.log 'TIMNG:', args...
 Rx      = require 'rx'
 emitSrc = new (require('events').EventEmitter)
 
-nextChkAgainTime = 0
+minDampCyle     = 5e3
+fanHold         = 30e3 # 2 * 60e3
+extAirDelay     = 20e3 #10 * 60e3
+dampersOffDelay = 30e3 #10 * 60e3
+minAcOff        = 40e3 # 4 * 60e3
 
-minDampCyle       = 5e3
-fanHold           =  2 * 60e3
-extAirDelay       = 10 * 60e3
+nextChkAgainTime  = 0
 lastActiveOffTime = 0
-lastExtAirChgTime = 0
-  
-lastFreezeTime = 0
-minThawTime    = 3 * 60e3
-thawing = no
-
 allDampersOffTime = 0
-dampersOffDelay   = 10 * 60e3
+lastAcOffTime     = 0
 
-lastAcOnTime = 0
-minAcCyle    =  4 * 60e3
+lastActive        = no
 
-lastDamperChgTime = {}
+dampersReq    = {tvRoom: on, kitchen: on, master:on, guest: on}
+lastDampers   = {tvRoom: on, kitchen: on, master:on, guest: on}
+dampersOnTime = {tvRoom: on, kitchen: on, master:on, guest: on}
+hvacReq       = {extAir: off, fan: off, heat: off, cool: off}
+lastHvac      = {extAir: off, fan: off, heat: off, cool: off}
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
-
-dampersReq   = {tvRoom: on, kitchen: on, master:on, guest: on}
-lastDampers  = {tvRoom: on, kitchen: on, master:on, guest: on}
-hvacReq      = {extAir: off, fan: off, heat: off, cool: off}
-lastHvac     = {extAir: off, fan: off, heat: off, cool: off}
-
-allRoomsEqual = (a, b) ->
-  for room in rooms
-    if a[room] isnt b[room] then return false
-  true
-  
 allRoomsEqualTo = (a, b) ->
   for room in rooms
     if a[room] isnt b then return false
   true
-  
 setAllRoomsTo = (a, b) ->
   for room in rooms
     a[room] = b
   true
-  
 copyAllRoomsTo = (a,b) ->
   for room in rooms
     b[room] = a[room]
@@ -67,53 +46,51 @@ check = ->
   if now > nextChkAgainTime
     nextChkAgainTime = 0
     
-  expired = (evtTime, delay) -> now > evtTime + delay
-  lt = (a, b) -> a? and b? and a < b
-  
   checkAgainAt = (time) ->
     if time > now and time < nextChkAgainTime
       nextChkAgainTime = time
       setTimeout check, time - now + 100
     
-  checkAgainDelay = (delay) ->
-    checkAgainAt now + delay
-  
-  # ac freeze
-  if freezeDelta < 0
-    lastFreezeTime = now 
-    thawing = yes
-  else if freezeDelta = 0 and 
-          not expired lastFreezeTime, minThawTime
-    thawing = lastThawing
-  else 
-    thawing = no
-    lastFreezeTime = 0
-  if thawing
-    hvacReq.cool = off
-    hvacReq.fan  = on
-    if not expired lastFreezeTime, minThawTime
-      checkAgainAt lastFreezeTime + minThawTime
+  expired = (evtTime, delay) -> 
+    exp = now > evtTime + delay
+    if not exp then checkAgainAt evtTime + delay
+    exp
     
   # all room dampers closed
   if allRoomsEqualTo dampersReq, off
     allDampersOffTime or= now
     if not expired allDampersOffTime, dampersOffDelay
       copyAllRoomsTo lastDampers, dampersReq
-      checkAgainAt allDampersOffTime + dampersOffDelay
     else
       setAllRoomsTo dampersReq, on
-  else
-    allDampersOffTime = 0
+      
+  # any damper cycle limit
+  for room in rooms
+    if not expired dampersOnTime[room], minDampCyle
+      dampers[room] = on
+    if not lastDampers[room] and dampers[room]
+      dampersOnTime[room] = now
     
   # ac cycling limit
-  if not expired lastAcOnTime, minAcCyle
+  if not expired lastAcOffTime, minAcOff
     hvacReq.cool = off
-  else
-    lastAcOnTime = 0
-  if hvacReq.cool and not lastHvac.cool
-    lastAcOnTime = now
-  
+  if lastHvac.cool and not hvacReq.cool
+    lastAcOffTime = now
 
+  # extAirIn cycling limit
+  if not expired lastExtAirOnTime, extAirDelay
+    hvacReq.extAir = on
+  if not lastHvac.extAir and hvacReq.extAir
+    lastExtAirOnTime = now
+    
+  # min fan on after active off
+  active = (hvacReq.heat or hvacReq.cool)
+  if not expired lastActiveOffTime, fanHold
+    hvacReq.fan = yes
+  if lastActive and not active
+    lastActiveOffTime = now
+  lastActive = active  
+    
 module.exports =
   init: (@obs$) -> 
     
@@ -127,6 +104,6 @@ module.exports =
       hvacReq = hvac
       check()
       
-    @obs$.over_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
-    @obs$.over_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
+    @obs$.timng_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
+    @obs$.timng_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
        

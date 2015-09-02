@@ -17,6 +17,7 @@
     "moment": "^2.10.6",
     "node-static": "^0.7.7",
     "primus": "^3.2.2",
+    "request": "^2.61.0",
     "rx": "^3.1.1",
     "serialport": "^1.7.4",
     "sqlite3": "^3.0.10",

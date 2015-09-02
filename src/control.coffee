@@ -51,8 +51,8 @@ check = ->
       
     if sysMode is 'cool'
       thaw = switch
-        when deltas.freeze > 0 then on
-        when deltas.freeze < 0 then off
+        when deltas.freeze < 0 then on
+        when deltas.freeze > 0 then off
         else lastThaw
     
     sysActive = no

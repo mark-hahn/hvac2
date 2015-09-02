@@ -87,7 +87,7 @@ module.exports =
     if mockAirIn
       t = 0
       setInterval ->
-        emitSrc.emit 'airIntake', 70 + Math.sin(t++ * 0.2) * 10
+        emitSrc.emit 'airIntake', 70 + Math.sin(t++ * 0.2) * 6
       , 1000
     
     if mockFreeze

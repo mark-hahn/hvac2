@@ -19,18 +19,13 @@ db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (er
         log 'Error reading weewx db', err
         db.close()
         return
-      emitSrc.emit 'wx', res
+      emitSrc.emit 'outTemp', res.outTemp
   , 4000
 
 module.exports =
-  
   init:  (@obs$) -> 
-    @obs$.wxStation$ = 
-      Rx.Observable.fromEvent emitSrc, 'wx'
-    
     @obs$.temp_outside$ = 
-      @obs$.wxStation$
-        .map (wx) -> wx.outTemp
+      Rx.Observable
+        .fromEvent emitSrc, 'outTemp'
         .distinctUntilChanged()
-        # .skip 1
 
