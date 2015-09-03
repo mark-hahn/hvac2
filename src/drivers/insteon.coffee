@@ -28,17 +28,16 @@ send = (isDamper, obj, cb) ->
       when 'guest',   'extAir' then 8
     if isDamper and not val or not isDamper and val
       data += bit
-  dataHex = data.toString 16
-  # log 'dataHex', {dataHex, hvacInsteonHubUrlPfx}
+  dataHex = '0' + data.toString(16).toUpperCase()
   pfx = (if isDamper then dampersInsteonHubUrlPfx  \
                      else hvacInsteonHubUrlPfx)
-  # log 'request pfx', pfx
-  # request pfx + dataHex, (err, res) ->
-  #   # log 'insteon cmd res', {err, res}
-  #   if err
-  #     name = (if isDamper then 'damper' else 'hvac')
-  #     log 'insteon cmd err', name, err; cb? err; return
-  cb?()
+  # log 'request', pfx + dataHex
+  request pfx + dataHex, (err, res) ->
+    # log 'cmd res', {err, res: res.statusCode}
+    if err
+      name = (if isDamper then 'damper' else 'hvac')
+      log 'cmd err', name, err; cb? err; return
+    cb?()
 
 tryTO = {}
 
@@ -68,8 +67,7 @@ module.exports =
       # logobj 'hvac in', hvac
       sendWretry no, hvac
         
-    sendWretry no,  {extAir: off, fan: off, heat: off, cool: off}
-    sendWretry yes, {tvRoom: on, kitchen: on, master:on, guest: on}
-
-    log 'relays cleared'
+    sendWretry no,  {extAir: off, fan: off,    heat: off, cool: off}
+    sendWretry yes, {tvRoom: on,  kitchen: on, master:on, guest: on}
     
+    log 'relays cleared'

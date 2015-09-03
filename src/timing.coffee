@@ -12,8 +12,8 @@ emitSrc = new (require('events').EventEmitter)
 minDampCyle     = 5e3
 fanHold         = 30e3 # 2 * 60e3
 extAirDelay     = 20e3 #10 * 60e3
-dampersOffDelay = 30e3 #10 * 60e3
-minAcOff        = 40e3 # 4 * 60e3
+dampersOffDelay = 120e3 #10 * 60e3
+minAcOff        = 30e3 # 4 * 60e3
 
 nextChkAgainTime  = 0
 lastActiveOffTime = 0
@@ -50,9 +50,6 @@ copyAllHvacsTo = (a,b) ->
   for hvac in hvacs then b[hvac] = a[hvac]
     
 check = ->
-  # logobj 'damp check', dampersReq
-  # logobj 'hvac check', hvacReq
-
   now = Date.now()
   if now > nextChkAgainTime
     nextChkAgainTime = 0
