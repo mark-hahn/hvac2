@@ -5,6 +5,8 @@
 ###
 
 log     = (args...) -> console.log ' CTRL:', args...
+logobj = (title, obj) -> log require('./utils').fmtobj title, obj
+
 Rx      = require 'rx'
 emitSrc = new (require('events').EventEmitter)
 
@@ -19,10 +21,11 @@ lastActive  = {tvRoom: no, kitchen: no, master:no, guest: no}
 lastDampers = {tvRoom: off, kitchen: off, master:off, guest: off}
 lastHvac    = {extAir: off, fan: off, heat: off, cool: off}
 lastThaw = no
-  
+
 check = ->
-  # log 'check', airIntake, outsideTemp, modes, fans, deltas
-  
+  # logobj 'check modes', modes
+  # logobj 'check deltas', deltas
+
   fanCount = heatCount = coolCount = 0
   for room in rooms
     switch modes[room]
@@ -55,16 +58,28 @@ check = ->
         when deltas.freeze > 0 then off
         else lastThaw
     
+    # logobj 'modes tst 1',    modes
+    # logobj 'dampers tst 1',  dampers
+    # logobj 'deltas tst 1',   deltas
+    # log {sysMode}
+    
     sysActive = no
     if sysMode in ['heat', 'cool']
       for room in rooms when modes[room] is sysMode
         delta = deltas[room]
-        sysActive or= active[room] = switch
-          when sysMode is 'cool' and delta > 0 then yes
-          when sysMode is 'cool' and delta < 0 then no
-          when sysMode is 'heat' and delta > 0 then no
-          when sysMode is 'heat' and delta < 0 then yes
-          else lastActive[room]
+        # log 'switch', {sysMode, sysActive, room, delta, \
+        #                res: (sysMode is 'cool' and delta > 0)}
+        active[room] = switch
+            when sysMode is 'cool' and delta > 0 then yes
+            when sysMode is 'cool' and delta < 0 then  no
+            when sysMode is 'heat' and delta > 0 then  no
+            when sysMode is 'heat' and delta < 0 then yes
+            else lastActive[room]
+        sysActive or= active[room]
+        # log 'switch2', {sysMode, sysActive, room, delta, active: active[room]}
+            
+    # log {sysActive}
+    # logobj 'active tst 2',  active
     
     if sysActive  
       hvac[sysMode] = on
@@ -85,12 +100,15 @@ check = ->
     lastActive[room] = active[room]
   lastThaw = thaw
 
+  # logobj 'dampers chk',  dampers
+  # logobj 'dampers last', lastDampers
   dampersChanged = no
   for room in rooms
     if dampers[room] isnt lastDampers[room]
       dampersChanged = yes
       lastDampers[room] = dampers[room]
   if dampersChanged 
+    logobj 'damp out', dampers
     emitSrc.emit 'dampers', dampers
       
   hvacChanged = no
@@ -99,6 +117,7 @@ check = ->
       hvacChanged = yes
       lastHvac[out] = hvac[out]
   if hvacChanged 
+    logobj 'hvac out', hvac
     emitSrc.emit 'hvac', hvac
   
 module.exports =
@@ -115,7 +134,7 @@ module.exports =
         else
           delta = data
         deltas[name] = delta
-        # log 'tstat_' + name + '$' + ' in', data  
+        # logobj 'name in' + name + '$' + ' in', data  
         check()
     
     @obs$.ctrl_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'

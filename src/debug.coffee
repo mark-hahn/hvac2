@@ -2,7 +2,8 @@
 moment = require 'moment'
 log = (args...) -> 
   time = moment().format('MM-DD HH:mm:ss')
-  console.log time, args...
+  # console.log time, args...
+  console.log args...
 
 util = require 'util'
 Rx   = require 'rx'
@@ -28,8 +29,8 @@ obsNames = [
   'ctrl_dampers$'
   'ctrl_hvac$'
   
-  'timng_dampers$'
-  'timng_hvac$'
+  'timing_dampers$'
+  'timing_hvac$'
 ]
 
 pad = (str, len) ->
@@ -49,7 +50,7 @@ module.exports =
   init: (@obs$) -> 
     for obsName in obsNames then do (obsName) =>
       @obs$[obsName].forEach (item) -> 
-        log pad(obsName,15), 
+        log 'OBSRV:', pad(obsName,15), 
           padPfx(item)
             .replace /['"{}\s\n]/g, ''
             .replace(/,/g, ', ')[0..100]

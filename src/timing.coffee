@@ -3,7 +3,9 @@
   control(dampers/hvac) in and timing(dampers/hvac) out
 ###
 
-log     = (args...) -> console.log 'TIMNG:', args...
+log    = (args...) -> console.log 'TIMNG:', args...
+logobj = (title, obj) -> log require('./utils').fmtobj title, obj
+
 Rx      = require 'rx'
 emitSrc = new (require('events').EventEmitter)
 
@@ -17,8 +19,7 @@ nextChkAgainTime  = 0
 lastActiveOffTime = 0
 allDampersOffTime = 0
 lastAcOffTime     = 0
-
-lastActive        = no
+lastExtAirOnTime  = 0
 
 dampersReq    = {tvRoom: on, kitchen: on, master:on, guest: on}
 lastDampers   = {tvRoom: on, kitchen: on, master:on, guest: on}
@@ -27,21 +28,31 @@ hvacReq       = {extAir: off, fan: off, heat: off, cool: off}
 lastHvac      = {extAir: off, fan: off, heat: off, cool: off}
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
+allRoomsEqual = (a, b) ->
+  for room in rooms
+    if a[room] isnt b[room] then return no
+  yes
 allRoomsEqualTo = (a, b) ->
   for room in rooms
-    if a[room] isnt b then return false
-  true
+    if a[room] isnt b then return no
+  yes
 setAllRoomsTo = (a, b) ->
-  for room in rooms
-    a[room] = b
-  true
+  for room in rooms then a[room] = b
 copyAllRoomsTo = (a,b) ->
-  for room in rooms
-    b[room] = a[room]
-  
+  for room in rooms then b[room] = a[room]
+    
+hvacs = ['extAir', 'fan', 'heat', 'cool']
+allHvacsEqual = (a, b) ->
+  for hvac in hvacs
+    if a[hvac] isnt b[hvac] then return no
+  yes
+copyAllHvacsTo = (a,b) ->
+  for hvac in hvacs then b[hvac] = a[hvac]
+    
 check = ->
-  # log 'check', airIntake, outsideTemp, modes, fans, deltas
-  
+  # logobj 'damp check', dampersReq
+  # logobj 'hvac check', hvacReq
+
   now = Date.now()
   if now > nextChkAgainTime
     nextChkAgainTime = 0
@@ -66,44 +77,54 @@ check = ->
       
   # any damper cycle limit
   for room in rooms
-    if not expired dampersOnTime[room], minDampCyle
-      dampers[room] = on
-    if not lastDampers[room] and dampers[room]
+    if not lastDampers[room] and dampersReq[room]
       dampersOnTime[room] = now
+    if not expired dampersOnTime[room], minDampCyle
+      dampersReq[room] = on
     
   # ac cycling limit
-  if not expired lastAcOffTime, minAcOff
-    hvacReq.cool = off
   if lastHvac.cool and not hvacReq.cool
     lastAcOffTime = now
-
+  if not expired lastAcOffTime, minAcOff
+    hvacReq.cool = off
+    
   # extAirIn cycling limit
-  if not expired lastExtAirOnTime, extAirDelay
-    hvacReq.extAir = on
   if not lastHvac.extAir and hvacReq.extAir
     lastExtAirOnTime = now
+  if not expired lastExtAirOnTime, extAirDelay
+    hvacReq.extAir = on
     
   # min fan on after active off
-  active = (hvacReq.heat or hvacReq.cool)
-  if not expired lastActiveOffTime, fanHold
-    hvacReq.fan = yes
+  active     = ( hvacReq.heat or  hvacReq.cool)
+  lastActive = (lastHvac.heat or lastHvac.cool)
   if lastActive and not active
     lastActiveOffTime = now
-  lastActive = active  
+  if not expired lastActiveOffTime, fanHold
+    hvacReq.fan = yes
+
+  if not allRoomsEqual dampersReq, lastDampers
+    # logobj 'damp out', dampersReq
+    emitSrc.emit 'dampers', dampersReq
+    copyAllRoomsTo dampersReq, lastDampers
+
+  if not allHvacsEqual hvacReq, lastHvac
+    # logobj 'hvac out', hvacReq
+    emitSrc.emit 'hvac', hvacReq
+    copyAllHvacsTo hvacReq, lastHvac
     
 module.exports =
   init: (@obs$) -> 
     
     @obs$.ctrl_dampers$.forEach (dampers) -> 
-      # log 'ctrl_dampers$ in', dampers
+      # logobj 'damp in', dampers
       dampersReq = dampers
       check()
         
     @obs$.ctrl_hvac$.forEach (hvac) -> 
-      # log 'ctrl_hvac$ in', hvac
+      # logobj 'hvac in', hvac
       hvacReq = hvac
       check()
       
-    @obs$.timng_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
-    @obs$.timng_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
+    @obs$.timing_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
+    @obs$.timing_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
        
