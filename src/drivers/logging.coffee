@@ -13,9 +13,11 @@ fmts = ''; args = []
 
 str = (s) -> fmts += s
 
-ltr = (val) ->
+ltr = (val, uc = yes) ->
   fmts += '%1s'
-  args.push (val ? '-').toUpperCase()[0].replace 'O', '-'
+  val = val ? '-'
+  if uc then val = val.toUpperCase()
+  args.push val[0].replace /[Oo]/, '-'
 
 num = (val) ->
   if val 
@@ -24,16 +26,20 @@ num = (val) ->
   else
     fmts += '--.--'
     
-int = (val) ->
-  if val? then str '---'
+int = (val, wid = 2, neg = '') ->
+  if not val?
+    dashes = ''
+    for i in [0...wid] then dashes += '-'
+    str dashes
   else
-    fmts += '%-3.0f'
+    fmt = "%#{neg}#{wid}.0f"
+    fmts += fmt
     args.push val
 
 lastLine = ''
 
 modes     = {tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'}
-fans      = {tvRoom:   on,  kitchen:   on,  master:  on,  guest:   on }
+fans      = {tvRoom:  off,  kitchen:  off,  master: off,  guest:  off }
 setpoints = {tvRoom:    0,  kitchen:    0,  master:   0,  guest:    0 }
 
 $.react '*', (name) ->
@@ -48,13 +54,13 @@ $.react '*', (name) ->
     setpoints[ws.room] = ws.setpoint
   
   fanActive =  @timing_hvac?.fan
-  sysActive = (@timing_hvac?.cool or  @timing_hvac?.heat)
+  sysActive = (fanActive or @timing_hvac?.cool or  @timing_hvac?.heat)
     
   ltr @ctrl_sysMode
   ltr (if not sysActive then '-' else @ctrl_sysMode)
   ltr (if @timing_extAirIn then 'E' else 'I')
   ltr '  '
-  int @temp_acReturn
+  int @temp_acReturn, 3, '-'
   str '  '
   int @temp_airIntake
   str '-'
@@ -63,8 +69,9 @@ $.react '*', (name) ->
   for room in ['tvRoom', 'kitchen', 'master', 'guest']
     damper = @timing_dampers?[room]
     
-    mode = modes[room]
-    if fans[room] then mode = mode.toLowerCase()
+    mode   = modes[room]
+    active = (mode in ['cool', 'heat'])
+    if fans[room] and not active then mode = 'fan'
     
     actual = switch 
       when sysActive and damper       then mode
@@ -75,12 +82,12 @@ $.react '*', (name) ->
     str '   '
     ltr room
     str ':'
-    ltr mode
+    ltr (if fans[room] and mode isnt 'fan' then mode else mode.toUpperCase()), no
     ltr actual
     str ' '
     num @['temp_' + room]
     str ' '
-    num setpoints[room]
+    num (if active then setpoints[room])
   
   line = sprintf fmts, args...
   if line isnt lastLine

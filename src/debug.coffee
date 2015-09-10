@@ -27,9 +27,13 @@ obsNames = [
   'tstat_guest'
   'tstat_extAirIn'
   'tstat_freeze'
+  'ctrl_sysMode'
   'ctrl_info'
   'ctrl_dampers'
   'ctrl_hvac'
+  'timing_extAirIn'
+  'timing_dampers'
+  'timing_hvac'
 ]
 
 pad = (str, len) ->
