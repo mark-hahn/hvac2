@@ -1,39 +1,38 @@
 #   -*-  grammar-ext: sh  -*-
 
 if [ $LOCATION != "server" ]; then 
-  echo "hvac2 can only run on the server"
+  echo "hvac can only run on the server"
   exit
 fi
 
 if [ $(pwd) == "/root/dev/apps/hvac2" ]; then isdev=true; else isdev=false; fi
 
-echo "killing all hvac(1&2) apps"
+echo "killing all hvac apps"
 kill $(pgrep -f "hvac") 2> /dev/null  
-  
+
 if $isdev
   then 
     echo "Running hvac2 in debug mode"
   else 
-    echo "Running hvac2 in normal mode"
-    rsync -av /root/dev/apps/hvac2/ /root/apps/hvac2/
+    echo "Running hvac in normal mode"
+    cd /root/apps/hvac
 fi
 
 killall tail > /dev/null 2>&1
+touch nohup.out
+tail -fn 0 nohup.out &
 
-if $isdev
-  then tail -fn 0 ~/logs/hvac2-dev.log &
-  else tail -fn 0 ~/logs/hvac2.log     &
-fi
 set -e
 
-coffee -co /root/dev/apps/imprea/js /root/dev/apps/imprea/src/*.coffee
-
-coffee -co js src/*.coffee
-coffee -co js src/drivers/*.coffee
-coffee -co www/js www/*.coffee
+if $isdev; then
+  coffee -co /root/dev/apps/imprea/js /root/dev/apps/imprea/src/*.coffee
+  coffee -co js src/*.coffee
+  coffee -co js src/drivers/*.coffee
+  coffee -co www/js www/*.coffee
+fi
 
 # export DEBUG=*
 if $isdev
-  then       node /root/dev/apps/hvac2/js/main.js >> ~/logs/hvac2-dev.log 2>&1 &
-  else nohup node /root/apps/hvac2/js/main.js     >> ~/logs/hvac2.log     2>&1 &
+  then nohup node js/main.js hvac dev &
+  else nohup node js/main.js hvac &
 fi

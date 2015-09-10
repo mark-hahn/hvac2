@@ -22,7 +22,7 @@ lastThaw    = no
 
 sysMode = 'O'
 
-$.output 'ctrl_dampers', 'ctrl_hvac', 'ctrl_sysMode'
+$.output 'ctrl_dampers', 'ctrl_hvac', 'ctrl_sysMode', 'ctrl_thaw'
       
 check = ->
   fanCount = heatCount = coolCount = 0
@@ -52,12 +52,13 @@ check = ->
         when deltas.extAirIn > 0 then on
         when deltas.extAirIn < 0 then off
         else lastExtAir
-      
+    
     if sysMode is 'cool'
       thaw = switch
         when deltas.freeze < 0 then on
         when deltas.freeze > 0 then off
         else lastThaw
+    $.ctrl_thaw thaw
     
     sysActive = no
     if sysMode in ['heat', 'cool']
