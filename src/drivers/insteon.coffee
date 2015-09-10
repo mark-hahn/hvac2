@@ -3,11 +3,10 @@
   timing dampers/hvac in -> insteon relays in closet
 ###
 
-log    = (args...) -> console.log 'INSTE:', args...
-logobj = (title, obj) -> log require('./utils').fmtobj title, obj
+{log, logObj} = require('./utils') 'INSTE'
 
-Rx       = require 'rx'
-request  = require 'request'
+$ = require('imprea') 'inste'
+request = require 'request'
 
 insteonHubAddr        = 'http://192.168.1.103:1342/io/set/'
 hvacInsteonAddress    = '387EFD'
@@ -17,7 +16,7 @@ hvacInsteonHubUrlPfx    = insteonHubAddr + hvacInsteonAddress    + '/'
 dampersInsteonHubUrlPfx = insteonHubAddr + dampersInsteonAddress + '/'
 
 send = (isDamper, obj, cb) ->
-  logobj 'send ' + (if isDamper then 'damp' else 'hvac'), obj
+  logObj 'send ' + (if isDamper then 'damp' else 'hvac'), obj
    
   data = 0
   for name, val of obj
@@ -31,7 +30,10 @@ send = (isDamper, obj, cb) ->
   dataHex = '0' + data.toString(16).toUpperCase()
   pfx = (if isDamper then dampersInsteonHubUrlPfx  \
                      else hvacInsteonHubUrlPfx)
-  # log 'request', pfx + dataHex
+  # debug
+  cb()
+  return
+  
   request pfx + dataHex, (err, res) ->
     # log 'cmd res', {err, res: res.statusCode}
     if err
@@ -57,15 +59,12 @@ sendWretry = (isDamper, obj) ->
         tryTO[''+isDamper] = setTimeout (-> tryOnce isDamper, obj, tries), 5e3
 
 module.exports =
-  init: (@obs$) -> 
-    
-    @obs$.timing_dampers$.forEach (dampers) -> 
-      # logobj 'damp in', dampers
-      sendWretry yes, dampers
+  init: -> 
+    $.react 'timing_dampers', ->
+      sendWretry yes, @timing_dampers
       
-    @obs$.timing_hvac$.forEach (hvac) -> 
-      # logobj 'hvac in', hvac
-      sendWretry no, hvac
+    $.react 'timing_hvac', ->
+      sendWretry no, @timing_hvac
         
     sendWretry no,  {extAir: off, fan: off,    heat: off, cool: off}
     sendWretry yes, {tvRoom: on,  kitchen: on, master:on, guest: on}

@@ -1,19 +1,24 @@
 
-log = (args...) -> console.log ' XBEE:', args...
+{log, logObj} = require('./utils') ' XBEE'
 
-Rx = require 'rx'
+$ = require('imprea') 'xbee'
 SerialPort = require('serialport').SerialPort
 emitSrc = new (require('events').EventEmitter)
 
+$.output 'allXbeePackets'
+
 module.exports =
-  init:  (@obs$) -> 
-    @obs$.allXbeePackets$ = 
-      Rx.Observable.fromEvent emitSrc, 'newPacket', (addr, packet) -> {addr, packet}
+  init: -> 
+    emitSrc.on 'newPacket', (pktAddr, packet) ->
+      # log 'newPacket', pktAddr
+      $.allXbeePackets {pktAddr, packet}
   
-  getPacketsByAddr$: (name, addr) ->
-    @obs$['xbeePackets_' + name + '$'] =
-      @obs$.allXbeePackets$
-        .filter (item) -> addr is item.addr
+  getPacketsByAddr: (name, addr) ->
+    name = 'xbeePacket_' + name
+    $.output name
+    emitSrc.on 'newPacket', (pktAddr, packet) ->
+      if pktAddr is addr
+        $[name] {addr, packet}
 
 xbeeSerialPort = new SerialPort '/dev/xbee',
   baudrate: 9600,
@@ -33,7 +38,7 @@ getFrameLen = (index) ->
   else 0
 
 assembleFrame = (data) ->
-  # log 'assembleFrame', utils.arr2hexStr data, yes
+  # log 'recv data', data
   for i in [0...data.length] then frameBuf.push data[i]
 
   loop
@@ -50,6 +55,7 @@ assembleFrame = (data) ->
         for idx in [4...12] by 1
           srcAddr *= 256
           srcAddr += frame[idx]
+        # log 'emitSrc.emit newPacket', srcAddr
         emitSrc.emit 'newPacket', srcAddr, frame 
     else
       break

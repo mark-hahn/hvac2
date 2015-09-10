@@ -3,9 +3,9 @@
   per name: mode and compare tsat setting to setpoint -> -1, 0, +1
 ###
 
-log = (args...) -> console.log 'TSTAT:', args...
-Rx  = require 'rx'
+{log, logObj} = require('./utils') 'TSTAT'
 
+$ = require('imprea') 'tstat'
 roomHysterisis  = 0.25
 extDiffHigh     = 8
 extDiffLow      = 4
@@ -14,16 +14,14 @@ thawedTemp      =  3
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 observers  = {}
-modes      = {}; lastModes  = {}
-fans       = {}; lastFans   = {}; lastDeltas = {}
+modes      = {}
+fans       = {}
 temps      = {}
 setpoints  = {}
 
-lastExtAirInDelta = lastFreezeDelta = null
-
 check = (name) ->
   # log 'check', {name, modes, temps, setpoints}
-  
+
   if name in rooms
     room     = name
     mode     = modes[room]
@@ -35,14 +33,7 @@ check = (name) ->
         when temp <= setpoint - roomHysterisis then -1
         when temp >= setpoint + roomHysterisis then +1
         else 0
-      if mode  isnt lastModes[room] or 
-         fan   isnt lastFans[room]  or
-         delta isnt lastDeltas[room]
-        lastModes[room]  = mode
-        lastFans[room]   = fan
-        lastDeltas[room] = delta
-        for obs in observers[room]
-          obs.onNext {mode, fan, delta}
+      $['tstat_' + name] {mode, fan, delta}
     return
         
   if name in ['airIntake', 'outside'] 
@@ -53,10 +44,7 @@ check = (name) ->
         when diff >= extDiffHigh then +1
         else 0
       # log 'diff', diff, temps.outside, temps.airIntake, delta
-      if delta isnt lastExtAirInDelta
-        for obs in observers.extAirIn
-          obs.onNext delta
-          lastExtAirInDelta = delta
+      $.tstat_extAirIn delta
     return
     
   if name is 'acReturn'
@@ -65,17 +53,13 @@ check = (name) ->
         when temps.acReturn <= freezeTemp then -1
         when temps.acReturn >= thawedTemp then +1
         else 0
-      if delta isnt lastFreezeDelta
-        for obs in observers.freeze
-          obs.onNext delta
-        lastFreezeDelta = delta
+      $.tstat_freeze delta
     return
     
 module.exports =
-  init: (@obs$) -> 
-    
-    @obs$.allWebSocketIn$.forEach (data) ->
-      {type, room, mode, fan, setpoint} = data
+  init: -> 
+    $.react 'allWebSocketIn', ->
+      {type, room, mode, fan, setpoint} = @allWebSocketIn
       # log 'allWebSocketIn$', data
       if type is 'tstat'
         modes[room]     = mode
@@ -86,9 +70,10 @@ module.exports =
     names = rooms.concat 'airIntake', 'outside', 'acReturn'
     
     for name in names then do (name) =>
-      @obs$['temp_' + name + '$'].forEach (temp) ->
+      obsName = 'temp_' + name
+      $.react obsName, ->
         # log 'temp_' + name + '$ in', temp
-        temps[name] = temp
+        temps[name] = $[obsName]
         check name
         
       if name isnt 'airIntake'
@@ -96,8 +81,5 @@ module.exports =
           when 'outside'  then 'extAirIn' 
           when 'acReturn' then 'freeze'
           else name
-        @obs$['tstat_' + nameOut + '$'] = 
-          Rx.Observable.create (observer) -> 
-            observers[nameOut] ?= []
-            observers[nameOut].push observer      
-            
+        $.output 'tstat_' + nameOut
+

@@ -4,11 +4,12 @@
   xbee packet stream -> filtered/rounded temp streams for each sensor
 ###
 
-log = (args...) -> console.log 'WXSTA:', args...
+{log, logObj} = require('./utils') 'WXSTA'
 
-Rx      = require 'rx'
+$       = require('imprea') 'wxsta'
 sqlite3 = require("sqlite3").verbose()
-emitSrc = new (require('events').EventEmitter)
+
+$.output 'temp_outside'
 
 db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (err) ->
   if err then log 'Error opening weewx db', err; cb? err; return
@@ -19,13 +20,5 @@ db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (er
         log 'Error reading weewx db', err
         db.close()
         return
-      emitSrc.emit 'outTemp', res.outTemp
+      $.temp_outside res.outTemp
   , 4000
-
-module.exports =
-  init:  (@obs$) -> 
-    @obs$.temp_outside$ = 
-      Rx.Observable
-        .fromEvent emitSrc, 'outTemp'
-        .distinctUntilChanged()
-

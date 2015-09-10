@@ -1,36 +1,35 @@
 
-moment = require 'moment'
-log = (args...) -> 
-  time = moment().format('MM-DD HH:mm:ss')
-  # console.log time, args...
-  console.log args...
+$      = require('imprea') 'debug'
+util   = require 'util'
+
+{log, logObj} = require('./utils') '     '
 
 util = require 'util'
-Rx   = require 'rx'
 
 obsNames = [
-  # 'temp_outside$'
-  'temp_tvRoom$'
-  # 'temp_kitchen$'
-  # 'temp_master$'
-  # 'temp_guest$'
-  # 'temp_airIntake$'
-  # 'temp_acReturn$'
-  
-  # 'allWebSocketIn$'
-  
-  'tstat_tvRoom$'
-  # 'tstat_kitchen$'
-  # 'tstat_master$'
-  # 'tstat_guest$'
-  # 'tstat_extAirIn$'
-  # 'tstat_freeze$'
-  
-  # 'ctrl_dampers$'
-  # 'ctrl_hvac$'
-  
-  # 'timing_dampers$'
-  # 'timing_hvac$'
+  'allXbeePackets'
+  'temp_outside'
+  'xbeePacket_tvRoom'
+  'xbeePacket_kitchen'
+  'xbeePacket_master'
+  'xbeePacket_guest'
+  'xbeePacket_closet'
+  # 'temp_tvRoom'
+  'temp_kitchen'
+  # 'temp_master'
+  'temp_guest'
+  'temp_acReturn'
+  'temp_airIntake'
+  'allWebSocketIn'
+  # 'tstat_tvRoom'
+  'tstat_kitchen'
+  # 'tstat_master'
+  'tstat_guest'
+  'tstat_extAirIn'
+  'tstat_freeze'
+  # 'ctrl_info'
+  # 'ctrl_dampers'
+  # 'ctrl_hvac'
 ]
 
 pad = (str, len) ->
@@ -47,11 +46,10 @@ padPfx = (val, len, precision = 1) ->
   val
   
 module.exports =
-  init: (@obs$) -> 
-    for obsName in obsNames then do (obsName) =>
-      @obs$[obsName].forEach (item) -> 
-        log 'OBSRV:', pad(obsName,15), 
-          padPfx(item)
-            .replace /['"{}\s\n]/g, ''
-            .replace(/,/g, ', ')[0..100]
-        
+  $.react '*', (name, value) ->
+    if name not in obsNames
+      log pad(name, 15), 
+        padPfx(value)
+          .replace /['"{}\s\n]/g, ''
+          .replace(/,/g, ', ')[0..100]
+

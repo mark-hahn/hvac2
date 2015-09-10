@@ -1,8 +1,9 @@
 
-log = (args...) -> console.log ' MAIN:', args...
+{log, logObj} = require('./utils') ' MAIN'
+
 console.log ''
 
-mods = [
+modules = [
   './xbee', 
   './wx-station'
   './temp'
@@ -11,10 +12,11 @@ mods = [
   './control'
   './timing'
   './insteon'
+  # './logging'
   './debug'
 ]
-obs$ = {}
-for mod in mods 
-  # log 'starting', mod
-  require(mod).init obs$
+
+for module in modules 
+  # log 'starting', module
+  require(module).init?()
   

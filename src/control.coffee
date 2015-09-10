@@ -4,11 +4,10 @@
   There is nothing timing dependent, that is all in timing.coffee
 ###
 
-log     = (args...) -> console.log ' CTRL:', args...
-logobj = (title, obj) -> log require('./utils').fmtobj title, obj
+{log, logObj} = require('./utils') ' CTRL'
 
-Rx      = require 'rx'
-emitSrc = new (require('events').EventEmitter)
+$ = require('imprea') 'ctrl'
+_ = require 'underscore'
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 
@@ -18,9 +17,14 @@ deltas      = {tvRoom:   0, kitchen: 0, master:0, guest: 0, \
                extAirIn: 0, freeze:  0}
 
 lastActive  = {tvRoom: no, kitchen: no, master:no, guest: no}
-lastDampers = {tvRoom: off, kitchen: off, master:off, guest: off}
-lastHvac    = {extAir: off, fan: off, heat: off, cool: off}
-lastThaw = no
+lastExtAir  = off
+lastThaw    = no
+
+sysMode = 'O'
+
+$.output 'ctrl_dampers', 'ctrl_hvac', 'ctrl_info'
+      
+info = -> $.ctrl_info {sysMode}
 
 check = ->
   fanCount = heatCount = coolCount = 0
@@ -34,6 +38,8 @@ check = ->
     when coolCount             then 'cool'
     when fanCount              then 'fan'
     else                            'off'
+      
+  info()
   
   # damper on means air is flowing
   dampers = {tvRoom: off, kitchen: off, master: off, guest: off}
@@ -47,7 +53,7 @@ check = ->
       hvac.extAir = switch
         when deltas.extAirIn > 0 then on
         when deltas.extAirIn < 0 then off
-        else lastHvac.extAir
+        else lastExtAir
       
     if sysMode is 'cool'
       thaw = switch
@@ -84,43 +90,27 @@ check = ->
       
   for room in rooms
     lastActive[room] = active[room]
-  lastThaw = thaw
+  lastExtAir = hvac.extAir
+  lastThaw   = thaw
 
-  dampersChanged = no
-  for room in rooms
-    if dampers[room] isnt lastDampers[room]
-      dampersChanged = yes
-      lastDampers[room] = dampers[room]
-  if dampersChanged 
-    # logobj 'damp out', dampers
-    emitSrc.emit 'dampers', dampers
-      
-  hvacChanged = no
-  for out in ['extAir', 'fan', 'heat', 'cool']
-    if hvac[out] isnt lastHvac[out]
-      hvacChanged = yes
-      lastHvac[out] = hvac[out]
-  if hvacChanged 
-    # logobj 'hvac out', hvac
-    emitSrc.emit 'hvac', hvac
+  $.ctrl_dampers dampers
+  $.ctrl_hvac hvac
   
 module.exports =
-  init: (@obs$) -> 
+  init: -> 
     names = rooms.concat 'extAirIn', 'freeze'
     
     for name in names then do (name) =>
-      @obs$['tstat_' + name + '$'].forEach (data) ->
+      obsName = 'tstat_' + name
+      $.react obsName, ->
         if name in rooms
           room = name
-          {mode, fan, delta} = data
+          {mode, fan, delta} = @[obsName]
           modes[room] = mode
           fans[room]  = fan
         else
-          delta = data
+          delta = @[obsName]
         deltas[name] = delta
-        # logobj 'name in' + name + '$' + ' in', data  
+        # logObj 'name in' + name + '$' + ' in', data  
         check()
     
-    @obs$.ctrl_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
-    @obs$.ctrl_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
-       

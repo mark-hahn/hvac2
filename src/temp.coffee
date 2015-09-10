@@ -3,12 +3,12 @@
   xbee packet stream -> filtered/rounded/unique temp streams for each sensor
 ###
 
-log = (args...) -> console.log 'TEMP:', args...
+{log, logObj} = require('./utils') ' TEMP'
 
 mockAirIn  = no
 mockFreeze = no
 
-Rx      = require 'rx'
+$       = require('imprea') 'temp'
 xbee    = require './xbee'
 emitSrc = new (require('events').EventEmitter)
 
@@ -31,12 +31,13 @@ voltsPerC    = (voltsAtZeroC - voltsAt25C) / 25
 histories = {}
 lastTemps = {}
 
-observers = {}
-
 module.exports =
-  init: (@obs$) -> 
+  init: -> 
     
-    addObs = (name, debounceMS) =>
+    addObs = (name) ->
+      obsName = 'temp_' + name 
+      $.output obsName
+      
       emitSrc.on name, (rawTemp) ->
         now = Date.now()
         history = histories[name] ?= []
@@ -57,19 +58,13 @@ module.exports =
             rndedTemp isnt lastRndedTemp
           rndedTemp = lastRndedTemp
         if history.length > numHistory then history.pop()
-        for obs in observers[name] ? []
-          obs.onNext (if mockAirIn or mockFreeze then rawTemp else rndedTemp)
-  
-      @obs$['temp_' + name + '$'] = 
-        Rx.Observable.create (observer) ->
-          observers[name] ?= []
-          observers[name].push observer
-        .distinctUntilChanged()
-        .debounce debounceMS
+        $[obsName] (if mockAirIn or mockFreeze then rawTemp else rndedTemp)
 
     for name, addr of xbeeRadios then do (name, addr) ->        
-      xbee.getPacketsByAddr$(name, addr).forEach (item) ->
-        {packet} = item
+      xbee.getPacketsByAddr name, addr
+      obsName = 'xbeePacket_' + name
+      $.react obsName, ->
+        {packet} = $[obsName]
         volts  = ((packet[19] * 256 + packet[20]) / 1024) * 1.2
         if name is 'closet'
           temp = ((voltsAtZeroC - volts ) / voltsPerC) * 9/5 + 32
@@ -80,9 +75,9 @@ module.exports =
         else
           emitSrc.emit name, volts * 100 
           
-    for name of xbeeRadios when name isnt 'closet' then addObs name, 1e3
+    for name of xbeeRadios when name isnt 'closet' then addObs name
     for name in ['airIntake', 'acReturn'] 
-      addObs name, (if mockAirIn or mockFreeze then 1e3 else 30e3)
+      addObs name
       
     if mockAirIn
       t = 0

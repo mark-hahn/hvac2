@@ -3,17 +3,23 @@
   control(dampers/hvac) in and timing(dampers/hvac) out
 ###
 
-log    = (args...) -> console.log 'TIMNG:', args...
-logobj = (title, obj) -> log require('./utils').fmtobj title, obj
+{log, logObj} = require('./utils') 'TIMNG'
 
-Rx      = require 'rx'
-emitSrc = new (require('events').EventEmitter)
+$ = require('imprea') 'timng'
+$.output 'timing_dampers', 'timing_hvac'
 
+$.timing_hvac
 minDampCyle     = 5e3
-fanHold         = 30e3 # 2 * 60e3
-extAirDelay     = 20e3 #10 * 60e3
-dampersOffDelay = 120e3 #10 * 60e3
-minAcOff        = 30e3 # 4 * 60e3
+
+# fanHold         = 2 * 60e3
+# extAirDelay     = 10 * 60e3
+# dampersOffDelay = 10 * 60e3
+# minAcOff        = 4 * 60e3
+
+fanHold         = 30e3 
+extAirDelay     = 20e3 
+dampersOffDelay = 120e3 
+minAcOff        = 30e3 
 
 nextChkAgainTime  = 0
 lastActiveOffTime = 0
@@ -48,8 +54,12 @@ allHvacsEqual = (a, b) ->
   yes
 copyAllHvacsTo = (a,b) ->
   for hvac in hvacs then b[hvac] = a[hvac]
+
+checkTO = null
     
 check = ->
+  if checkTO then clearTimeout checkTO; checkTO = null
+  
   now = Date.now()
   if now > nextChkAgainTime
     nextChkAgainTime = 0
@@ -57,7 +67,8 @@ check = ->
   checkAgainAt = (time) ->
     if time > now and time < nextChkAgainTime
       nextChkAgainTime = time
-      setTimeout check, time - now + 100
+      if checkTO then clearTimeout checkTO
+      checkTO = setTimeout check, time - now + 100
     
   expired = (evtTime, delay) -> 
     exp = now > evtTime + delay
@@ -99,29 +110,17 @@ check = ->
   if not expired lastActiveOffTime, fanHold
     hvacReq.fan = yes
 
-  if not allRoomsEqual dampersReq, lastDampers
-    # logobj 'damp out', dampersReq
-    emitSrc.emit 'dampers', dampersReq
-    copyAllRoomsTo dampersReq, lastDampers
+  $.timing_dampers dampersReq
+  copyAllRoomsTo dampersReq, lastDampers
 
-  if not allHvacsEqual hvacReq, lastHvac
-    # logobj 'hvac out', hvacReq
-    emitSrc.emit 'hvac', hvacReq
-    copyAllHvacsTo hvacReq, lastHvac
+  $.timing_hvac hvacReq
+  copyAllHvacsTo hvacReq, lastHvac
     
 module.exports =
-  init: (@obs$) -> 
-    
-    @obs$.ctrl_dampers$.forEach (dampers) -> 
-      # logobj 'damp in', dampers
-      dampersReq = dampers
-      check()
-        
-    @obs$.ctrl_hvac$.forEach (hvac) -> 
-      # logobj 'hvac in', hvac
-      hvacReq = hvac
-      check()
+  init: -> 
+    $.react 'ctrl_dampers', 'ctrl_hvac', ->
+      if @ctrl_dampers and @ctrl_hvac
+        dampersReq = @ctrl_dampers
+        hvacReq = @ctrl_hvac
+        check()
       
-    @obs$.timing_dampers$ = Rx.Observable.fromEvent emitSrc, 'dampers'
-    @obs$.timing_hvac$    = Rx.Observable.fromEvent emitSrc, 'hvac'    
-       

@@ -26,6 +26,8 @@ if $isdev
 fi
 set -e
 
+coffee -co /root/dev/apps/imprea/js /root/dev/apps/imprea/src/*.coffee
+
 coffee -co js src/*.coffee
 coffee -co js src/drivers/*.coffee
 coffee -co www/js www/*.coffee

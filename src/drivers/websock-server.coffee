@@ -3,11 +3,11 @@
   http server / websocket <-> rx
 ###
 
-log = (args...) -> console.log 'WSOCK:', args...
+{log, logObj} = require('./utils') 'WSOCK'
 
 port = 4444
 
-Rx          = require 'rx'
+$           = require('imprea') 'wsock'
 http        = require 'http'
 Primus      = require 'primus'
 url         = require 'url'
@@ -15,28 +15,25 @@ nodeStatic  = require 'node-static'
 html        = require('../www/js/index-html')()
 fileServer  = new nodeStatic.Server 'www', cache: 0
   
-observers   = []
 connections = [] 
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 tempsByRoom = {}
 tstatByRoom = {}
 
+$.output 'allWebSocketIn'
+
 module.exports =
-  init:  (@obs$) -> 
-    @obs$.allWebSocketIn$ = 
-      Rx.Observable.create (observer) -> 
-        observers.push observer
-        
+  init: -> 
     for room in rooms then do (room) =>
-      @obs$['temp_' + room + '$'].forEach (temp) ->
+      obsName = 'temp_' + room
+      $.react obsName, ->
         # log 'recvd temp', temp, connections.length
+        temp = $[obsName]
         tempData = {type: 'temp', room, temp}
         tempsByRoom[room] = tempData
         for conn in connections
           conn.connection.write tempData
-        null
-    null
       
 srvr = http.createServer (req, res) ->
   # log 'req:', req.url
@@ -66,24 +63,19 @@ primus.on 'connection', (connection) ->
   connection.on 'data', (data) ->
     # log 'connection.on data', data
     
-    for obs in observers
-      switch data.type
+    switch data.type
+      when 'tstat' 
+        $.allWebSocketIn data
+        tstatByRoom[data.room] = data
+        for conn in connections when conn.id isnt connId and tstatByRoom[data.room]
+          conn.connection.write tstatByRoom[data.room]
         
-        when 'tstat' 
-          obs.onNext data
-          tstatByRoom[data.room] = data
-          for conn in connections when conn.id isnt connId and tstatByRoom[data.room]
-            conn.connection.write tstatByRoom[data.room]
-          null
-          
-        when 'reqAll'
-          for room in rooms
-            if tstatByRoom[room]
-              connection.write tstatByRoom[room]
-            if tempsByRoom[room]
-              connection.write tempsByRoom[room]
-          null
-    null
+      when 'reqAll'
+        for room in rooms
+          if tstatByRoom[room]
+            connection.write tstatByRoom[room]
+          if tempsByRoom[room]
+            connection.write tempsByRoom[room]
             
   connection.on 'end', ->
     leanConns = []
