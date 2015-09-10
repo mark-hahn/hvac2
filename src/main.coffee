@@ -12,7 +12,7 @@ modules = [
   './control'
   './timing'
   './insteon'
-  # './logging'
+  './logging'
   './debug'
 ]
 

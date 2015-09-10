@@ -12,9 +12,9 @@ _ = require 'underscore'
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 
 modes       = {tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'}
-fans        = {tvRoom: off, kitchen: off, master:off, guest: off}
-deltas      = {tvRoom:   0, kitchen: 0, master:0, guest: 0, \
-               extAirIn: 0, freeze:  0}
+fans        = {tvRoom:   on,  kitchen:   on,  master:  on,  guest:   on }
+deltas      = {tvRoom:    0,  kitchen:    0,  master:   0,  guest:    0,\
+               extAirIn:  0,  freeze:     0}
 
 lastActive  = {tvRoom: no, kitchen: no, master:no, guest: no}
 lastExtAir  = off
@@ -22,10 +22,8 @@ lastThaw    = no
 
 sysMode = 'O'
 
-$.output 'ctrl_dampers', 'ctrl_hvac', 'ctrl_info'
+$.output 'ctrl_dampers', 'ctrl_hvac', 'ctrl_sysMode'
       
-info = -> $.ctrl_info {sysMode}
-
 check = ->
   fanCount = heatCount = coolCount = 0
   for room in rooms
@@ -38,9 +36,9 @@ check = ->
     when coolCount             then 'cool'
     when fanCount              then 'fan'
     else                            'off'
-      
-  info()
   
+  $.ctrl_sysMode sysMode
+      
   # damper on means air is flowing
   dampers = {tvRoom: off, kitchen: off, master: off, guest: off}
   hvac    = {extAir: off, fan: off,     heat: off,   cool: off}

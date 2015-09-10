@@ -6,7 +6,7 @@
 {log, logObj} = require('./utils') 'TIMNG'
 
 $ = require('imprea') 'timng'
-$.output 'timing_dampers', 'timing_hvac'
+$.output 'timing_dampers', 'timing_hvac', 'timing_delayed', 'timing_extAirIn'
 
 $.timing_hvac
 minDampCyle     = 5e3
@@ -91,17 +91,22 @@ check = ->
       dampersReq[room] = on
     
   # ac cycling limit
+  delayed = no
   if lastHvac.cool and not hvacReq.cool
     lastAcOffTime = now
   if not expired lastAcOffTime, minAcOff
     hvacReq.cool = off
+    delayed = yes
+  $.timing_delayed delayed
     
   # extAirIn cycling limit
+  extAirIn = off
   if not lastHvac.extAir and hvacReq.extAir
     lastExtAirOnTime = now
   if not expired lastExtAirOnTime, extAirDelay
-    hvacReq.extAir = on
-    
+    hvacReq.extAir = extAirIn = on
+  $.timing_extAirIn extAirIn
+  
   # min fan on after active off
   active     = ( hvacReq.heat or  hvacReq.cool)
   lastActive = (lastHvac.heat or lastHvac.cool)
