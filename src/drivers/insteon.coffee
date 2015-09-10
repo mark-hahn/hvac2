@@ -31,8 +31,8 @@ send = (isDamper, obj, cb) ->
   pfx = (if isDamper then dampersInsteonHubUrlPfx  \
                      else hvacInsteonHubUrlPfx)
   # debug
-  cb()
-  return
+  # cb()
+  # return
   
   request pfx + dataHex, (err, res) ->
     # log 'cmd res', {err, res: res.statusCode}

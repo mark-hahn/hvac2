@@ -11,15 +11,15 @@ $.output 'timing_dampers', 'timing_hvac', 'timing_delayed', 'timing_extAirIn'
 $.timing_hvac
 minDampCyle     = 5e3
 
-# fanHold         = 2 * 60e3
-# extAirDelay     = 10 * 60e3
-# dampersOffDelay = 10 * 60e3
-# minAcOff        = 4 * 60e3
+fanHold         = 2 * 60e3
+extAirDelay     = 10 * 60e3
+dampersOffDelay = 10 * 60e3
+minAcOff        = 4 * 60e3
 
-fanHold         = 30e3 
-extAirDelay     = 20e3 
-dampersOffDelay = 120e3 
-minAcOff        = 30e3 
+# fanHold         = 30e3 
+# extAirDelay     = 20e3 
+# dampersOffDelay = 120e3 
+# minAcOff        = 30e3 
 
 nextChkAgainTime  = 0
 lastActiveOffTime = 0

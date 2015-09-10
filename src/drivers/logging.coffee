@@ -45,7 +45,7 @@ setpoints = {tvRoom:    0,  kitchen:    0,  master:   0,  guest:    0 }
 $.react '*', (name) ->
   if name in ['temp_airIntake', 'temp_acReturn']
     return
-  fmts = '   '; args = []
+  fmts = '  '; args = []
   
   ws = @allWebSocketIn ? {}
   if ws.type is 'tstat'
@@ -86,7 +86,7 @@ $.react '*', (name) ->
     ltr actual
     str ' '
     num @['temp_' + room]
-    str ' '
+    str '-'
     num (if active then setpoints[room])
   
   line = sprintf fmts, args...

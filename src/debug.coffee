@@ -6,7 +6,7 @@ util   = require 'util'
 
 util = require 'util'
 
-obsNames = [
+dontShow = [
   'allXbeePackets'
   'temp_outside'
   'xbeePacket_tvRoom'
@@ -20,7 +20,7 @@ obsNames = [
   'temp_guest'
   'temp_acReturn'
   'temp_airIntake'
-  # 'allWebSocketIn'
+  'allWebSocketIn'
   'tstat_tvRoom'
   'tstat_kitchen'
   'tstat_master'
@@ -34,6 +34,7 @@ obsNames = [
   'timing_extAirIn'
   'timing_dampers'
   'timing_hvac'
+  'timing_delayed'
 ]
 
 pad = (str, len) ->
@@ -51,7 +52,7 @@ padPfx = (val, len, precision = 1) ->
   
 module.exports =
   $.react '*', (name, value) ->
-    if name not in obsNames
+    if name not in dontShow
       log pad(name, 15), 
         padPfx(value)
           .replace /['"{}\s\n]/g, ''
