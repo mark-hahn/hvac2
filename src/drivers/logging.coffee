@@ -99,7 +99,7 @@ $.react '*', (name) ->
     str ' '
     
     if room is 'master'
-      @log_masterCode? modeLtr + actualLtr
+      $.log_masterCode? modeLtr + actualLtr
   
   line = sprintf fmts, args...
   if line isnt lastLine
