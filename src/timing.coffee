@@ -5,8 +5,12 @@
 
 {log, logObj} = require('./utils') 'TIMNG'
 
+rooms = ['tvRoom', 'kitchen', 'master', 'guest']
+hvacs = ['extAir', 'fan', 'heat', 'cool']
+
 $ = require('imprea') 'timng'
-$.output 'timing_dampers', 'timing_hvac', 'timing_delayed', 'timing_extAirIn'
+$.output 'timing_dampers', 'timing_hvac', 'timing_extAirIn'
+for room in rooms then $.output "acDelay_#{room}"
 
 # minAcOff problems
 #  12 mins waited til temp up
@@ -25,14 +29,12 @@ allDampersOffTime = 0
 lastAcOffTime     = 0
 lastExtAirOnTime  = 0
 
+modes         = {}
 dampersReq    = {tvRoom: on, kitchen: on, master:on, guest: on}
 lastDampers   = {tvRoom: on, kitchen: on, master:on, guest: on}
 dampersOnTime = {tvRoom:  0, kitchen:  0, master: 0, guest:  0}
 hvacReq       = {extAir: off, fan: off, heat: off, cool: off}
 lastHvac      = {extAir: off, fan: off, heat: off, cool: off}
-
-rooms = ['tvRoom', 'kitchen', 'master', 'guest']
-hvacs = ['extAir', 'fan', 'heat', 'cool']
 
 allRoomsEqualTo = (a, b) ->
   for room in rooms
@@ -77,21 +79,23 @@ check = ->
     else
       setAllRoomsTo dampersReq, on
       
+  # ac cycling limit
+  delaying = no
+  if lastHvac.cool and not hvacReq.cool
+    lastAcOffTime = now
+  if not expired lastAcOffTime, minAcOff
+    hvacReq.cool = off
+    delaying = yes
+  for room in rooms
+    $["acDelay_#{room}"] delaying and dampersReq[room] and 
+                         modes[room] in ['heat', 'cool']
+    
   # any damper cycle limit
   for room in rooms
     if not lastDampers[room] and dampersReq[room]
       dampersOnTime[room] = now
     if not expired dampersOnTime[room], minDampCyle
       dampersReq[room] = on
-    
-  # ac cycling limit
-  delayed = no
-  if lastHvac.cool and not hvacReq.cool
-    lastAcOffTime = now
-  if not expired lastAcOffTime, minAcOff
-    hvacReq.cool = off
-    delayed = yes
-  $.timing_delayed delayed
     
   # extAirIn cycling limit
   extAirIn = off
@@ -122,4 +126,10 @@ module.exports =
         dampersReq = @ctrl_dampers
         hvacReq = @ctrl_hvac
         check()
+        
+    $.react 'allWebSocketIn', ->
+      if @allWebSocketIn.type is 'tstat'
+        modes[@allWebSocketIn.room] = @allWebSocketIn.mode
+        check()
+
       

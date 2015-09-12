@@ -60,7 +60,6 @@ $.react '*', (name) ->
   sysActive = (@timing_hvac?.cool or @timing_hvac?.heat)
   sysActual = switch 
     when @ctrl_thaw      then 't'
-    when @timing_delayed then 'd'
     when sysActive       then @ctrl_sysMode
     when fanActive       then 'f'
     else '-'
@@ -84,6 +83,7 @@ $.react '*', (name) ->
     
     actual = switch 
       when sysActive and damper then mode
+      when @["acDelay_#{room}"] then 'd'
       when fanActive and damper then 'f'
       else '-'
     

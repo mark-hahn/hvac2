@@ -3,7 +3,7 @@
   timing dampers/hvac in -> insteon relays in closet
 ###
 
-testMode = no
+disableHvacCtrl = no
 
 {log, logObj} = require('./utils') 'INSTE'
 
@@ -32,9 +32,8 @@ send = (isDamper, obj, cb) ->
   dataHex = '0' + data.toString(16).toUpperCase()
   pfx = (if isDamper then dampersInsteonHubUrlPfx  \
                      else hvacInsteonHubUrlPfx)
-  if testMode
-    cb()
-    return
+                       
+  if disableHvacCtrl then cb(); return
   
   request pfx + dataHex, (err, res) ->
     # log 'cmd res', {err, res: res.statusCode}

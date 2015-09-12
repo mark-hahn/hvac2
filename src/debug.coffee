@@ -32,7 +32,10 @@ dontShow = [
   'timing_extAirIn'
   'timing_dampers'
   'timing_hvac'
-  'timing_delayed'
+  'acDelay_tvRoom'
+  'acDelay_kitchen'
+  'acDelay_master'
+  'acDelay_guest'
   'log_masterCode'
 ]
 
