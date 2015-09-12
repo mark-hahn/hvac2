@@ -8,18 +8,16 @@
 $ = require('imprea') 'timng'
 $.output 'timing_dampers', 'timing_hvac', 'timing_delayed', 'timing_extAirIn'
 
-$.timing_hvac
-minDampCyle     = 5e3
+# minAcOff problems
+#  12 mins waited til temp up
+#  5 mins waited til timeout
+# cd shows after timeout until temp up
 
-fanHold         = 2 * 60e3
+minDampCyle     =       5e3
+fanHold         =  2 * 60e3
 extAirDelay     = 10 * 60e3
 dampersOffDelay = 10 * 60e3
-minAcOff        = 4 * 60e3
-
-# fanHold         = 30e3 
-# extAirDelay     = 20e3 
-# dampersOffDelay = 120e3 
-# minAcOff        = 30e3 
+minAcOff        =  4 * 60e3  
 
 nextChkAgainTime  = 0
 lastActiveOffTime = 0
@@ -29,15 +27,13 @@ lastExtAirOnTime  = 0
 
 dampersReq    = {tvRoom: on, kitchen: on, master:on, guest: on}
 lastDampers   = {tvRoom: on, kitchen: on, master:on, guest: on}
-dampersOnTime = {tvRoom: on, kitchen: on, master:on, guest: on}
+dampersOnTime = {tvRoom:  0, kitchen:  0, master: 0, guest:  0}
 hvacReq       = {extAir: off, fan: off, heat: off, cool: off}
 lastHvac      = {extAir: off, fan: off, heat: off, cool: off}
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
-allRoomsEqual = (a, b) ->
-  for room in rooms
-    if a[room] isnt b[room] then return no
-  yes
+hvacs = ['extAir', 'fan', 'heat', 'cool']
+
 allRoomsEqualTo = (a, b) ->
   for room in rooms
     if a[room] isnt b then return no
@@ -46,8 +42,6 @@ setAllRoomsTo = (a, b) ->
   for room in rooms then a[room] = b
 copyAllRoomsTo = (a,b) ->
   for room in rooms then b[room] = a[room]
-    
-hvacs = ['extAir', 'fan', 'heat', 'cool']
 allHvacsEqual = (a, b) ->
   for hvac in hvacs
     if a[hvac] isnt b[hvac] then return no

@@ -9,6 +9,8 @@ sprintf = require('sprintf-js').sprintf
 moment  = require 'moment'
 _       = require 'underscore'
 
+$.output 'log_masterCode'
+
 fmts = ''; args = []
 
 str = (s) -> fmts += s
@@ -17,7 +19,9 @@ ltr = (val, uc = no) ->
   fmts += '%1s'
   val = val ? '-'
   if uc then val = val.toUpperCase()
-  args.push val[0].replace /[Oo]/, '-'
+  char = val[0].replace /[Oo]/, '-'
+  args.push char
+  char
 
 tmp = (val) ->
   if val 
@@ -86,13 +90,17 @@ $.react '*', (name) ->
     str '  '
     ltr room, yes
     str ':'
-    ltr mode, (fans[room] and mode isnt 'fan')
-    ltr actual
+    modeLtr   = ltr mode, (fans[room] and mode isnt 'fan')
+    actualLtr = ltr actual
     str ' '
     tmp @['temp_' + room]
     str '-'
     tmp (if active then setpoints[room])
-    str ' xxx'
+    str ' '
+    
+    if room is 'master'
+      log 'sending @log_masterCode', modeLtr + actualLtr
+      @log_masterCode? modeLtr + actualLtr
   
   line = sprintf fmts, args...
   if line isnt lastLine

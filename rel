@@ -15,7 +15,6 @@ kill $(pgrep -f "hvac") 2> /dev/null
 
 echo "Releasing hvac2 -> hvac"
 cd /root/apps/hvac
-rm -rf *
 cp -v /root/dev/apps/hvac2/k                 k
 cp -v /root/dev/apps/hvac2/rel               rel
 cp -v /root/dev/apps/hvac2/run               run
@@ -27,3 +26,4 @@ coffee -co js src/*.coffee
 coffee -co js src/drivers/*.coffee
 coffee -co www/js www/*.coffee
 
+run

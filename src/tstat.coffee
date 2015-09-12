@@ -7,10 +7,10 @@
 
 $ = require('imprea') 'tstat'
 roomHysterisis  = 0.25
-extDiffHigh     = 8
-extDiffLow      = 4
+extDiffHigh     =  8
+extDiffLow      =  4
+thawedTemp      =  5
 freezeTemp      = -5
-thawedTemp      =  3
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 observers  = {}

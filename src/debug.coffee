@@ -4,8 +4,6 @@ util   = require 'util'
 
 {log, logObj} = require('./utils') '     '
 
-util = require 'util'
-
 dontShow = [
   'allXbeePackets'
   'temp_outside'
@@ -35,6 +33,7 @@ dontShow = [
   'timing_dampers'
   'timing_hvac'
   'timing_delayed'
+  'log_masterCode'
 ]
 
 pad = (str, len) ->

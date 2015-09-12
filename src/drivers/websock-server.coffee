@@ -5,7 +5,7 @@
 
 {log, logObj} = require('./utils') 'WSOCK'
 
-port = 4444
+port = 1339
 
 $           = require('imprea') 'wsock'
 http        = require 'http'
@@ -13,8 +13,9 @@ Primus      = require 'primus'
 url         = require 'url'
 nodeStatic  = require 'node-static'
 html        = require('../www/js/index-html')()
+ceilHtml    = require('../www/js/ceil-html')()
+moment      = require 'moment'
 fileServer  = new nodeStatic.Server 'www', cache: 0
-  
 connections = [] 
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
@@ -22,6 +23,8 @@ tempsByRoom = {}
 tstatByRoom = {}
 
 $.output 'allWebSocketIn'
+
+masterSetpoint = null
 
 module.exports =
   init: -> 
@@ -34,15 +37,30 @@ module.exports =
         tempsByRoom[room] = tempData
         for conn in connections
           conn.connection.write tempData
+          
+    $.react 'temp_master', 'temp_outside', 'log_masterCode', -> 
+      for conn in connections
+        conn.connection.write 
+          type:          'ceil'
+          master:         @temp_master?.toFixed(1) ? '----'
+          masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----')
+          masterCode:     @log_masterCode ? '--'
+          outside:   '' + Math.round @temp_outside ? '0'
       
 srvr = http.createServer (req, res) ->
-  # log 'req:', req.url
+  log 'req:', req.url
   
   if req.url is '/'
     res.writeHead 200, "Content-Type": "text/html"
     res.end html
     return
     
+  if req.url is '/ceil'
+    res.writeHead 200, "Content-Type": "text/html"
+    res.end ceilHtml
+    console.log 'ceil-req:', req.url
+    return
+  
   req.addListener('end', ->
     fileServer.serve req, res, (err) ->
       if err and req.url[-4..-1] not in ['.map', '.ico']
@@ -67,13 +85,25 @@ primus.on 'connection', (connection) ->
       when 'tstat' 
         $.allWebSocketIn data
         tstatByRoom[data.room] = data
+        if data.room is 'master' 
+          masterSetpoint = (if data.mode in ['cool', 'heat'] then data.setpoint)
         for conn in connections when conn.id isnt connId and tstatByRoom[data.room]
           conn.connection.write tstatByRoom[data.room]
         
       when 'reqAll'
         for room in rooms
           if tstatByRoom[room]
-            connection.write tstatByRoom[room]
+            tstat = tstatByRoom[room]
+            connection.write tstat
+            if tstat.room is 'master' 
+              masterSetpoint = (if tstat.mode in ['cool', 'heat'] then tstat.setpoint)
+              for conn in connections
+                conn.connection.write 
+                  type:          'ceil'
+                  master:         $.temp_master?.toFixed(1) ? '----'
+                  masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----')
+                  masterCode:     $.log_masterCode ? '--'
+                  outside:   '' + Math.round $.temp_outside ? '0'
           if tempsByRoom[room]
             connection.write tempsByRoom[room]
             

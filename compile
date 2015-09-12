@@ -1,0 +1,3 @@
+coffee -co js src/*.coffee
+coffee -co js src/drivers/*.coffee
+coffee -co www/js www/*.coffee
