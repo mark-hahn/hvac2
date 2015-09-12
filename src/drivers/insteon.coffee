@@ -3,8 +3,6 @@
   timing dampers/hvac in -> insteon relays in closet
 ###
 
-testMode = on
-
 {log, logObj} = require('./utils') 'INSTE'
 
 $ = require('imprea') 'inste'

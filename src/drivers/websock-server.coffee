@@ -26,6 +26,15 @@ $.output 'allWebSocketIn'
 
 masterSetpoint = null
 
+writeCeil = ->
+  for conn in connections
+    conn.connection.write 
+      type:          'ceil'
+      master:         $.temp_master?.toFixed(1) ? '----'
+      masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----')
+      masterCode:     $.log_masterCode ? '--'
+      outside:   '' + Math.round $.temp_outside ? '0'
+
 module.exports =
   init: -> 
     for room in rooms then do (room) =>
@@ -39,13 +48,7 @@ module.exports =
           conn.connection.write tempData
           
     $.react 'temp_master', 'temp_outside', 'log_masterCode', -> 
-      for conn in connections
-        conn.connection.write 
-          type:          'ceil'
-          master:         @temp_master?.toFixed(1) ? '----'
-          masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----')
-          masterCode:     @log_masterCode ? '--'
-          outside:   '' + Math.round @temp_outside ? '0'
+      writeCeil()
       
 srvr = http.createServer (req, res) ->
   log 'req:', req.url
@@ -87,6 +90,7 @@ primus.on 'connection', (connection) ->
         tstatByRoom[data.room] = data
         if data.room is 'master' 
           masterSetpoint = (if data.mode in ['cool', 'heat'] then data.setpoint)
+          writeCeil()
         for conn in connections when conn.id isnt connId and tstatByRoom[data.room]
           conn.connection.write tstatByRoom[data.room]
         
@@ -97,13 +101,7 @@ primus.on 'connection', (connection) ->
             connection.write tstat
             if tstat.room is 'master' 
               masterSetpoint = (if tstat.mode in ['cool', 'heat'] then tstat.setpoint)
-              for conn in connections
-                conn.connection.write 
-                  type:          'ceil'
-                  master:         $.temp_master?.toFixed(1) ? '----'
-                  masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----')
-                  masterCode:     $.log_masterCode ? '--'
-                  outside:   '' + Math.round $.temp_outside ? '0'
+              writeCeil()
           if tempsByRoom[room]
             connection.write tempsByRoom[room]
             
