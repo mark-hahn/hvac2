@@ -12,18 +12,13 @@ $ = require('imprea') 'timng'
 $.output 'timing_dampers', 'timing_hvac', 'timing_extAirIn'
 for room in rooms then $.output "acDelay_#{room}"
 
-# minAcOff problems
-#  12 mins waited til temp up
-#  5 mins waited til timeout
-# cd shows after timeout until temp up
-
 minDampCyle     =       5e3
 fanHold         =  2 * 60e3
 extAirDelay     = 10 * 60e3
 dampersOffDelay = 10 * 60e3
 minAcOff        =  4 * 60e3  
 
-nextChkAgainTime  = 0
+nextChkAgainTime  = Infinity
 lastActiveOffTime = 0
 allDampersOffTime = 0
 lastAcOffTime     = 0
@@ -51,73 +46,80 @@ allHvacsEqual = (a, b) ->
 copyAllHvacsTo = (a,b) ->
   for hvac in hvacs then b[hvac] = a[hvac]
 
-checkTO = null
-    
+pendingChecks = []
+     
 check = ->
-  if checkTO then clearTimeout checkTO; checkTO = null
-  
   now = Date.now()
-  if now > nextChkAgainTime
-    nextChkAgainTime = 0
+  
+  chks = []
+  for pendingCheck in pendingChecks
+    if pendingCheck[0] <= now then clearTimeout pendingCheck[1]
+    else chks.push pendingCheck
+  pendingChecks = chks
+  
+  dampers = {}
+  hvac    = {}
+  copyAllRoomsTo dampersReq, dampers
+  copyAllHvacsTo hvacReq,    hvac
     
   checkAgainAt = (time) ->
-    if time > now and time < nextChkAgainTime
-      nextChkAgainTime = time
-      if checkTO then clearTimeout checkTO
-      checkTO = setTimeout check, time - now + 100
-    
+    if time > now
+      TO = setTimeout check, time - now
+      pendingChecks.push [time, TO]
+      
   expired = (evtTime, delay) -> 
     exp = now > evtTime + delay
-    if not exp then checkAgainAt evtTime + delay
+    if not exp then checkAgainAt evtTime + delay + 100
     exp
     
   # all room dampers closed
-  if allRoomsEqualTo dampersReq, off
+  if allRoomsEqualTo dampers, off
     allDampersOffTime or= now
     if not expired allDampersOffTime, dampersOffDelay
-      copyAllRoomsTo lastDampers, dampersReq
+      copyAllRoomsTo lastDampers, dampers
     else
-      setAllRoomsTo dampersReq, on
+      setAllRoomsTo dampers, on
       
   # ac cycling limit
   delaying = no
-  if lastHvac.cool and not hvacReq.cool
+  if lastHvac.cool and not hvac.cool
     lastAcOffTime = now
   if not expired lastAcOffTime, minAcOff
-    hvacReq.cool = off
+    hvac.cool = off
     delaying = yes
+    
   for room in rooms
-    $["acDelay_#{room}"] delaying and dampersReq[room] and 
+    $["acDelay_#{room}"] delaying and dampers[room] and 
                          modes[room] in ['heat', 'cool']
     
   # any damper cycle limit
   for room in rooms
-    if not lastDampers[room] and dampersReq[room]
+    if not lastDampers[room] and dampers[room]
       dampersOnTime[room] = now
     if not expired dampersOnTime[room], minDampCyle
-      dampersReq[room] = on
+      dampers[room] = on
     
   # extAirIn cycling limit
   extAirIn = off
-  if not lastHvac.extAir and hvacReq.extAir
+  if not lastHvac.extAir and hvac.extAir
     lastExtAirOnTime = now
   if not expired lastExtAirOnTime, extAirDelay
-    hvacReq.extAir = extAirIn = on
+    hvac.extAir = extAirIn = on
   $.timing_extAirIn extAirIn
   
   # min fan on after active off
-  active     = ( hvacReq.heat or  hvacReq.cool)
+  active     = ( hvac.heat or  hvac.cool)
   lastActive = (lastHvac.heat or lastHvac.cool)
   if lastActive and not active
     lastActiveOffTime = now
   if not expired lastActiveOffTime, fanHold
-    hvacReq.fan = yes
+    hvac.fan = yes
 
-  $.timing_dampers dampersReq
-  copyAllRoomsTo dampersReq, lastDampers
+  $.timing_dampers dampers
+  copyAllRoomsTo dampers, lastDampers
 
-  $.timing_hvac hvacReq
-  copyAllHvacsTo hvacReq, lastHvac
+  $.timing_hvac hvac
+  copyAllHvacsTo hvac, lastHvac
     
 module.exports =
   init: -> 
