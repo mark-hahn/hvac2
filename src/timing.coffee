@@ -19,8 +19,8 @@ dampersOffDelay = 10 * 60e3
 minAcOff        =  4 * 60e3  
 
 nextChkAgainTime  = Infinity
+allDampersOffTime = null
 lastActiveOffTime = 0
-allDampersOffTime = 0
 lastAcOffTime     = 0
 lastExtAirOnTime  = 0
 
@@ -74,12 +74,13 @@ check = ->
     
   # all room dampers closed
   if allRoomsEqualTo dampers, off
-    allDampersOffTime or= now
+    allDampersOffTime ?= now
     if not expired allDampersOffTime, dampersOffDelay
       copyAllRoomsTo lastDampers, dampers
     else
       setAllRoomsTo dampers, on
-      
+  else allDampersOffTime = null
+    
   # ac cycling limit
   delaying = no
   if lastHvac.cool and not hvac.cool
