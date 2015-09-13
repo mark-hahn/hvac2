@@ -5,9 +5,6 @@
 
 {log, logObj} = require('./utils') ' TEMP'
 
-mockAirIn  = no
-mockFreeze = no
-
 $       = require('imprea') 'temp'
 xbee    = require './xbee'
 emitSrc = new (require('events').EventEmitter)
@@ -16,6 +13,8 @@ tempResolution = 1
 tempHysterisis = 0.05
 numHistory     = 10
 dampening      = 30000
+
+offset = {tvRoom: 0, kitchen: -4, master:0, guest: -4, airIntake:0, acReturn:0}
 
 xbeeRadios = 
   tvRoom : 0x0013a20040c33695
@@ -58,7 +57,7 @@ module.exports =
             rndedTemp isnt lastRndedTemp
           rndedTemp = lastRndedTemp
         if history.length > numHistory then history.pop()
-        $[obsName] (if mockAirIn or mockFreeze then rawTemp else rndedTemp)
+        $[obsName] rndedTemp + offset[name] ? 0
 
     for name, addr of xbeeRadios then do (name, addr) ->        
       xbee.getPacketsByAddr name, addr
@@ -68,26 +67,14 @@ module.exports =
         volts  = ((packet[19] * 256 + packet[20]) / 1024) * 1.2
         if name is 'closet'
           temp = ((voltsAtZeroC - volts ) / voltsPerC) * 9/5 + 32
-          if not mockAirIn then emitSrc.emit 'airIntake', temp
+          emitSrc.emit 'airIntake', temp
           volts = ((packet[21] * 256 + packet[22]) / 1024) * 1.2
           temp =  (voltsAtZeroC - volts) / voltsPerC
-          if not mockFreeze then emitSrc.emit 'acReturn', temp
+          emitSrc.emit 'acReturn', temp
         else
           emitSrc.emit name, volts * 100 
           
     for name of xbeeRadios when name isnt 'closet' then addObs name
     for name in ['airIntake', 'acReturn'] 
       addObs name
-      
-    if mockAirIn
-      t = 0
-      setInterval ->
-        emitSrc.emit 'airIntake', 70 + Math.sin(t++ * 0.2) * 6
-      , 1000
-    
-    if mockFreeze
-      t = 0
-      setInterval ->
-        emitSrc.emit 'acReturn', 0 + Math.sin(t++ * 0.2) * 10
-      , 1000
-    
+          
