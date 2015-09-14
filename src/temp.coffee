@@ -14,7 +14,7 @@ tempHysterisis = 0.05
 numHistory     = 10
 dampening      = 30000
 
-offset = {tvRoom: -1.5, kitchen: -3.5, master: +2.5, guest: -1.5, airIntake: -5.0, acReturn:0}
+offset = {tvRoom: -1.0, kitchen: -3.5, master: +2.5, guest: -1.5, airIntake: -5.0, acReturn:0}
 
 xbeeRadios = 
   tvRoom : 0x0013a20040c33695
