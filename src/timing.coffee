@@ -9,8 +9,7 @@ rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 hvacs = ['extAir', 'fan', 'heat', 'cool']
 
 $ = require('imprea') 'timng'
-$.output 'timing_dampers', 'timing_hvac', 'timing_extAirIn'
-for room in rooms then $.output "acDelay_#{room}"
+$.output 'timing_dampers', 'timing_hvac', 'timing_extAirIn', 'timing_acDelay'
 
 minDampCyle     =       5e3
 fanHold         =  2 * 60e3
@@ -24,7 +23,9 @@ lastActiveOffTime = 0
 lastAcOffTime     = 0
 lastExtAirOnTime  = 0
 
-modes         = {}
+modes  = {}
+deltas = {}
+
 dampersReq    = {tvRoom: on, kitchen: on, master:on, guest: on}
 lastDampers   = {tvRoom: on, kitchen: on, master:on, guest: on}
 dampersOnTime = {tvRoom:  0, kitchen:  0, master: 0, guest:  0}
@@ -89,10 +90,15 @@ check = ->
     hvac.cool = off
     delaying = yes
     
-  for room in rooms
-    $["acDelay_#{room}"] delaying and dampers[room] and 
-                         modes[room] in ['heat', 'cool']
-    
+  # any room request while delaying?
+  timing_acDelay = no  
+  if $.ctrl_sysMode is 'cool'
+    for room in rooms
+      if delaying and modes[room] is 'cool' and deltas[room] > 0
+        timing_acDelay = yes
+        break
+  $.timing_acDelay timing_acDelay
+  
   # any damper cycle limit
   for room in rooms
     if not lastDampers[room] and dampers[room]
@@ -131,8 +137,10 @@ module.exports =
         check()
         
     $.react 'allWebSocketIn', ->
-      if @allWebSocketIn.type is 'tstat'
-        modes[@allWebSocketIn.room] = @allWebSocketIn.mode
+      ws = @allWebSocketIn
+      if ws.type is 'tstat'
+        modes[ws.room]  = ws.mode
+        deltas[ws.room] = ws.delta
         check()
 
       

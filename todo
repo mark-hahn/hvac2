@@ -1,0 +1,13 @@
+
+put mode/req/actual/elapsed codes in ceil display top
+put req/actual codes in tstat display
+
+bug: room-actual says B after fan delay done but before ac delay done
+bug: @timing_acDelay isn't being emitted
+
+open damper on all rooms that are in AC mode during AC delay or thawing
+
+when all dampers are closed, instead of always copying old dampers, 
+        turn on dampers in rooms with the same mode as sys when you can
+
+recheck calibration in tvRoom and kitchen

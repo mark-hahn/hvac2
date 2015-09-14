@@ -1,8 +1,0 @@
-
-room-actual says B after fan timeout and before ac timeout
-
-open damper on all rooms with active mode during AC delay
-
-put mode/req/actual/elapsed codes in ceil display top
-
-put req/actual codes in tstat display

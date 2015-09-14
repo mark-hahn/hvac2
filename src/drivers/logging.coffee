@@ -58,14 +58,14 @@ $.react '*', (name) ->
 
   fmts = '  '; args = []
   
-  $.log_modeCode_sys modeCode_sys = switch
-    when @ctrl_thaw                             then 'T'
-    when @timing_hvac?.heat and @timing_acDelay then 'I'
-    when @timing_hvac?.heat                     then 'H'
-    when @timing_hvac?.cool and @timing_acDelay then 'D'
-    when @timing_hvac?.cool                     then 'C'
-    when @timing_hvac?.fan                      then 'F'
-    else                                             '-'
+  $.log_modeCode_sys modeCode_sys = 
+    switch
+      when @ctrl_thaw         then 'T'
+      when @timing_hvac?.heat then 'H'
+      when @timing_acDelay    then 'D'
+      when @timing_hvac?.cool then 'C'
+      when @timing_hvac?.fan  then 'F'
+      else                         '-'
       
   $.log_extAirCode extAirCode = (if @timing_extAirIn then 'E' else 'R')
     
@@ -90,20 +90,22 @@ $.react '*', (name) ->
     mode        = tstat.mode or 'off'
     tstatActive = mode in ['heat', 'cool']
     
-    $['log_modeCode_'+room] tstatModeCode = switch
-      when mode is 'heat' and fan then 'U'
-      when mode is 'heat'         then 'H'
-      when mode is 'cool' and fan then 'Q'
-      when mode is 'cool'         then 'C'
-      when fan                    then 'F'
-      else                             '-'
+    $['log_modeCode_'+room] tstatModeCode = 
+      switch
+        when mode is 'heat' and fan then 'U'
+        when mode is 'heat'         then 'H'
+        when mode is 'cool' and fan then 'Q'
+        when mode is 'cool'         then 'C'
+        when fan                    then 'F'
+        else                             '-'
     
-    $['log_reqCode_' + room] tstatReqCode = switch 
-      when tstatActive and tstat.delta is 0 then 'M'
-      when mode is 'heat' and tstat.delta  < 0 or \
-           mode is 'cool' and tstat.delta  > 0 then 'W'
-      else '-'
-
+    $['log_reqCode_' + room] tstatReqCode = 
+      switch tstatActive and tstat.delta
+        when no then '-'
+        when +1 then '^'
+        when  0 then '-'
+        when -1 then 'V'
+    
     damper = @timing_dampers?[room]
     active = sysActive and damper
     
@@ -111,10 +113,11 @@ $.react '*', (name) ->
       if mode isnt 'off' then roomCountNotOff++
       if active          then roomCountActive++
     
-    $['log_actualCode_' + room] tstatActualCode = switch 
-      when active     then 'A'
-      when damper     then 'B'
-      else                 '-'
+    $['log_actualCode_' + room] tstatActualCode = 
+      switch 
+        when active     then 'A'
+        when damper     then 'B'
+        else                 '-'
         
     now = Date.now()
     codes = tstatModeCode + tstatReqCode + tstatActualCode

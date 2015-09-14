@@ -14,9 +14,9 @@ blinkMS   = 200
 curRoom = localStorage?.getItem('room') ? 'tvRoom'
 rooms   = ['tvRoom', 'kitchen', 'master', 'guest']
 
-modes     = {tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'}
-fans      = {tvRoom: off, kitchen: off, master:off, guest: off}
-setpoints = {tvRoom: 70, kitchen: 70, master: 70, guest: 70}
+modes     = tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'
+fans      = tvRoom:  off,  kitchen:  off,  master: off,  guest: off
+setpoints = tvRoom: 74,    kitchen: 74,    master: 74,   guest: 74
 temps     = {}
 
 $ ->
@@ -31,10 +31,12 @@ $ ->
     $lftTemp.text (if temps[curRoom] then (+temps[curRoom]).toFixed 1 else '')
     $rgtTemp.text setpoints[curRoom].toFixed 1
     
-    set = Math.min 75, Math.max 65, setpoints[curRoom]
-    red = (((set-65) / 10) * 256).toString(16).split('.')[0]
+    maxTemp = 80
+    minTemp = 65
+    set = Math.min maxTemp, Math.max minTemp, setpoints[curRoom]
+    red = (((set-minTemp) / (maxTemp-minTemp)) * 256).toString(16).split('.')[0]
     while red.length < 2 then red = '0' + red
-    blu = ((1 - (set-65) / 10) * 256).toString(16).split('.')[0]
+    blu = ((1 - (set-minTemp) / 10) * 256).toString(16).split('.')[0]
     while blu.length < 2 then blu = '0' + red
     $rgtTemp.css color: '#' + red + '00' + blu
     
