@@ -9,26 +9,34 @@ sprintf = require('sprintf-js').sprintf
 moment  = require 'moment'
 _       = require 'underscore'
 
-$.output 'log_masterCode'
+rooms = ['tvRoom', 'kitchen', 'master', 'guest']
+setpoints = {}
 
-fmts = ''; args = []
-
+$.output 'log_modeCode_sys', 'log_extAirCode', 'log_otherCounts_master'
+for room in rooms
+  $.output 'log_modeCode_'    + room, 'log_reqCode_' + room, 'log_actualCode_' + room,
+           'log_elapsedCode_' + room
+  
+fmts = args = null
+lastCodes = {}
+now = Date.now()
+elapsedTime = tvRoom: now, kitchen: now, master: now, guest: now
+elapsedMins = tvRoom:   0, kitchen:   0, master:   0, guest:   0
 str = (s) -> fmts += s
 
 ltr = (val, uc = no) ->
   fmts += '%1s'
-  val = val ? '-'
-  if uc then val = val.toUpperCase()
+  val = val or '-'
+  val = if uc then val.toUpperCase() else val.toLowerCase()
   char = val[0].replace /[Oo]/, '-'
   args.push char
-  char
 
 tmp = (val) ->
   if val 
     fmts += '%4.1f'
     args.push val 
   else
-    fmts += '--.-'
+    fmts += '----'
     
 int = (val, wid = 2) ->
   if not val?
@@ -41,65 +49,95 @@ int = (val, wid = 2) ->
     args.push val
 
 lastLine  = ''
-fans      = {tvRoom:  off,  kitchen:  off,  master: off,  guest:  off }
-modes     = {tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'}
-setpoints = {tvRoom:    0,  kitchen:    0,  master:   0,  guest:    0 }
 
 $.react '*', (name) ->
   if name is 'temp_airIntake' then return
   
+  if (ws = @allWebSocketIn) and ws.type is 'tstat' 
+    setpoints[ws.room] = ws.setpoint
+
   fmts = '  '; args = []
   
-  ws = @allWebSocketIn ? {}
-  if ws.type is 'tstat'
-    fans[ws.room]      = ws.fan
-    modes[ws.room]     = ws.mode
-    setpoints[ws.room] = ws.setpoint
-  
-  fanActive =  @timing_hvac?.fan
-  sysActive = (@timing_hvac?.cool or @timing_hvac?.heat)
-  sysActual = switch 
-    when @ctrl_thaw      then 't'
-    when sysActive       then @ctrl_sysMode
-    when fanActive       then 'f'
-    else '-'
-
-  ltr @ctrl_sysMode
-  ltr sysActual
+  $.log_modeCode_sys modeCode_sys = switch
+    when @ctrl_thaw                             then 'T'
+    when @timing_hvac?.heat and @timing_acDelay then 'I'
+    when @timing_hvac?.heat                     then 'H'
+    when @timing_hvac?.cool and @timing_acDelay then 'D'
+    when @timing_hvac?.cool                     then 'C'
+    when @timing_hvac?.fan                      then 'F'
+    else                                             '-'
+      
+  $.log_extAirCode extAirCode = (if @timing_extAirIn then 'E' else 'R')
+    
+  ltr @ctrl_sysMode, yes
+  ltr modeCode_sys,  yes
   str ' '
-  ltr (if @timing_extAirIn then 'e' else ' ')
+  ltr extAirCode
   int @temp_airIntake
   str '-'
   int @temp_outside
   str ' '
   int @temp_acReturn, 3
   
-  for room in ['tvRoom', 'kitchen', 'master', 'guest']
-    damper = @timing_dampers?[room]
+  sysActive = $.timing_hvac?.cool or $.timing_hvac?.heat
+  
+  roomCountNotOff = 0
+  roomCountActive = 0
+  
+  for room in rooms
+    tstat       = @['tstat_' + room] ? mode: 'off', fan: off, delta: 0
+    fan         = tstat.fan
+    mode        = tstat.mode or 'off'
+    tstatActive = mode in ['heat', 'cool']
     
-    mode   = modes[room]
-    active = (mode in ['cool', 'heat'])
-    if fans[room] and not active then mode = 'fan'
+    $['log_modeCode_'+room] tstatModeCode = switch
+      when mode is 'heat' and fan then 'U'
+      when mode is 'heat'         then 'H'
+      when mode is 'cool' and fan then 'Q'
+      when mode is 'cool'         then 'C'
+      when fan                    then 'F'
+      else                             '-'
     
-    actual = switch 
-      when sysActive and damper then mode
-      when @["acDelay_#{room}"] then 'd'
-      when fanActive and damper then 'f'
+    $['log_reqCode_' + room] tstatReqCode = switch 
+      when tstatActive and tstat.delta is 0 then 'M'
+      when mode is 'heat' and tstat.delta  < 0 or \
+           mode is 'cool' and tstat.delta  > 0 then 'W'
       else '-'
+
+    damper = @timing_dampers?[room]
+    active = sysActive and damper
+    
+    if room isnt 'master'
+      if mode isnt 'off' then roomCountNotOff++
+      if active          then roomCountActive++
+    
+    $['log_actualCode_' + room] tstatActualCode = switch 
+      when active     then 'A'
+      when damper     then 'B'
+      else                 '-'
+        
+    now = Date.now()
+    codes = tstatModeCode + tstatReqCode + tstatActualCode
+    if codes isnt lastCodes[room]
+      elapsedTime[room] = now
+      lastCodes[room] = codes
+    elapsedMins = (now - elapsedTime[room]) / (60*1e3)
+    $['log_elapsedCode_' + room] \
+      (if elapsedMins < 100 then elapsedMins.toFixed 1 else Math.round elapsedMins)
     
     str '  '
     ltr room, yes
     str ':'
-    modeLtr   = ltr mode, (fans[room] and mode isnt 'fan')
-    actualLtr = ltr actual
+    ltr tstatModeCode
+    ltr tstatReqCode
+    ltr tstatActualCode
     str ' '
     tmp @['temp_' + room]
     str '-'
-    tmp (if active then setpoints[room])
+    tmp (if tstatActive then setpoints[room])
     str ' '
     
-    if room is 'master'
-      $.log_masterCode? modeLtr + actualLtr
+  $.log_otherCounts_master '' + roomCountNotOff + roomCountActive
   
   line = sprintf fmts, args...
   if line isnt lastLine
