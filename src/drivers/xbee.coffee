@@ -1,7 +1,7 @@
 
 {log, logObj} = require('./utils') ' XBEE'
 
-$ = require('imprea') 'xbee'
+$ = require('imprea')()
 SerialPort = require('serialport').SerialPort
 emitSrc = new (require('events').EventEmitter)
 

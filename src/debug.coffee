@@ -1,5 +1,5 @@
 
-$      = require('imprea') 'debug'
+$      = require('imprea')()
 util   = require 'util'
 
 {log, logObj} = require('./utils') '     '
@@ -50,7 +50,7 @@ dontShow = [
   'log_actualCode_guest'
   'log_elapsedCode_tvRoom'
   'log_elapsedCode_kitchen'
-  # 'log_elapsedCode_master'
+  'log_elapsedCode_master'
   'log_elapsedCode_guest'
   'log_otherCounts_master'
 ]

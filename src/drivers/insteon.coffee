@@ -7,7 +7,7 @@ disableHvacCtrl = no
 
 {log, logObj} = require('./utils') 'INSTE'
 
-$ = require('imprea') 'inste'
+$ = require('imprea')()
 request = require 'request'
 
 insteonHubAddr        = 'http://192.168.1.103:1342/io/set/'

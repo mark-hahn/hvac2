@@ -7,7 +7,7 @@
 
 port = 1339
 
-$           = require('imprea') 'wsock'
+$           = require('imprea')()
 http        = require 'http'
 Primus      = require 'primus'
 url         = require 'url'
@@ -26,6 +26,15 @@ $.output 'ws_tstat_data'
 
 masterSetpoint = null
 
+writeCodes = (room) ->
+  codes = '' + $.log_modeCode_sys + $.log_extAirCode +
+               $['log_reqCode_' + room] + $['log_actualCode_' + room]
+  for conn in connections
+    conn.connection.write 
+      type: 'codes'
+      room: room
+      codes: codes.toUpperCase().replace 'V', 'v'
+
 writeCeil = ->
   masterCode = 
     $.log_modeCode_master + $.log_reqCode_master + $.log_actualCode_master + 
@@ -37,9 +46,9 @@ writeCeil = ->
       type:          'ceil'
       master:         $.temp_master?.toFixed(1) ? '----'
       masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----')
-      masterCode:     masterCode.toUpperCase()
+      masterCode:     masterCode.toUpperCase().replace 'V', 'v'
       outside:   '' + Math.round $.temp_outside ? '0'
-      sysCode:        sysCode.toUpperCase().replace 'V', 'v'
+      sysCode:        sysCode.toUpperCase()
 
 module.exports =
   init: -> 
@@ -58,9 +67,13 @@ module.exports =
             'log_elapsedCode_master', 
             'temp_outside', 
             'log_sysMode', 'log_modeCode_sys', 'log_extAirCode', 
-            'log_otherCounts_master'
-            , writeCeil
-      
+            'log_otherCounts_master', writeCeil
+            
+    for room in rooms then do (room) ->
+      $.react 'log_modeCode_sys', 'log_extAirCode',
+              'log_reqCode_' + room, 'log_actualCode_' + room
+      , -> writeCodes room
+
 srvr = http.createServer (req, res) ->
   log 'req:', req.url
   
@@ -112,8 +125,8 @@ primus.on 'connection', (connection) ->
             if tstat.room is 'master' 
               masterSetpoint = (if tstat.mode in ['cool', 'heat'] then tstat.setpoint)
               writeCeil()
-          if tempsByRoom[room]
-            connection.write tempsByRoom[room]
+          if tempsByRoom[room] then connection.write tempsByRoom[room]
+          writeCodes room
             
   connection.on 'end', ->
     leanConns = []

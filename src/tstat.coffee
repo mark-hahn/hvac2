@@ -4,7 +4,7 @@
 ###
 
 {log, logObj} = require('./utils') 'TSTAT'
-$ = require('imprea') 'tstat'
+$ = require('imprea')()
 
 roomHysterisis  = 0.25
 extDiffHigh     =  8

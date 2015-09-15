@@ -1,7 +1,8 @@
 
 util = require 'util'
 
-{render, doctype, html, head, title, body, div, img, raw, text, script} = require 'teacup'
+{render, doctype, html, head, title, meta, 
+ body, div, img, raw, text, script} = require 'teacup'
 
 module.exports = ->
   render ->
@@ -9,6 +10,10 @@ module.exports = ->
     html ->
       head ->
         title 'thermostat'
+        # meta name: "viewport", \
+        #      content: "width=device-width; height=device-height;
+        #                initial-scale=1.0; maximum-scale=1.0; 
+        #                user-scalable=no; user-scalable=0;"
 
       body style: "overflow:hidden;
             -webkit-touch-callout: none;
@@ -16,7 +21,8 @@ module.exports = ->
             -khtml-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
-            user-select: none;", ->
+            user-select: none;
+            font-family: Sans-Serif;", ->
         div '#page', style: "position:absolute; overflow:hidden; display:none", ->
           div '#top', style: "clear:both; width:100%; height:25%;
                     background-color:#aaa; text-align:center; color:#666", ->
@@ -29,9 +35,11 @@ module.exports = ->
           div '#middle', style: "clear:both; background-color: #eee;
                       width:100%; height:50%", ->
 
-            div '#left', style: "clear:both; float:left; width:50%;", ->
+            div '#left', style: "clear:both; float:left; 
+                                 width:50%; height:100%; position: relative", ->
               div '#lftTemp', style: "clear:both; float:left; text-align: center;
-                          width:100%;"
+                                      width:100%;"
+              div '#codes', style: "position:absolute; right:1%; bottom:1%; font-size: 20%"
 
             div '#right', style: "float:left; width:50%; height:100%;
                         background-color: gray; color: white; ", ->

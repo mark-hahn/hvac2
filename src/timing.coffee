@@ -8,7 +8,7 @@
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 hvacs = ['extAir', 'fan', 'heat', 'cool']
 
-$ = require('imprea') 'timng'
+$ = require('imprea')()
 $.output 'timing_dampers', 'timing_hvac', 'timing_extAirIn', 'timing_acDelay'
 
 minDampCyle     =       5e3

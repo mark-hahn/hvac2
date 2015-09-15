@@ -6,7 +6,7 @@
 
 {log, logObj} = require('./utils') 'WXSTA'
 
-$       = require('imprea') 'wxsta'
+$       = require('imprea')()
 sqlite3 = require("sqlite3").verbose()
 
 $.output 'temp_outside'

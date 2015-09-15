@@ -5,7 +5,7 @@
 
 {log, logObj} = require('./utils') ' TEMP'
 
-$       = require('imprea') 'temp'
+$       = require('imprea')()
 xbee    = require './xbee'
 emitSrc = new (require('events').EventEmitter)
 

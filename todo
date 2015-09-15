@@ -1,22 +1,12 @@
 
-put mode/req/actual/elapsed codes in ceil display top
+bug: room-actual and extAir codes show when blower not blowing
+  (room-actual shows from fan delay end to ac delay end)
 
-30 sec increments
-0
-2
-...
-9
-a
-b
+change timing_acDelay back to room-based
+    emit timing_acDelay during whole off time
+    each room decides to show D
 
+when timing_acDelay or ctrl_thaw or all dampers are closed
+  turn on dampers in all rooms with the same mode as sys or in fan mode
+  if still none on, then turn all on
 
-
-put req/actual codes in tstat display
-
-bug: room-actual says B after fan delay done but before ac delay done
-bug: @timing_acDelay isn't being emitted
-
-open damper on all rooms that are in AC mode during AC delay or thawing
-
-when all dampers are closed, instead of always copying old dampers, 
-        turn on dampers in rooms with the same mode as sys when you can

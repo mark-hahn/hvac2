@@ -6,7 +6,7 @@
 
 {log, logObj} = require('./utils') ' CTRL'
 
-$ = require('imprea') 'ctrl'
+$ = require('imprea')()
 _ = require 'underscore'
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']

@@ -18,6 +18,7 @@ modes     = tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'
 fans      = tvRoom:  off,  kitchen:  off,  master: off,  guest: off
 setpoints = tvRoom: 74,    kitchen: 74,    master: 74,   guest: 74
 temps     = {}
+codes     = {}
 
 $ ->
   $top       = $ '.top'
@@ -29,6 +30,7 @@ $ ->
     $top.css border:'none', backgroundColor: '#aaa', color: 'gray'
     $('#'+curRoom).css border:'1px solid black', backgroundColor: 'yellow', color: 'black'
     $lftTemp.text (if temps[curRoom] then (+temps[curRoom]).toFixed 1 else '')
+    $('#codes').text codes[curRoom]
     $rgtTemp.text setpoints[curRoom].toFixed 1
     
     maxTemp = 80
@@ -103,4 +105,9 @@ $ ->
         
       when 'temp'
         temps[data.room] = data.temp
-        update no        
+        update no  
+              
+      when 'codes'
+        codes[data.room] = data.codes
+        update no  
+

@@ -9,6 +9,7 @@ $ ->
   $page      = $ '#page'
   $top       = $ '#top'
   $left      = $ '#left'
+  $lftTemp   = $ "#lftTemp"
   $rgtPlus   = $ '#rgtPlus'
   $rgtMid    = $ '#rgtMid'
   $rgtTemp   = $ '#rgtTemp'
@@ -31,6 +32,8 @@ $ ->
     
     $left.css 
       fontSize: fs
+      
+    $lftTemp.css
       marginTop: (h/2 - fs * 1.2)/2
       
     $rgtPlus.css 

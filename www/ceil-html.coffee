@@ -10,7 +10,7 @@ module.exports = ->
       head ->
         title 'ceil'
       body style:'background-color:black; color:white;
-                  font-size:450px; text-align:center;
+                  font-size:420px; text-align:center;
                   font-family:tahoma', ->
 
         div style:'width:1520px; height:1000px; padding:150px; position:relative', ->

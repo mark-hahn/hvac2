@@ -3,7 +3,7 @@
 ###
 
 {log, logObj} = require('./utils') 'LOGNG'
-$ = require('imprea') 'logng'
+$ = require('imprea')()
 
 sprintf = require('sprintf-js').sprintf
 moment  = require 'moment'
