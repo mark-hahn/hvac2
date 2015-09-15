@@ -39,7 +39,10 @@ module.exports = ->
                                  width:50%; height:100%; position: relative", ->
               div '#lftTemp', style: "clear:both; float:left; text-align: center;
                                       width:100%;"
-              div '#codes', style: "position:absolute; right:1%; bottom:1%; font-size: 20%"
+              div '#codes', style: "position:absolute; right:1%; bottom:1%; 
+                                    background-color:rgba(255, 247, 0, 0.28); 
+                                               color:rgba(144, 63, 63, 0.63);
+                                    padding:1%; border-radius: 20%; font-size: 20%;"
 
             div '#right', style: "float:left; width:50%; height:100%;
                         background-color: gray; color: white; ", ->

@@ -40,7 +40,7 @@ writeCeil = ->
     $.log_modeCode_master + $.log_reqCode_master + $.log_actualCode_master + 
     $.log_elapsedCode_master + ''
   sysCode =  
-    $.log_sysMode + $.log_modeCode_sys + $.log_extAirCode + $.log_otherCounts_master + ''
+    $.log_modeCode_sys + $.log_extAirCode + $.log_otherCounts_master + ''
   for conn in connections
     conn.connection.write 
       type:          'ceil'

@@ -10,3 +10,5 @@ when timing_acDelay or ctrl_thaw or all dampers are closed
   turn on dampers in all rooms with the same mode as sys or in fan mode
   if still none on, then turn all on
 
+Blower runs for one sec when booting app
+

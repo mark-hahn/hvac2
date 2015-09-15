@@ -18,10 +18,12 @@ for room in rooms
            'log_elapsedCode_' + room
   
 fmts = args = null
-lastCodes = {}
+lastActualCode = {}
 now = Date.now()
-elapsedTime = tvRoom: now, kitchen: now, master: now, guest: now
-elapsedMins = tvRoom:   0, kitchen:   0, master:   0, guest:   0
+lastCodeChange  = tvRoom: now, kitchen: now, master: now, guest: now
+elapsedMins     = tvRoom:   0, kitchen:   0, master:   0, guest:   0
+lastElapsedMins = tvRoom:   0, kitchen:   0, master:   0, guest:   0
+  
 str = (s) -> fmts += s
 
 ltr = (val, uc = no) ->
@@ -102,9 +104,9 @@ $.react '*', (name) ->
     $['log_reqCode_' + room] tstatReqCode = 
       switch tstatActive and tstat.delta
         when no then '-'
-        when +1 then '^'
+        when +1 then 'v'
         when  0 then '-'
-        when -1 then 'V'
+        when -1 then '^'
     
     damper = @timing_dampers?[room]
     active = sysActive and damper
@@ -116,19 +118,23 @@ $.react '*', (name) ->
     $['log_actualCode_' + room] tstatActualCode = 
       switch 
         when active     then 'A'
-        when damper     then 'B'
+        when damper     then 'O'
+        # when delayed then 'D'
         else                 '-'
         
     now = Date.now()
-    codes = tstatModeCode + tstatReqCode + tstatActualCode
-    if codes isnt lastCodes[room]
-      elapsedTime[room] = now
-      lastCodes[room] = codes
-    elapsedMins = (now - elapsedTime[room]) / (60*1e3)
+    elapsedMins = (now - lastCodeChange[room]) / (60*1e3)
+    if tstatActualCode isnt lastActualCode[room]
+      if elapsedMins >= 0.1
+        lastElapsedMins[room] = elapsedMins
+      elapsedMins = 0
+      lastCodeChange[room] = now
+      lastActualCode[room] = tstatActualCode
+    if elapsedMins < 0.5 then elapsedMins = lastElapsedMins[room]
     $['log_elapsedCode_' + room] \
       (if elapsedMins < 100 then elapsedMins.toFixed 1 else Math.round elapsedMins)
 
-    # elapsedHalfMins = (now - elapsedTime[room]) / (30*1e3)
+    # elapsedHalfMins = (now - lastCodeChange[room]) / (30*1e3)
     # $['log_elapsedCode_' + room] switch
     #   when elapsedHalfMins < 10
     #     String.fromCharCode '0'.charCodeAt(0) + elapsedHalfMins
