@@ -18,7 +18,7 @@ dontShow = [
   'temp_guest'
   'temp_acReturn'
   'temp_airIntake'
-  'allWebSocketIn'
+  'ws_tstat_data'
   'tstat_tvRoom'
   'tstat_kitchen'
   'tstat_master'
@@ -50,7 +50,7 @@ dontShow = [
   'log_actualCode_guest'
   'log_elapsedCode_tvRoom'
   'log_elapsedCode_kitchen'
-  'log_elapsedCode_master'
+  # 'log_elapsedCode_master'
   'log_elapsedCode_guest'
   'log_otherCounts_master'
 ]

@@ -9,6 +9,7 @@ log = (args...) -> console.log ' CEIL:', args...
 
 $ ->
   window.ceilWsRecv = (data) ->
+    if data.type is 'ceil' then log 'recv ceil', data
     for name, value of data
       $('#' + name).text value
       

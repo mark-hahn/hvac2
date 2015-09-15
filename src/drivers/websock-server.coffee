@@ -22,18 +22,24 @@ rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 tempsByRoom = {}
 tstatByRoom = {}
 
-$.output 'allWebSocketIn'
+$.output 'ws_tstat_data'
 
 masterSetpoint = null
 
 writeCeil = ->
+  masterCode = 
+    $.log_modeCode_master + $.log_reqCode_master + $.log_actualCode_master + 
+    $.log_elapsedCode_master + ''
+  sysCode =  
+    $.log_sysMode + $.log_modeCode_sys + $.log_extAirCode + $.log_otherCounts_master + ''
   for conn in connections
     conn.connection.write 
       type:          'ceil'
       master:         $.temp_master?.toFixed(1) ? '----'
       masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----')
-      masterCode:     $.log_masterCode ? '--'
+      masterCode:     masterCode.toUpperCase()
       outside:   '' + Math.round $.temp_outside ? '0'
+      sysCode:        sysCode.toUpperCase().replace 'V', 'v'
 
 module.exports =
   init: -> 
@@ -47,8 +53,13 @@ module.exports =
         for conn in connections
           conn.connection.write tempData
           
-    $.react 'temp_master', 'temp_outside', 'log_masterCode', -> 
-      writeCeil()
+    $.react 'temp_master', 
+            'log_modeCode_master', 'log_reqCode_master', 'log_actualCode_master',
+            'log_elapsedCode_master', 
+            'temp_outside', 
+            'log_sysMode', 'log_modeCode_sys', 'log_extAirCode', 
+            'log_otherCounts_master'
+            , writeCeil
       
 srvr = http.createServer (req, res) ->
   log 'req:', req.url
@@ -85,7 +96,7 @@ primus.on 'connection', (connection) ->
     
     switch data.type
       when 'tstat' 
-        $.allWebSocketIn data
+        $.ws_tstat_data data
         tstatByRoom[data.room] = data
         if data.room is 'master' 
           masterSetpoint = (if data.mode in ['cool', 'heat'] then data.setpoint)

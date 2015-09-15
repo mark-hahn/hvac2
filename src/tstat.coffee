@@ -58,21 +58,18 @@ check = (name) ->
     
 module.exports =
   init: -> 
-    $.react 'allWebSocketIn', ->
-      {type, room, mode, fan, setpoint} = @allWebSocketIn
-      # log 'allWebSocketIn$', data
-      if type is 'tstat'
-        modes[room]     = mode
-        fans[room]      = fan
-        setpoints[room] = setpoint
-        check room
+    $.react 'ws_tstat_data', ->
+      {type, room, mode, fan, setpoint} = @ws_tstat_data
+      modes[room]     = mode
+      fans[room]      = fan
+      setpoints[room] = setpoint
+      check room
         
     names = rooms.concat 'airIntake', 'outside', 'acReturn'
     
     for name in names then do (name) =>
       obsName = 'temp_' + name
       $.react obsName, ->
-        # log 'temp_' + name + '$ in', temp
         temps[name] = $[obsName]
         check name
         

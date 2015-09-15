@@ -136,11 +136,10 @@ module.exports =
         hvacReq = @ctrl_hvac
         check()
         
-    $.react 'allWebSocketIn', ->
-      ws = @allWebSocketIn
-      if ws.type is 'tstat'
-        modes[ws.room]  = ws.mode
-        deltas[ws.room] = ws.delta
-        check()
+    $.react 'ws_tstat_data', ->
+      ws = @ws_tstat_data
+      modes[ws.room]  = ws.mode
+      deltas[ws.room] = ws.delta
+      check()
 
       
