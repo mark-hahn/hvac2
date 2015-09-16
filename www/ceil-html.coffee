@@ -1,7 +1,7 @@
 
 util = require 'util'
 
-{render, doctype, html, head, title, body, div, hr, script} = require 'teacup'
+{render, doctype, html, head, title, body, div, script} = require 'teacup'
 
 module.exports = ->
   render ->
@@ -27,7 +27,8 @@ module.exports = ->
              div '#masterSetpoint', style:'position:relative; float:right; top:-25px; 
                                     width:100%; height:250px; text-align:center'
                                            
-             hr style: "height:6px; margin:0; color: #ccc"
+             div style:'width:100%; height:6px; overflow:hidden; margin:0;
+                                    background-color:#ccc; position:relative'
              
              div '#masterCode',  
                   style: 'position: relative; float: right; width:100%; color:#ccc;
@@ -47,8 +48,9 @@ module.exports = ->
               div '#outside', style:'position:relative; float:right; top:-25px; 
                                      width:100%; height:250px; text-align:center'
                                      
-              hr style: "height:6px; margin:0; color: #ccc"
-              
+              div style:'width:100%; height:6px; overflow:hidden; margin:0;
+                                    background-color:#ccc; position:relative'
+                           
               div '#sysCode',  
                   style: 'position: relative; float: right; width:100%;
 									        top: 0; font-size: 150px; text-align:center; color:#ccc'
