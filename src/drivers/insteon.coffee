@@ -10,12 +10,27 @@ disableHvacCtrl = no
 $ = require('imprea')()
 request = require 'request'
 
-insteonHubAddr        = 'http://192.168.1.103:1342/io/set/'
-hvacInsteonAddress    = '387EFD'
-dampersInsteonAddress = '387B9E'
-
-hvacInsteonHubUrlPfx    = insteonHubAddr + hvacInsteonAddress    + '/'
-dampersInsteonHubUrlPfx = insteonHubAddr + dampersInsteonAddress + '/'
+insteonIds =
+  serverGateway:        '2413fd'
+  furnaceHvac:          '387efd'
+  furnaceDampers:       '387b9e'
+  lightsRemote1:        '270b8a'
+  lightsRemote2:        '270b00'
+  controlRemote:        '27178d'
+  lftFrontBulb:         '297ebf'
+  midFrontBulb:         '29802b'
+  rgtFrontBulb:         '298243'
+  lftRearBulb:          '2982c1'
+  midRearBulb:          '298cda'
+  rgtRearBulb:          '29814c'
+  masterDimmer:         '24e363'
+  masterLightsRemote:   '1c5a16'
+  tVRoomHallDoorRemote: '290758'
+  tVRoomFrontDoorRemote:'2902a6'
+  
+insteonHubAddr = 'http://192.168.1.103:1342/io/set/'
+hvacInsteonHubUrlPfx    = insteonHubAddr + insteonIds.furnaceHvac    + '/'
+dampersInsteonHubUrlPfx = insteonHubAddr + insteonIds.furnaceDampers + '/'
 
 send = (isDamper, obj, cb) ->
   logObj 'send ' + (if isDamper then 'damp' else 'hvac'), obj

@@ -1,10 +1,8 @@
 
+remove all acDelay logging stuff
+
 bug: room-actual and extAir codes show when blower not blowing
   (room-actual shows from fan delay end to ac delay end)
-
-change timing_acDelay back to room-based
-    emit timing_acDelay during whole off time
-    each room decides to show D
 
 when timing_acDelay or ctrl_thaw or all dampers are closed
   turn on dampers in all rooms with the same mode as sys or in fan mode
