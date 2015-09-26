@@ -3,7 +3,7 @@
   timing dampers/hvac in -> insteon relays in closet
 ###
 
-disableHvacCtrl = no
+disableHvacCtrl = yes
 
 {log, logObj} = require('./utils') 'INSTE'
 
@@ -17,9 +17,9 @@ insteonIds =
   lightsRemote1:        '270b8a'
   lightsRemote2:        '270b00'
   controlRemote:        '27178d'
-  lftFrontBulb:         '297ebf'
+  lftFrontBulb:         '2c5134' # was '297ebf'
   midFrontBulb:         '29802b'
-  rgtFrontBulb:         '298243'
+  rgtFrontBulb:         '2b4f44' # '2b4c44'??   # was '298243'
   lftRearBulb:          '2982c1'
   midRearBulb:          '298cda'
   rgtRearBulb:          '29814c'

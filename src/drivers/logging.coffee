@@ -18,9 +18,9 @@ for room in rooms
            'log_elapsedCode_' + room
   
 fmts = args = null
-lastActualCode = {}
+lastActive = {}
 now = Date.now()
-lastCodeChange  = tvRoom: now, kitchen: now, master: now, guest: now
+lastActiveChg  = tvRoom: now, kitchen: now, master: now, guest: now
 elapsedMins     = tvRoom:   0, kitchen:   0, master:   0, guest:   0
 lastElapsedMins = tvRoom:   0, kitchen:   0, master:   0, guest:   0
   
@@ -115,26 +115,25 @@ $.react '*', (name) ->
       if mode isnt 'off' then roomCountNotOff++
       if active          then roomCountActive++
     
-    $['log_actualCode_' + room] tstatActualCode = 
+    $['log_actualCode_' + room]  tstatActualCode =
       switch 
-        when active     then 'A'
+        when active     then '@'
         when damper     then 'O'
-        # when delayed then 'D'
         else                 '-'
-        
+          
     now = Date.now()
-    elapsedMins = (now - lastCodeChange[room]) / (60*1e3)
-    if tstatActualCode isnt lastActualCode[room]
-      if elapsedMins >= 0.1
+    elapsedMins = (now - lastActiveChg[room]) / (60*1e3)
+    if active isnt lastActive[room]
+      if elapsedMins >= 0.2
         lastElapsedMins[room] = elapsedMins
       elapsedMins = 0
-      lastCodeChange[room] = now
-      lastActualCode[room] = tstatActualCode
+      lastActiveChg[room] = now
+      lastActive[room] = active
     if elapsedMins < 0.5 then elapsedMins = lastElapsedMins[room]
     $['log_elapsedCode_' + room] \
       (if elapsedMins < 100 then elapsedMins.toFixed 1 else Math.round elapsedMins)
 
-    # elapsedHalfMins = (now - lastCodeChange[room]) / (30*1e3)
+    # elapsedHalfMins = (now - lastActiveChg[room]) / (30*1e3)
     # $['log_elapsedCode_' + room] switch
     #   when elapsedHalfMins < 10
     #     String.fromCharCode '0'.charCodeAt(0) + elapsedHalfMins

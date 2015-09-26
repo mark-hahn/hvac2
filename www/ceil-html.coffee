@@ -10,50 +10,49 @@ module.exports = ->
       head ->
         title 'ceil'
       body style:'background-color:black; color:white;
-                  font-size:420px; text-align:center;
+                  font-size:320px; 
                   font-family:tahoma', ->
-
-        div style:'width:1520px; height:1000px; padding:150px; position:relative', ->
-
-          div style:'width:100%; height:430px; position:relative;
-                     overflow:hidden; margin-bottom:0', ->
-                       
-           div '#master', style:'display:inline-block; float:left; width:880px;
-                                position:relative; top:-40px; text-align: center;'
-           
-           div style:'display:inline-block; float:right; font-size:250px; width:620px;
-                      border-left:6px solid #ccc', ->
-                        
-             div '#masterSetpoint', style:'position:relative; float:right; top:-25px; 
-                                    width:100%; height:250px; text-align:center'
-                                           
-             div style:'width:100%; height:6px; overflow:hidden; margin:0;
-                                    background-color:#ccc; position:relative'
-             
-             div '#masterCode',  
-                  style: 'position: relative; float: right; width:100%; color:#ccc;
-									        top: -15px; font-size: 150px; text-align:center'
-		
-          div '#divider', style:'width:100%; height:6px; overflow:hidden; margin:0;
-                                 background-color:#ccc; position:relative; top:0;'
-
-          div style:'position:relative; width:100%; height:430px; top:0px; overflow:hidden', ->
-            
-           div '#time', style:'display:inline-block; float:left; 
-                               width:1080px; text-align:center;'
-           
-           div style:'display:inline-block; float:right; font-size:250px; width:420px;
-                      border-left:6px solid #ccc', ->
+# outer rim
+        div style:'width:1570px; height:760px;  
+                   position:relative; border:1px solid red;', ->
+# top half
+          div style:'width:100%; height:300px; position:relative;', ->
+  # temp                       
+           div '#master', style:'width:850px; text-align:right;  height: 400px;
+                                position:relative; top:-40px; '
+  # setpoint container         
+           div style:'position:absolute; top:0px; right:30px; font-size:250px;', ->
+    # setpoint                        
+             div '#masterSetpoint', style:'top:-20px; width:100%; 
+                                           position: relative;'
+# main divider             
+          div '#divider', style:'width:100%; height:6px; margin:0; background-color:#ccc;'
+# bot half
+          div style:'position:relative; width:100%; height:300px; top:0px;', ->
+  # time            
+           div '#time', style:'height:400px; width:850px; text-align:right; top:-40px;
+                               position:relative;'
+  # outside temp         
+           div style:'position:absolute; top:0px; right:20px; 
+                     font-size:250px; width:280px; height:300px;', ->
                         
               div '#outside', style:'position:relative; float:right; top:-25px; 
-                                     width:100%; height:250px; text-align:center'
+                                     width:100%; height:250px; '
                                      
-              div style:'width:100%; height:6px; overflow:hidden; margin:0;
-                                    background-color:#ccc; position:relative'
-                           
+# bottom divider                            
+          div '#divider', style:'width:100%; height:6px;  margin:0; background-color:#ccc;'
+            
+          div '#codes', ->
+            
               div '#sysCode',  
-                  style: 'position: relative; float: right; width:100%;
-									        top: 0; font-size: 150px; text-align:center; color:#ccc'
+                  style: 'position: relative; float: left; width:50%;
+									        top: 0; font-size: 150px; text-align:center;
+                          font-family: Courier, monospace;'
+                          
+              div '#masterCode',  
+                  style: 'position: relative; float: right; width:50%;
+									        top: -15px; font-size: 150px; text-align:center'
+		
 
         script src: 'js/jquery-2.1.4.js'
         script src: 'js/moment.js'
