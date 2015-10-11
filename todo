@@ -1,9 +1,7 @@
 
-show acDelay in sys codes
-
-bug: room-actual and extAir codes show when blower not blowing
-  (room-actual shows from fan delay end to ac delay end)
-
+Fan mode for room doesn't always work
+  sys mode went to off when room showed F
+  
 when timing_acDelay or ctrl_thaw or all dampers are closed
   turn on dampers in all rooms with the same mode as sys or in fan mode
   if still none on, then turn all on
@@ -12,15 +10,4 @@ Blower runs for one sec when booting app
 
 external damper stays on when triggered
 
-ceil
-  delay timer should start only when A changes
-  top codes too high by a pix or 2
-  all text should be white
-  put space in middle of top codes
-  change more letters to symbols?
-     A -> @   =>   -  O  @  
-     - -> =   =>   Cv= 4.3
-                   =  O  @  
-     - -> |   =>   Cv| 4.3
-                   |  O  @  
-                   
+CR ^- =@ v@ F- 10.7

@@ -11,11 +11,11 @@ hvacs = ['extAir', 'fan', 'heat', 'cool']
 $ = require('imprea')()
 $.output 'timing_dampers', 'timing_hvac', 'timing_extAirIn', 'timing_acDelay'
 
-minDampCyle     =       5e3
-fanHold         =  2 * 60e3
-extAirDelay     = 10 * 60e3
-dampersOffDelay = 10 * 60e3
-minAcOff        =  4 * 60e3  
+minDampCyle     =        2e3
+fanHold         = 1.7 * 60e3
+extAirDelay     =  10 * 60e3
+dampersOffDelay =  10 * 60e3
+minAcOff        =   4 * 60e3  
 
 nextChkAgainTime  = Infinity
 allDampersOffTime = null

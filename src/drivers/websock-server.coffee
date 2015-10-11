@@ -40,7 +40,7 @@ writeCeil = ->
     $.log_modeCode_master + $.log_reqCode_master + $.log_actualCode_master + ' ' +
     $.log_elapsedCode_master
   sysCode =  
-    $.log_modeCode_sys + $.log_extAirCode + $.log_otherCounts_master + ''
+    $.log_modeCode_sys + $.log_extAirCode + $.log_counts + ''
   for conn in connections
     conn.connection.write 
       type:          'ceil'
@@ -67,7 +67,7 @@ module.exports =
             'log_elapsedCode_master', 
             'temp_outside', 
             'log_sysMode', 'log_modeCode_sys', 'log_extAirCode', 
-            'log_otherCounts_master', writeCeil
+            'log_counts', writeCeil
             
     for room in rooms then do (room) ->
       $.react 'log_modeCode_sys', 'log_extAirCode',

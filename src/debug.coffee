@@ -52,7 +52,7 @@ dontShow = [
   'log_elapsedCode_kitchen'
   'log_elapsedCode_master'
   'log_elapsedCode_guest'
-  'log_otherCounts_master'
+  'log_counts'
 ]
 
 pad = (str, len) ->

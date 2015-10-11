@@ -12,7 +12,7 @@ _       = require 'underscore'
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 setpoints = {}
 
-$.output 'log_sysMode', 'log_modeCode_sys', 'log_extAirCode', 'log_otherCounts_master'
+$.output 'log_sysMode', 'log_modeCode_sys', 'log_extAirCode', 'log_counts'
 for room in rooms
   $.output 'log_modeCode_'    + room, 'log_reqCode_' + room, 'log_actualCode_' + room,
            'log_elapsedCode_' + room
@@ -103,17 +103,16 @@ $.react '*', (name) ->
     
     $['log_reqCode_' + room] tstatReqCode = 
       switch tstatActive and tstat.delta
-        when no then '-'
-        when +1 then 'v'
-        when  0 then '-'
-        when -1 then '^'
+        when off then '-'
+        when  +1 then 'v'
+        when   0 then '='
+        when  -1 then '^'
     
     damper = @timing_dampers?[room]
     active = sysActive and damper
     
-    if room isnt 'master'
-      if mode isnt 'off' then roomCountNotOff++
-      if active          then roomCountActive++
+    if mode isnt 'off' then roomCountNotOff++
+    if active          then roomCountActive++
     
     $['log_actualCode_' + room]  tstatActualCode =
       switch 
@@ -133,16 +132,6 @@ $.react '*', (name) ->
     $['log_elapsedCode_' + room] \
       (if elapsedMins < 100 then elapsedMins.toFixed 1 else Math.round elapsedMins)
 
-    # elapsedHalfMins = (now - lastActiveChg[room]) / (30*1e3)
-    # $['log_elapsedCode_' + room] switch
-    #   when elapsedHalfMins < 10
-    #     String.fromCharCode '0'.charCodeAt(0) + elapsedHalfMins
-    #   when elapsedHalfMins < 36 
-    #     String.fromCharCode 'A'.charCodeAt(0) + elapsedHalfMins - 10
-    #   when elapsedHalfMins < 62
-    #     String.fromCharCode 'a'.charCodeAt(0) + elapsedHalfMins - 36
-    #   else 'z'
-    
     str '  '
     ltr room, yes
     str ':'
@@ -155,7 +144,7 @@ $.react '*', (name) ->
     tmp (if tstatActive then setpoints[room])
     str ' '
     
-  $.log_otherCounts_master '' + roomCountNotOff + roomCountActive
+  $.log_counts '' + roomCountNotOff + roomCountActive
   
   line = sprintf fmts, args...
   if line isnt lastLine

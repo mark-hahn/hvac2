@@ -14,9 +14,13 @@
   },
   "homepage": "https://github.com/mark-hahn/hvac2",
   "dependencies": {
+    "gnuplot": "^0.2.0",
     "imprea": "^1.0.0",
+    "linebyline": "^1.1.0",
     "moment": "^2.10.6",
+    "nano": "^6.1.5",
     "node-static": "^0.7.7",
+    "plotter": "^0.5.0",
     "primus": "^3.2.2",
     "request": "^2.61.0",
     "serialport": "^1.7.4",
