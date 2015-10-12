@@ -40,9 +40,9 @@ chargeByKWH = (kwh, topTier) ->
     kwh -= hrsInTier
   charge
    
-log 'billing check 8/28 to 9/28, 1203 kwhrs, 296.77:', chargeByKWH(1203).toFixed 2
-sepBillWithSolar = chargeByKWH 1343
-log 'bill if solar included', sepBillWithSolar.toFixed 2
+# log 'billing check 8/28 to 9/28, 1203 kwhrs, 296.77:', chargeByKWH(1203).toFixed 2
+# sepBillWithSolar = chargeByKWH 1343
+# log 'bill if solar included', sepBillWithSolar.toFixed 2
 
 minsPc = (mins) -> (100 * mins / (24*60)).toFixed 2
 
@@ -55,6 +55,7 @@ plotPeriod = (label, start, end=Infinity) ->
     gnuPlotDataUsage     = ["unixtime AllDayUsage NightUsage"]
     lastDay = lastTime   = null
     days = allDayMins = nightMins = kwHrs = dayHighTemp = 0
+    firstDay = yes
     
     for row in data.rows
       acMins = +row.value[1] 
@@ -75,9 +76,14 @@ plotPeriod = (label, start, end=Infinity) ->
         dayCharge = +chargeByKWH(kwhrsForDay, yes)
         # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
         # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
-        
-        gnuPlotDataUsage.push \
-            "#{lastTime ? unixtime} #{minsPc allDayMins} #{minsPc nightMins}"
+
+        if firstDay
+          gnuPlotDataUsage.push \
+              "#{start/1000} #{minsPc allDayMins} #{minsPc nightMins}"
+          firstDay = no
+        else
+          gnuPlotDataUsage.push \
+              "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"
         
         days++
         lastTime = unixtime
@@ -93,12 +99,15 @@ plotPeriod = (label, start, end=Infinity) ->
       gnuPlotDataTemp.push "#{unixtime} #{temp}"
       
     gnuPlotDataUsage.push "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"
+    gnuPlotDataUsage.push "#{unixtime} #{minsPc allDayMins} #{minsPc nightMins}"
+    
+    log gnuPlotDataUsage
         
     kwhrsForDay = (allDayMins / 60) * ACPwrUsage
     kwHrs += kwhrsForDay
     dayCharge = +chargeByKWH kwhrsForDay, yes
     # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
-    log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
+    # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
 
     fs.writeFileSync 'stats/gnuPlotDataUsage.txt', gnuPlotDataUsage.join '\n'
     fs.writeFileSync 'stats/gnuPlotDataTemp.txt',  gnuPlotDataTemp .join '\n'
@@ -118,21 +127,21 @@ plotPeriod = (label, start, end=Infinity) ->
                "stats/gnuPlotDataUsage.txt" using 1:2 with steps'
         .end()
         
-    log ''
-    log '--- sept (AC estimates based on 9/14 to 9/28) ---'
-    log 'AC kwHrs for', days, 'days:', Math.ceil kwHrs
-    log 'est. AC cost for', days, 'days:', chargeByKWH(kwHrs, yes).toFixed 2
-    estACMonthKwh = (32/days) * kwHrs
-    estACBill = chargeByKWH estACMonthKwh, yes
-    log 'est. sept AC bill:',  estACBill.toFixed 2
-    log ''
-    log '--- sept (ALL pwr estimates based on 9/14 to 9/28) ---'
-    otherKWHrs = 1343 - estACMonthKwh
-    otherKWHrsPerDay = otherKWHrs / days
-    estOtherBill = chargeByKWH 32 * otherKWHrsPerDay
-    log 'est. sept other bill:', estOtherBill.toFixed 2
-    log 'est. sept ALL bill:',  (estACBill + estOtherBill).toFixed 2
-    log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
+    # log ''
+    # log '--- sept (AC estimates based on 9/14 to 9/28) ---'
+    # log 'AC kwHrs for', days, 'days:', Math.ceil kwHrs
+    # log 'est. AC cost for', days, 'days:', chargeByKWH(kwHrs, yes).toFixed 2
+    # estACMonthKwh = (32/days) * kwHrs
+    # estACBill = chargeByKWH estACMonthKwh, yes
+    # log 'est. sept AC bill:',  estACBill.toFixed 2
+    # log ''
+    # log '--- sept (ALL pwr estimates based on 9/14 to 9/28) ---'
+    # otherKWHrs = 1343 - estACMonthKwh
+    # otherKWHrsPerDay = otherKWHrs / days
+    # estOtherBill = chargeByKWH 32 * otherKWHrsPerDay
+    # log 'est. sept other bill:', estOtherBill.toFixed 2
+    # log 'est. sept ALL bill:',  (estACBill + estOtherBill).toFixed 2
+    # log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
 
 # month is actually one greater
 plotPeriod 'Sep', new Date(2015, 8, 14).getTime(), new Date(2015, 8, 28).getTime()
