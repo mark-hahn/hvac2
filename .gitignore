@@ -3,3 +3,4 @@ js
 npm-debug.log
 nohup.out
 sample*
+gnuPlotData*.txt
