@@ -45,18 +45,16 @@ log 'billing check 8/28 to 9/28, 1203 kwhrs, 296.77:', chargeByKWH(1203).toFixed
 sepBillWithSolar = chargeByKWH 1343
 log 'bill if solar included', sepBillWithSolar.toFixed 2
 
+minsPc = (mins) -> (100 * mins / (24*60)).toFixed 2
+
 db.view 'all', 'hours', (err, data) ->
     
   ################### SEP ###################
-  plotDataTemp         = {}
-  plotDataPercent      = {}
-  plotDataNightPercent = {}
   gnuPlotDataTemp      = ["unixtime MaxTemp"]
   gnuPlotDataUsage     = ["unixtime AllDayUsage NightUsage"]
   lastDay              = null
   days = allDayMins = nightMins = kwHrs = dayHighTemp = 0
   
-  minsPc = (mins) -> 100 * mins / (24*60)
   
   for row in data.rows
     acMins = +row.value[1] 
@@ -73,11 +71,6 @@ db.view 'all', 'hours', (err, data) ->
     if temp > 50
       plotDataTemp['' + (day+hour/24).toFixed 3] = temp
     if lastDay and lastDay isnt day
-      pc = (100*(nightMins/60)/24).toFixed 3
-      plotDataNightPercent['' + (lastDay + 0.5)] = pc
-      pc = (100*(allDayMins/60)/24).toFixed 3
-      plotDataPercent['' + (lastDay + 0.5)] = pc
-      # plotDataPercent['' + (lastDay+1.00001)] = pc
       kwhrsForDay = (allDayMins / 60) * ACPwrUsage
       kwHrs += kwhrsForDay
       dayCharge = +chargeByKWH(kwhrsForDay, yes)
@@ -96,12 +89,6 @@ db.view 'all', 'hours', (err, data) ->
     
   # gnuPlotDataUsage.push "#{unixtime} #{minsPc allDayMins} #{minsPc nightMins}"
       
-  pc = (100*(nightMins/60)/24).toFixed 3
-  plotDataNightPercent['' + (lastDay + 0.5)] = pc
-  pc = (100*(allDayMins/60)/24).toFixed 3
-  plotDataPercent['' + (lastDay + 0.5)] = pc
-  # plotDataPercent['' + (lastDay+1.00001)] = pc
-  
   kwhrsForDay = (allDayMins / 60) * ACPwrUsage
   kwHrs += kwhrsForDay
   dayCharge = +chargeByKWH kwhrsForDay, yes
@@ -129,13 +116,6 @@ db.view 'all', 'hours', (err, data) ->
     .end()
           #  "stats/gnuPlotDataUsage.txt" using 1:(avg5($5)) with fsteps'
       
-  plot
-    data:      
-      maxTemp: plotDataTemp
-      percentAC: plotDataPercent
-      percentNight: plotDataNightPercent
-    filename: 'stats/tempMinsSep.png'
-    
   log ''
   log '--- sept (AC estimates based on 9/14 to 9/28) ---'
   log 'AC kwHrs for', days, 'days:', Math.ceil kwHrs
@@ -151,6 +131,7 @@ db.view 'all', 'hours', (err, data) ->
   log 'est. sept other bill:', estOtherBill.toFixed 2
   log 'est. sept ALL bill:',  (estACBill + estOtherBill).toFixed 2
   log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
+
 
   ################### OCT ###################
   plotDataTemp = {}
