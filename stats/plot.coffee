@@ -40,172 +40,100 @@ chargeByKWH = (kwh, topTier) ->
     kwh -= hrsInTier
   charge
    
-log 'aug est, 900 kwh', chargeByKWH(900)
 log 'billing check 8/28 to 9/28, 1203 kwhrs, 296.77:', chargeByKWH(1203).toFixed 2
 sepBillWithSolar = chargeByKWH 1343
 log 'bill if solar included', sepBillWithSolar.toFixed 2
 
-db.view 'all', 'hours', (err, data) ->
+minsPc = (mins) -> (100 * mins / (24*60)).toFixed 2
+
+plotPeriod = (label, start, end=Infinity) ->
+  title = 'title "HVAC temp and AC usage: ' + label + '"'
+  fileName = '/root/Downloads/hvac-' + label + '.svg'
     
-  ################### SEP ###################
-  plotDataTemp         = {}
-  plotDataPercent      = {}
-  plotDataNightPercent = {}
-  gnuPlotDataTemp      = ["unixtime MaxTemp"]
-  gnuPlotDataUsage     = ["unixtime AllDayUsage NightUsage"]
-  lastDay              = null
-  days = allDayMins = nightMins = kwHrs = dayHighTemp = 0
-  
-  minsPc = (mins) -> 100 * mins / (24*60)
-  
-  for row in data.rows
-    acMins = +row.value[1] 
-    temp   = +row.value[3]
-    month  = +row.value[5]
-    day    = +row.value[6]
-    hour   = +row.value[7]
-    timeMS = Math.round Date.parse '2015-' + row.value[5] + '-' + row.value[6] + 'T' + 
-                                             row.value[7] + ':00:00'
-    unixtime = Math.round timeMS / 1000
-    # gnuPlotDataUsage.push "#{unixtime} #{0} #{0}"
+  db.view 'all', 'hours', (err, data) ->
+    gnuPlotDataTemp      = ["unixtime Temp"]
+    gnuPlotDataUsage     = ["unixtime AllDayUsage NightUsage"]
+    lastDay = lastTime   = null
+    days = allDayMins = nightMins = kwHrs = dayHighTemp = 0
     
-    if month isnt 9 or not (14 <= day <= 28) then continue
-    if temp > 50
-      plotDataTemp['' + (day+hour/24).toFixed 3] = temp
-    if lastDay and lastDay isnt day
-      pc = (100*(nightMins/60)/24).toFixed 3
-      plotDataNightPercent['' + (lastDay + 0.5)] = pc
-      pc = (100*(allDayMins/60)/24).toFixed 3
-      plotDataPercent['' + (lastDay + 0.5)] = pc
-      # plotDataPercent['' + (lastDay+1.00001)] = pc
-      kwhrsForDay = (allDayMins / 60) * ACPwrUsage
-      kwHrs += kwhrsForDay
-      dayCharge = +chargeByKWH(kwhrsForDay, yes)
-      # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
-      # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
-      gnuPlotDataUsage.push "#{unixtime} #{minsPc allDayMins} #{minsPc nightMins}"
-      days++
-      dayHighTemp = allDayMins = nightMins = 0
-    lastDay = day
-    if hour < 9 or hour >= 21
-      nightMins += acMins
-    allDayMins += acMins
-    dayHighTemp = Math.max dayHighTemp, temp
+    for row in data.rows
+      acMins = +row.value[1] 
+      temp   = +row.value[3]
+      month  = +row.value[5]
+      day    = +row.value[6]
+      hour   = +row.value[7]
+      timeMS = Math.round Date.parse '2015-' + row.value[5] + '-' + row.value[6] + 'T' + 
+                                               row.value[7] + ':00:00'
+      if timeMS < start then continue
+      if timeMS >= end  then break
+      
+      unixtime = Math.round timeMS / 1000
+      
+      if lastDay and lastDay isnt day
+        kwhrsForDay = (allDayMins / 60) * ACPwrUsage
+        kwHrs += kwhrsForDay
+        dayCharge = +chargeByKWH(kwhrsForDay, yes)
+        # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
+        # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
+        
+        gnuPlotDataUsage.push \
+            "#{lastTime ? unixtime} #{minsPc allDayMins} #{minsPc nightMins}"
+        
+        days++
+        lastTime = unixtime
+        dayHighTemp = allDayMins = nightMins = 0
+        
+      lastDay = day
+      
+      if hour < 9 or hour >= 21
+        nightMins += acMins
+      allDayMins += acMins
+      dayHighTemp = Math.max dayHighTemp, temp
 
-    gnuPlotDataTemp.push "#{unixtime} #{temp}"
+      gnuPlotDataTemp.push "#{unixtime} #{temp}"
+      
+    gnuPlotDataUsage.push "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"
+        
+    kwhrsForDay = (allDayMins / 60) * ACPwrUsage
+    kwHrs += kwhrsForDay
+    dayCharge = +chargeByKWH kwhrsForDay, yes
+    # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
+    log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
+
+    fs.writeFileSync 'stats/gnuPlotDataUsage.txt', gnuPlotDataUsage.join '\n'
+    fs.writeFileSync 'stats/gnuPlotDataTemp.txt',  gnuPlotDataTemp .join '\n'
     
-  # gnuPlotDataUsage.push "#{unixtime} #{minsPc allDayMins} #{minsPc nightMins}"
-      
-  pc = (100*(nightMins/60)/24).toFixed 3
-  plotDataNightPercent['' + (lastDay + 0.5)] = pc
-  pc = (100*(allDayMins/60)/24).toFixed 3
-  plotDataPercent['' + (lastDay + 0.5)] = pc
-  # plotDataPercent['' + (lastDay+1.00001)] = pc
-  
-  kwhrsForDay = (allDayMins / 60) * ACPwrUsage
-  kwHrs += kwhrsForDay
-  dayCharge = +chargeByKWH kwhrsForDay, yes
-  # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
-  log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
+    if days
+      gnuPlot()
+        .set 'term svg dynamic'
+        .set title
+        .set 'grid'
+        .set 'key autotitle columnhead'
+        .set 'timefmt "%s"'
+        .set 'xdata time'
+        .set 'output "' + fileName + '"'
+        .set 'format x "%d"'
+        .plot '"stats/gnuPlotDataTemp.txt"  using 1:2 with lines,
+               "stats/gnuPlotDataUsage.txt" using 1:3 with steps,
+               "stats/gnuPlotDataUsage.txt" using 1:2 with steps'
+        .end()
+        
+    log ''
+    log '--- sept (AC estimates based on 9/14 to 9/28) ---'
+    log 'AC kwHrs for', days, 'days:', Math.ceil kwHrs
+    log 'est. AC cost for', days, 'days:', chargeByKWH(kwHrs, yes).toFixed 2
+    estACMonthKwh = (32/days) * kwHrs
+    estACBill = chargeByKWH estACMonthKwh, yes
+    log 'est. sept AC bill:',  estACBill.toFixed 2
+    log ''
+    log '--- sept (ALL pwr estimates based on 9/14 to 9/28) ---'
+    otherKWHrs = 1343 - estACMonthKwh
+    otherKWHrsPerDay = otherKWHrs / days
+    estOtherBill = chargeByKWH 32 * otherKWHrsPerDay
+    log 'est. sept other bill:', estOtherBill.toFixed 2
+    log 'est. sept ALL bill:',  (estACBill + estOtherBill).toFixed 2
+    log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
 
-  fs.writeFileSync 'stats/gnuPlotDataUsage.txt', gnuPlotDataUsage.join '\n'
-  fs.writeFileSync 'stats/gnuPlotDataTemp.txt',  gnuPlotDataTemp.join  '\n'
-  
-  gnuPlot()
-    # .print 'samples(x) = $0 > 4 ? 5 : ($0+1);'
-    # .print 'back1 = back2 = back3 = back4 = back5 = sum = 0;'
-    # .print 'avg5(x) = (shift5(x), (back1+back2+back3+back4+back5)/samples($0));'
-    # .print 'shift5(x) = (back5 = back4, back4 = back3, back3 = back2, back2 = back1, back1 = x);'
-    .set 'term svg dynamic'
-    .set 'title "HVAC temp and AC usage mins 9-14 to 9-28"'
-    .set 'key autotitle columnhead'
-    .set 'timefmt "%s"'
-    .set 'xdata time'
-    .set 'output "/root/Downloads/hvac-sep.svg"'
-    .set 'format x "%d"'
-    .plot '"stats/gnuPlotDataTemp.txt"  using 1:2 with lines,
-           "stats/gnuPlotDataUsage.txt" using 1:2 with fsteps,
-           "stats/gnuPlotDataUsage.txt" using 1:3 with fsteps'
-    .end()
-          #  "stats/gnuPlotDataUsage.txt" using 1:(avg5($5)) with fsteps'
-      
-  plot
-    data:      
-      maxTemp: plotDataTemp
-      percentAC: plotDataPercent
-      percentNight: plotDataNightPercent
-    filename: 'stats/tempMinsSep.png'
-    
-  log ''
-  log '--- sept (AC estimates based on 9/14 to 9/28) ---'
-  log 'AC kwHrs for', days, 'days:', Math.ceil kwHrs
-  log 'est. AC cost for', days, 'days:', chargeByKWH(kwHrs, yes).toFixed 2
-  estACMonthKwh = (32/days) * kwHrs
-  estACBill = chargeByKWH estACMonthKwh, yes
-  log 'est. sept AC bill:',  estACBill.toFixed 2
-  log ''
-  log '--- sept (ALL pwr estimates based on 9/14 to 9/28) ---'
-  otherKWHrs = 1343 - estACMonthKwh
-  otherKWHrsPerDay = otherKWHrs / days
-  estOtherBill = chargeByKWH 32 * otherKWHrsPerDay
-  log 'est. sept other bill:', estOtherBill.toFixed 2
-  log 'est. sept ALL bill:',  (estACBill + estOtherBill).toFixed 2
-  log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
-
-  ################### OCT ###################
-  plotDataTemp = {}
-  plotDataPercent = {}
-  plotDataNightPercent = {}
-  lastDay = null
-  allDayMins = nightMins = kwHrs = 0
-  days = 0
-  
-  for row in data.rows
-    acMins = +row.value[1] 
-    temp   = +row.value[3]
-    month  = +row.value[5]
-    day    = +row.value[6]
-    hour   = +row.value[7]
-    if month isnt 10 then continue
-    if temp > 50
-      plotDataTemp['' + (day+hour/24).toFixed 3] = temp
-    if lastDay and lastDay isnt day
-      
-      pc = (100*(nightMins/60)/24).toFixed 3
-      plotDataNightPercent['' + (lastDay + 0.5)] = pc
-      
-      pc = (100*(allDayMins/60)/24).toFixed 3
-      plotDataPercent['' + (lastDay + 0.5)] = pc
-      # plotDataPercent['' + (lastDay+1.00001)] = pc
-      kwHrs += (allDayMins / 60) * ACPwrUsage
-      days++
-      allDayMins = nightMins = 0
-    lastDay = day
-    if hour < 9 or hour >= 21
-      nightMins += acMins
-    allDayMins += acMins
-      
-  pc = (100*(nightMins/60)/24).toFixed 3
-  plotDataNightPercent['' + (lastDay + 0.5)] = pc
-      
-  pc = (100*(allDayMins/60)/24).toFixed 3
-  plotDataPercent['' + (lastDay + 0.5)] = pc
-  # plotDataPercent['' + (lastDay+1.00001)] = pc
-
-  plot
-    data:
-      maxTemp: plotDataTemp
-      percentAC: plotDataPercent
-      percentNight: plotDataNightPercent
-    filename: 'stats/tempMinsOct.png'
-
-  log ''
-  log '--- oct ---'
-  log 'AC kwHrs for', days, 'days:', Math.ceil kwHrs
-  estACMonthKwhrs = 31 * (kwHrs / days)
-  log 'est. AC cost for', days, 'days:', chargeByKWH(kwHrs, yes).toFixed 2
-  log 'est. AC cost for month', chargeByKWH(estACMonthKwhrs, yes).toFixed 2
-  log 'est. other month bill', chargeByKWH(31 * otherKWHrsPerDay).toFixed 2
-  estAllMonthKwhrs = estACMonthKwhrs + otherKWHrsPerDay * 31
-  log 'est. ALL month bill:', chargeByKWH(estAllMonthKwhrs).toFixed 2
-  log ''
+# month is actually one greater
+plotPeriod 'Sep', new Date(2015, 8, 14).getTime(), new Date(2015, 8, 28).getTime()
+plotPeriod 'Oct', new Date(2015, 9, 1).getTime()
