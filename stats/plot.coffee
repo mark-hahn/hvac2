@@ -46,7 +46,7 @@ chargeByKWH = (kwh, topTier) ->
 
 minsPc = (mins) -> (100 * mins / (24*60)).toFixed 2
 
-plotPeriod = (label, start, end=Infinity) ->
+plotPeriod = (label, start, end=Infinity, cb) ->
   title    = 'title "HVAC Temp and AC usage: ' + label + '"'
   filePath = '/root/apps/hvac/stats/hvac-'     + label + '.svg'
     
@@ -124,7 +124,9 @@ plotPeriod = (label, start, end=Infinity) ->
         .plot '"/root/apps/hvac/stats/gnuPlotDataTemp.txt"  using 1:2 with lines,
                "/root/apps/hvac/stats/gnuPlotDataUsage.txt" using 1:3 with steps,
                "/root/apps/hvac/stats/gnuPlotDataUsage.txt" using 1:2 with steps'
-        .end()
+        .end cb
+      return
+    cb()
         
     # log ''
     # log '--- sept (AC estimates based on 9/14 to 9/28) ---'
@@ -143,7 +145,6 @@ plotPeriod = (label, start, end=Infinity) ->
     # log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
 
 # month is actually one greater
-plotPeriod 'Sep', new Date(2015, 8, 14).getTime(), new Date(2015, 8, 28).getTime()
-plotPeriod 'Oct', new Date(2015, 9, 1).getTime()
-
-log 'plot finished', new Date
+plotPeriod 'Sep', new Date(2015, 8, 14).getTime(), new Date(2015, 8, 28).getTime(), ->
+  plotPeriod 'Oct', new Date(2015, 9, 1).getTime(), null, ->
+    log 'plot finished', new Date
