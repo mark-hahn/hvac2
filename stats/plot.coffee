@@ -148,3 +148,4 @@ plotPeriod = (label, start, end=Infinity, cb) ->
 plotPeriod 'Sep', new Date(2015, 8, 14).getTime(), new Date(2015, 8, 28).getTime(), ->
   plotPeriod 'Oct', new Date(2015, 9, 1).getTime(), null, ->
     log 'plot finished', new Date
+

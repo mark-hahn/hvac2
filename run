@@ -19,8 +19,7 @@ if $isdev
 fi
 
 killall tail > /dev/null 2>&1
-touch nohup.out
-tail -fn 0 nohup.out &
+tail -fn 0 ~/logs/hvac.log &
 
 set -e
 
@@ -36,3 +35,4 @@ if $isdev
   then nohup node js/main.js hvac dev >> ~/logs/hvac.log 2>&1 &
   else nohup node js/main.js hvac     >> ~/logs/hvac.log 2>&1 &
 fi
+
