@@ -3,7 +3,7 @@
   timing dampers/hvac in -> insteon relays in closet
 ###
 
-disableHvacCtrl = yes
+disableHvacCtrl = no
 
 {log, logObj} = require('./utils') 'INSTE'
 
