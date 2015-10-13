@@ -116,7 +116,7 @@ plotPeriod = (label, start, end=Infinity) ->
         .set title
         .set 'grid'
         .set 'key off' # autotitle columnhead'
-        .set 'label "`date +%m/%d%l:%M`" right at graph 1,1.07 font "arial,10"'
+        .set 'label "`date "+%m/%d %H:%M"`" right at graph 1,1.07 font "arial,10"'
         .set 'timefmt "%s"'
         .set 'xdata time'
         .set 'output "' + filePath + '"'
