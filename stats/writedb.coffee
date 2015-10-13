@@ -64,7 +64,7 @@ finish = ->
         minExtTemp: minTemp
         maxExtTemp: maxTemp
       }
-      log 'saving ' + doc._id
+      # log 'saving ' + doc._id
       put doc, (err) ->
         if err 
           log 'exiting ...'
@@ -101,6 +101,7 @@ files = ['/root/logs/hvac.log']
 do oneFile = ->
   if not (file = files.shift()) 
     finish()
+    log 'finished writedb', new Date
     return
     
   lr = readline file
@@ -109,8 +110,6 @@ do oneFile = ->
   lr.on 'line', (line) ->
     if (lineData = parseLine line)
       day = "#{lineData.mo}-#{lineData.day}"
-      if not dbgLastDay
-        log 'first:', day
       dbgLastDay = day
       lines.push lineData
      

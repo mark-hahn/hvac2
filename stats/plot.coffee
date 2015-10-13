@@ -3,7 +3,7 @@ log     = console.log.bind console
 fs      = require 'fs'
 plot    = require('plotter').plot
 gnuPlot = require 'gnuplot'
-db      = require('nano') 'http://hahnca.com:5984/hvac'
+db      = require('nano') 'http://localhost:5984/hvac'
 
 # socal edison
 # actual usage 8/28 to 9/28    => 1343 kwh
@@ -47,8 +47,8 @@ chargeByKWH = (kwh, topTier) ->
 minsPc = (mins) -> (100 * mins / (24*60)).toFixed 2
 
 plotPeriod = (label, start, end=Infinity) ->
-  title = 'title "HVAC temp and AC usage: ' + label + '"'
-  fileName = '/root/Downloads/hvac-' + label + '.svg'
+  title    = 'title "HVAC Temp and AC usage: ' + label + '"'
+  filePath = '/root/apps/hvac/stats/hvac-'     + label + '.svg'
     
   db.view 'all', 'hours', (err, data) ->
     gnuPlotDataTemp      = ["unixtime Temp"]
@@ -101,30 +101,29 @@ plotPeriod = (label, start, end=Infinity) ->
     gnuPlotDataUsage.push "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"
     gnuPlotDataUsage.push "#{unixtime} #{minsPc allDayMins} #{minsPc nightMins}"
     
-    log gnuPlotDataUsage
-        
     kwhrsForDay = (allDayMins / 60) * ACPwrUsage
     kwHrs += kwhrsForDay
     dayCharge = +chargeByKWH kwhrsForDay, yes
     # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
     # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
 
-    fs.writeFileSync 'stats/gnuPlotDataUsage.txt', gnuPlotDataUsage.join '\n'
-    fs.writeFileSync 'stats/gnuPlotDataTemp.txt',  gnuPlotDataTemp .join '\n'
+    fs.writeFileSync '/root/apps/hvac/stats/gnuPlotDataUsage.txt', gnuPlotDataUsage.join '\n'
+    fs.writeFileSync '/root/apps/hvac/stats/gnuPlotDataTemp.txt',  gnuPlotDataTemp .join '\n'
     
     if days
       gnuPlot()
         .set 'term svg dynamic'
         .set title
         .set 'grid'
-        .set 'key autotitle columnhead'
+        .set 'key off' # autotitle columnhead'
+        .set 'label "`date +%m/%d%l:%M`" right at graph 1,1.07 font "arial,10"'
         .set 'timefmt "%s"'
         .set 'xdata time'
-        .set 'output "' + fileName + '"'
+        .set 'output "' + filePath + '"'
         .set 'format x "%d"'
-        .plot '"stats/gnuPlotDataTemp.txt"  using 1:2 with lines,
-               "stats/gnuPlotDataUsage.txt" using 1:3 with steps,
-               "stats/gnuPlotDataUsage.txt" using 1:2 with steps'
+        .plot '"/root/apps/hvac/stats/gnuPlotDataTemp.txt"  using 1:2 with lines,
+               "/root/apps/hvac/stats/gnuPlotDataUsage.txt" using 1:3 with steps,
+               "/root/apps/hvac/stats/gnuPlotDataUsage.txt" using 1:2 with steps'
         .end()
         
     # log ''
@@ -146,3 +145,5 @@ plotPeriod = (label, start, end=Infinity) ->
 # month is actually one greater
 plotPeriod 'Sep', new Date(2015, 8, 14).getTime(), new Date(2015, 8, 28).getTime()
 plotPeriod 'Oct', new Date(2015, 9, 1).getTime()
+
+log 'plot finished', new Date

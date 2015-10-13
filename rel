@@ -20,6 +20,7 @@ cp -v /root/dev/apps/hvac2/rel               rel
 cp -v /root/dev/apps/hvac2/run               run
 rsync -av /root/dev/apps/hvac2/processing/   processing
 rsync -av /root/dev/apps/hvac2/src/          src
+rsync -av /root/dev/apps/hvac2/stats/        stats
 rsync -av /root/dev/apps/hvac2/www/          www
 rsync -av /root/dev/apps/hvac2/node_modules/ node_modules
 
