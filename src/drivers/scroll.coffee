@@ -5,65 +5,119 @@
 {log, logObj} = require('./utils') 'SCROL'
 fs = require 'fs'
 $  = require('imprea')()
+gnuPlot = require 'gnuplot'
 
 hyst = 0.25
-color = activeColor = null
+activeColor = null
 
 rooms        = ['tvRoom', 'kitchen', 'master', 'guest']
 lastSetpoint = {tvRoom:null, kitchen:null, master:null, guest:null}
-
+lastMode     = {tvRoom:'off', kitchen:'off', master:'off', guest:'off'}
+  
 pfx = '/tmp/hvac-gnuplot-'
 path = (room, data, sfx = 'txt') -> pfx + data + '-' + room + '.' + sfx
+
+color = (room, idxType) ->
+  for r, idx in rooms
+    if r is room then break
+  idx * 3 + idxType
+
 unixTime = -> Math.round Date.now() / 1000
+
+writeSetpoints = (room, setpoint=lastSetpoint[room], mode=lastMode[room]) ->
+  if not setpoint? or mode not in ['heat', 'cool'] then return
+  setColor = color room, 3
+  filePath = path room, 'setpointLo', 'txt'
+  time = unixTime() + ' '
+  line = time + (setpoint - hyst) + ' ' + setColor + 
+      '    # setpointLo-' + room
+  # log 'appending', line
+  fs.appendFileSync filePath, line + '\n'
+  
+  filePath = path room, 'setpointHi', 'txt'
+  line = time + (setpoint + hyst) + ' ' + setColor + 
+      '    # setpointHi-' + room
+  # log 'appending', line
+  fs.appendFileSync filePath, line + '\n'
+
+writeTemp = (self, room, temp) =>
+  active = (self.timing_dampers?[room] and 
+           (self.timing_hvac?.heat or self.timing_hvac?.cool))
+  if active? and temp?
+    filePath = path room, 'temp', 'txt'
+    lineColor = color room, (if active then 2 else 1)
+    line = unixTime() + ' ' + temp + ' ' + lineColor + '    # temp-' + room
+    # log 'appending', {filePath, line}
+    fs.appendFileSync filePath, line + '\n'
 
 $.react 'temp_tvRoom', 'temp_kitchen', 'temp_master', 'temp_guest',
         'ws_tstat_data', 'timing_hvac', 'timing_dampers'
 , (name) ->
-  
-  # log 'react', name, @[name]
-
-  writeTemp = (room, temp) =>
-    active = (@timing_dampers?[room] and 
-             (@timing_hvac?.heat or @timing_hvac?.cool))
-    if active? and temp?
-      filePath = path room, 'temp', 'txt'
-      lineColor = (if active then activeColor[room] else color[room])
-      line = unixTime() + ' ' + temp + ' ' + lineColor + ' temp-' + room
-      log 'appending', line
-      fs.appendFileSync filePath, line + '\n'
 
   if name[0..4] is 'temp_'
-    writeTemp name[5...], @[name]
+    room = name[5...]
+    writeTemp @, room, @[name]
+    writeSetpoints room
     return
   
   if name in ['timing_hvac', 'timing_dampers']
-    for room in rooms then writeTemp room, @['temp_' + room]
+    for room in rooms 
+      writeTemp @, room, @['temp_' + room]
+      writeSetpoints room
     return
 
   if name is 'ws_tstat_data'
-    {room, setpoint} = @ws_tstat_data
-    if setpoint isnt lastSetpoint[room]
-      lastSetpoint[room] = setpoint
-      
-      filePath = path room, 'setpointLo', 'txt'
-      line = unixTime() + ' ' + (setpoint - hyst) + ' ' + setColor[room] + 
-             ' setpointLo-' + room
-      log 'appending', line
-      fs.appendFileSync filePath, line + '\n'
-      
-      filePath = path room, 'setpointHi', 'txt'
-      line = unixTime() + ' ' + (setpoint + hyst) + ' ' + setColor[room] + 
-          ' setpointHi-' + room
-      log 'appending', line
-      fs.appendFileSync filePath, line + '\n'
-      return
+    {room, setpoint, mode} = @ws_tstat_data
+    lastMode[room] = mode
+    lastSetpoint[room] = setpoint
+    writeSetpoints room, setpoint, mode
+    return
+
+cmdPfx  = '"/tmp/hvac-gnuplot-'; 
+cmdSfx = '.txt" using 1:2:3 with lines lc variable'
+
+cmd = []
+for room in ['guest', 'kitchen', 'master', 'tvRoom']
+  cmd.push cmdPfx + 'setpointHi-' + room + cmdSfx
+for room in ['guest', 'kitchen', 'master', 'tvRoom']
+  cmd.push cmdPfx + 'setpointLo-' + room + cmdSfx
+for room in ['guest', 'kitchen', 'master', 'tvRoom']
+  cmd.push cmdPfx +       'temp-' + room + cmdSfx
+plotCmd = cmd.join ',  '
+# log plotCmd
+# process.exit 0
+
+module.exports = (svgFile, cb) ->
+  gnuPlot()
+    .set 'term svg dynamic'
+    # .set 'yrange["70":"90"]'
+    
+    .set 'linetype  1 lc rgb "#8888ff"' # tv room - temp
+    .set 'linetype  2 lc rgb "#000088"' #         - temp active
+    .set 'linetype  3 lc rgb "#ccccff"' #         - setpoint
+
+    .set 'linetype  4 lc rgb "#88ff88"' # kitchen - temp
+    .set 'linetype  5 lc rgb "#008800"' #         - temp active
+    .set 'linetype  6 lc rgb "#ccffcc"' #         - setpoint
   
-color = 
-  {tvRoom:'grey',  kitchen:'web-green', master:'red',   guest:'steelblue'}  
-activeColor = 
-  {tvRoom:'black', kitchen:'black',     master:'black', guest:'black'}  
-setColor = 
-  {tvRoom:'grey',  kitchen:'web-green', master:'red',   guest:'steelblue'}  
+    .set 'linetype  7 lc rgb "#ff8888"' # master  - temp
+    .set 'linetype  8 lc rgb "#880000"' #         - temp active
+    .set 'linetype  9 lc rgb "#ffcccc"' #         - setpoint
+    
+    .set 'linetype 10 lc rgb "#cccccc"' # guest   - temp
+    .set 'linetype 11 lc rgb "#111111"' #         - temp active
+    .set 'linetype 12 lc rgb "#eeeeee"' #         - setpoint
+    
+    .set 'title "HVAC Scroll Plot"'
+    .set 'grid'
+    .set 'key off'
+    .set 'label "`date "+%m/%d %H:%M"`" right at graph 1,1.07 font "arial,10"'
+    .set 'timefmt "%s"'
+    .set 'xdata time'
+    .set 'format x "%M"'
+    .set 'output "' + svgFile + '"'
+    .plot plotCmd
+    .end cb  
 
 ###
   white              #ffffff = 255 255 255

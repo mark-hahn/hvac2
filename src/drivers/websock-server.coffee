@@ -4,6 +4,7 @@
 ###
 
 {log, logObj} = require('./utils') 'WSOCK'
+scroll = require '../js/scroll'
 
 port = 1339
 
@@ -94,6 +95,14 @@ srvr = http.createServer (req, res) ->
     res.writeHead 200, "Content-Type": "image/svg+xml"
     res.end fs.readFileSync '/root/apps/hvac/stats/hvac-' + label + '.svg', 'utf8'
     console.log 'usage-req:', req.url
+    return
+  
+  if req.url[0..6] is '/scroll'
+    res.writeHead 200, "Content-Type": "image/svg+xml"
+    file = '/root/apps/hvac/stats/hvac-scroll.svg'
+    scroll file, ->
+      res.end fs.readFileSync file, 'utf8'
+      console.log 'scroll-req:', req.url
     return
   
   req.addListener('end', ->

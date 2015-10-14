@@ -107,8 +107,8 @@ plotPeriod = (label, start, end=Infinity, cb) ->
     # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
     # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
 
-    fs.writeFileSync '/root/apps/hvac/stats/gnuPlotDataUsage.txt', gnuPlotDataUsage.join '\n'
-    fs.writeFileSync '/root/apps/hvac/stats/gnuPlotDataTemp.txt',  gnuPlotDataTemp .join '\n'
+    fs.writeFileSync '/tmp/gnuPlotDataUsage.txt', gnuPlotDataUsage.join '\n'
+    fs.writeFileSync '/tmp/gnuPlotDataTemp.txt',  gnuPlotDataTemp .join '\n'
     
     if days
       gnuPlot()
@@ -121,9 +121,9 @@ plotPeriod = (label, start, end=Infinity, cb) ->
         .set 'xdata time'
         .set 'output "' + filePath + '"'
         .set 'format x "%d"'
-        .plot '"/root/apps/hvac/stats/gnuPlotDataTemp.txt"  using 1:2 with lines,
-               "/root/apps/hvac/stats/gnuPlotDataUsage.txt" using 1:3 with steps,
-               "/root/apps/hvac/stats/gnuPlotDataUsage.txt" using 1:2 with steps'
+        .plot '"/tmp/gnuPlotDataTemp.txt"  using 1:2 with lines,
+               "/tmp/gnuPlotDataUsage.txt" using 1:3 with steps,
+               "/tmp/gnuPlotDataUsage.txt" using 1:2 with steps'
         .end cb
       return
     cb()
