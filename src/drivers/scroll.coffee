@@ -37,7 +37,7 @@ writeSetpoints = (room, setpoint=lastSetpoint[room], mode=lastMode[room]) ->
     return
   now = Date.now()
   # log 'lastSetWrite', room, lastSetWrite[room], now
-  if now - lastSetWrite[room] < 1 * 60*1e3 then setColor = color room,  3 \
+  if now - lastSetWrite[room] < 5 * 60*1e3 then setColor = color room,  3 \
                                           else setColor = color room, 13
   filePath = path room, 'setpointLo', 'txt'
   time = unixTime() + ' '
@@ -137,7 +137,7 @@ module.exports = (svgFile, cb) ->
   if not trimmingOldFileCount
     gnuPlot()
       .set 'term svg dynamic'
-      .set 'linetype  1 lc rgb "#8888ff"' # tv room - temp
+      .set 'linetype  1 lc rgb "#aaaaff"' # tv room - temp
       .set 'linetype  2 lc rgb "#000088"' #         - temp active
       .set 'linetype  3 lc rgb "#ccccff"' #         - setpoint
       .set 'linetype  4 lc rgb "#88ff88"' # kitchen - temp
@@ -146,9 +146,9 @@ module.exports = (svgFile, cb) ->
       .set 'linetype  7 lc rgb "#ff8888"' # master  - temp
       .set 'linetype  8 lc rgb "#880000"' #         - temp active
       .set 'linetype  9 lc rgb "#ffcccc"' #         - setpoint
-      .set 'linetype 10 lc rgb "#cccccc"' # guest   - temp
-      .set 'linetype 11 lc rgb "#111111"' #         - temp active
-      .set 'linetype 12 lc rgb "#eeeeee"' #         - setpoint
+      .set 'linetype 10 lc rgb "#bbbbbb"' # guest   - temp
+      .set 'linetype 11 lc rgb "#333333"' #         - temp active
+      .set 'linetype 12 lc rgb "#cccccc"' #         - setpoint
       .set 'linetype 13 lc rgb "#ffffff"' # - blank (white)
       .set 'title "HVAC Scroll Plot"'
       .set 'grid'

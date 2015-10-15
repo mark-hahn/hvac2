@@ -77,7 +77,7 @@ module.exports =
       , -> writeCodes room
 
 srvr = http.createServer (req, res) ->
-  log 'req:', req.url
+  # log 'req:', req.url
   
   if req.url is '/'
     res.writeHead 200, "Content-Type": "text/html"
@@ -87,14 +87,14 @@ srvr = http.createServer (req, res) ->
   if req.url is '/ceil'
     res.writeHead 200, "Content-Type": "text/html"
     res.end ceilHtml
-    console.log 'ceil-req:', req.url
+    # log 'ceil-req:', req.url
     return
   
   if req.url[0..5] is '/usage'
     label = req.url[7...] or 'Oct'
     res.writeHead 200, "Content-Type": "image/svg+xml"
     res.end fs.readFileSync '/root/apps/hvac/stats/hvac-' + label + '.svg', 'utf8'
-    console.log 'usage-req:', req.url
+    log 'usage-req:', req.url
     return
   
   if req.url[0..6] is '/scroll'
@@ -102,7 +102,7 @@ srvr = http.createServer (req, res) ->
     file = '/root/apps/hvac/stats/hvac-scroll.svg'
     scroll file, ->
       res.end fs.readFileSync file, 'utf8'
-      console.log 'scroll-req:', req.url
+      # log 'scroll-req:', req.url
     return
   
   req.addListener('end', ->
