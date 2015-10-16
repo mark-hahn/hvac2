@@ -27,7 +27,8 @@ color = (room, idxType) ->
     if r is room then break
   idx * 3 + idxType
 
-unixTime = -> Math.round Date.now() / 1000
+utc = (time) -> time - 7 * 60 * 60 * 1e3
+unixTime = -> Math.round utc(Date.now()) / 1000
 
 writeSetpoints = (room, setpoint=lastSetpoint[room], mode=lastMode[room]) ->
   # log 'writeSetpoints', {room, last:lastSetWrite[room],setpoint,mode,trimmingOldFileCount}
@@ -35,7 +36,7 @@ writeSetpoints = (room, setpoint=lastSetpoint[room], mode=lastMode[room]) ->
      mode not in ['heat', 'cool'] or 
      trimmingOldFileCount 
     return
-  now = Date.now()
+  now = utc Date.now()
   # log 'lastSetWrite', room, lastSetWrite[room], now
   if now - lastSetWrite[room] < 5 * 60*1e3 then setColor = color room,  3 \
                                           else setColor = color room, 13
@@ -104,7 +105,7 @@ do trimFiles = ->
 
     lr.on 'line', (line) ->
       match = timeRegex.exec line
-      if +match[1] > Date.now()/1000 - 12*60*60
+      if +match[1] > utc(Date.now())/1000 - 6*60*60
         fs.appendFileSync newfile, line + '\n'
           
     lr.on 'close', ->
@@ -116,7 +117,7 @@ do trimFiles = ->
       fs.renameSync newfile, file
       trimmingOldFileCount--
   
-setInterval trimFiles, 60*60*1e3
+setInterval trimFiles, 30*60*1e3
 
 
 ############## create output SVG file to serve ############
@@ -136,7 +137,8 @@ plotCmd = cmd.join ',  '
 module.exports = (svgFile, cb) ->
   if not trimmingOldFileCount
     gnuPlot()
-      .set 'term svg dynamic'
+      .set 'term svg size 1920 1080 lw 3 dynamic font "Arial,24"'
+      .set 'size ratio 0.5'
       .set 'linetype  1 lc rgb "#aaaaff"' # tv room - temp
       .set 'linetype  2 lc rgb "#000088"' #         - temp active
       .set 'linetype  3 lc rgb "#ccccff"' #         - setpoint
@@ -150,13 +152,21 @@ module.exports = (svgFile, cb) ->
       .set 'linetype 11 lc rgb "#333333"' #         - temp active
       .set 'linetype 12 lc rgb "#cccccc"' #         - setpoint
       .set 'linetype 13 lc rgb "#ffffff"' # - blank (white)
+      .set 'linetype 14 lc rgb "#cccccc"' # - major grid
+      .set 'linetype 15 lc rgb "#eeeeee"' # - minor grid
       .set 'title "HVAC Scroll Plot"'
-      .set 'grid'
       .set 'key off'
-      .set 'label "`date "+%m/%d %H:%M"`" right at graph 1,1.07 font "arial,10"'
+      .set 'label "`date "+%m/%d %l:%M %p"`" right at graph 1,1.03 font "arial,24"'
       .set 'timefmt "%s"'
       .set 'xdata time'
-      .set 'format x "%H"'
+      .set 'xrange [ time(0) - (7*60*60) - (4*60*60) : ' +
+                    'time(0) - (7*60*60) +    (5*60) ]'
+      .set 'xtics 900 scale 0.01'
+      .set 'mxtics 3'
+      .set 'format x "%l:%M"'
+      .set 'ytics 1 scale 0.01'
+      .set 'mytics 2'
+      .set 'grid xtics mxtics ytics mytics lt 14, lt 15'
       .set 'output "' + svgFile + '"'
       .plot plotCmd
       .end cb 
