@@ -104,8 +104,8 @@ do trimFiles = ->
     lr = readline file
 
     lr.on 'line', (line) ->
-      match = timeRegex.exec line
-      if +match[1] > utc(Date.now())/1000 - 6*60*60
+      if (match = timeRegex.exec line) and
+         +match[1] > utc(Date.now())/1000 - 6*60*60
         fs.appendFileSync newfile, line + '\n'
           
     lr.on 'close', ->
