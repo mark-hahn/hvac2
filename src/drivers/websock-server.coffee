@@ -102,11 +102,15 @@ srvr = http.createServer (req, res) ->
     return
   
   if req.url[0..6] is '/scroll'
-    res.writeHead 200, "Content-Type": "image/svg+xml"
-    file = '/root/apps/hvac/stats/hvac-scroll.svg'
-    scroll file, ->
-      res.end fs.readFileSync file, 'utf8'
-      # log 'scroll-req:', req.url
+    try
+      file = '/root/apps/hvac/stats/hvac-scroll.svg'
+      res.writeHead 200, "Content-Type": "image/svg+xml"
+      scroll file, ->
+        res.end fs.readFileSync file, 'utf8'
+    catch e
+      log 'scroll read error:', e
+      res.writeHead 500, "Content-Type": "text/plain"
+      res.end 'Scroll file read error: ' + JSON.stringify e
     return
   
   req.addListener('end', ->

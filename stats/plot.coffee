@@ -49,7 +49,7 @@ minsPc = (mins) -> (100 * mins / (24*60)).toFixed 2
 plotPeriod = (label, start, end=Infinity, cb) ->
   title    = 'title "HVAC Temp and AC usage: ' + label + '"'
   filePath = '/root/dev/apps/hvac2/stats/hvac_'     + label.replace(/\s+/g, '_') + '.svg'
-  log 'processing file', filePath
+  log 'plot processing file', filePath
   
   ###
     function(doc) {
@@ -57,6 +57,11 @@ plotPeriod = (label, start, end=Infinity, cb) ->
     }
   ###
   db.view 'all', 'hours', (err, data) ->
+    if err
+      log 'plot err reading db view "hours"', err
+      process.exit 1
+      return
+      
     gnuPlotDataTemp      = ["unixtime Temp"]
     gnuPlotDataUsage     = ["unixtime AllDayUsage NightUsage"]
     lastDay = lastTime   = null
@@ -75,7 +80,8 @@ plotPeriod = (label, start, end=Infinity, cb) ->
         # log 'excluded doc:', row.value
         continue
         
-      timeMS = Math.round new Date(+year, +month-1, +day, +hour).getTime()
+      timeMS = Math.round new Date(+year, +month-1, +day, +hour).getTime() +
+               -24*60*60*1e3  # don't know why this is needed
       if timeMS < start then continue
       if timeMS >= end  then break
       
@@ -156,9 +162,7 @@ plotPeriod = (label, start, end=Infinity, cb) ->
     # log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
 
 # month is actually one greater
-plotPeriod 'September 2015', new Date(2015,  8, 14).getTime(), 
-                             new Date(2015,  8, 28).getTime(), ->
-  plotPeriod 'October 2015', new Date(2015,  9,  1).getTime(),
-                             new Date(2015, 10,  1), ->
-    log 'plot finished', new Date().toString()[0..23]
+plotPeriod 'October 2015', new Date(2015,  9,  1).getTime(),
+                           new Date(2015, 10,  1), ->
+  log 'plot finished', new Date().toString()[0..23]
 

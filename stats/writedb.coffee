@@ -4,7 +4,7 @@ db = require('nano') 'http://localhost:5984/hvac'
 readline = require 'linebyline'
 
 log ''
-log 'started', new Date().toString()[0..23], '\n'
+log 'writedb started', new Date().toString()[0..23], '\n'
 
 put = (doc, cb) ->
   db.head doc._id, (err, __, headers) ->
@@ -14,7 +14,7 @@ put = (doc, cb) ->
         if err?.statusCode is 409
           put doc, cb
           return
-        if err then log 'db put err:', err; cb? err; return
+        if err then log 'writedb db put err:', err; cb? err; return
         cb?()
       return
     # log 'doc exists:', doc._id, {err, headers}
@@ -72,10 +72,16 @@ processLines = ->
         maxExtTemp: maxTemp
       }
         
+      if doc.hour is 0
+        log 'writing to db:', doc.year, doc.month, doc.day
+        
+      # if doc.year is 2015 and doc.month is 10 and doc.day is 28
+      #   log 'writing to db:', doc.year, doc.month, doc.day, doc.hour
+        
       # log 'saving ' + doc._id
       put doc, (err) ->
         if err 
-          log 'exiting ...', new Date().toString()[0..23], '\n'
+          log 'writedb exiting ...', new Date().toString()[0..23], '\n'
           process.exit 1
         clearStats()
         cb?()
@@ -85,7 +91,7 @@ processLines = ->
   do oneLine = ->
     if not (line = lines.shift()) 
       hrBreak()
-      log 'finished', lineCount, 'of', lines.length, 'lines', 
+      log 'writedb finished', lineCount, 'of', lines.length, 'lines', 
                       new Date().toString()[0..23], '\n'
       return
 
@@ -106,15 +112,15 @@ processLines = ->
     addToStats nextElapsed, line      
     oneLine()
 
-# files = ['/root/logs/hvac.log']
-files = ['/root/logs/hvac.log'
-         '/root/apps/hvac/nohup.out'
-         '/root/dev/apps/hvac2/nohup.out'
-        ]
+files = ['/root/logs/hvac.log']
+# files = ['/root/logs/hvac.log'
+        #  '/root/apps/hvac/nohup.out'
+        #  '/root/dev/apps/hvac2/nohup.out'
+        # ]
 
 do oneFile = ->
   if not (file = files.shift()) 
-    log 'finished reading files', new Date().toString()[0..23], '\n'
+    log 'writedb finished reading files', new Date().toString()[0..23], '\n'
     processLines()
     return
   
@@ -133,10 +139,10 @@ do oneFile = ->
       lines.push lineData
      
   lr.on 'error', (err) ->
-    log err
+    log 'writedb line reader err', err
     oneFile()
     
   lr.on 'close', ->
-    log 'read', file, 'with', linesFromFile, 'lines covering', 
+    log 'writedb: read', file, 'with', linesFromFile, 'lines covering', 
                 firstDayInLog, 'to', lastDayInLog
     oneFile()
