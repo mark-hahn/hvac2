@@ -48,8 +48,14 @@ minsPc = (mins) -> (100 * mins / (24*60)).toFixed 2
 
 plotPeriod = (label, start, end=Infinity, cb) ->
   title    = 'title "HVAC Temp and AC usage: ' + label + '"'
-  filePath = '/root/apps/hvac/stats/hvac-'     + label + '.svg'
-    
+  filePath = '/root/dev/apps/hvac2/stats/hvac_'     + label.replace(/\s+/g, '_') + '.svg'
+  log 'processing file', filePath
+  
+  ###
+    function(doc) {
+      if(doc.type == 'hour') emit(doc._id, doc);
+    }
+  ###
   db.view 'all', 'hours', (err, data) ->
     gnuPlotDataTemp      = ["unixtime Temp"]
     gnuPlotDataUsage     = ["unixtime AllDayUsage NightUsage"]
@@ -58,13 +64,18 @@ plotPeriod = (label, start, end=Infinity, cb) ->
     firstDay = yes
     
     for row in data.rows
-      acMins = +row.value[1] 
-      temp   = +row.value[3]
-      month  = +row.value[5]
-      day    = +row.value[6]
-      hour   = +row.value[7]
-      timeMS = Math.round Date.parse '2015-' + row.value[5] + '-' + row.value[6] + 'T' + 
-                                               row.value[7] + ':00:00'
+      {_id, acSecs, avgExtTemp, year, month, day, hour} = row.value
+      
+      acMins = Math.round Math.ceil +acSecs/60
+      temp   = +avgExtTemp
+      
+      if _id in [ 'hour:15-10-09-13'
+                  'hour:15-10-09-14'
+                  'hour:15-10-10-13' ]
+        # log 'excluded doc:', row.value
+        continue
+        
+      timeMS = Math.round new Date(+year, +month-1, +day, +hour).getTime()
       if timeMS < start then continue
       if timeMS >= end  then break
       
@@ -145,7 +156,9 @@ plotPeriod = (label, start, end=Infinity, cb) ->
     # log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
 
 # month is actually one greater
-plotPeriod 'Sep', new Date(2015, 8, 14).getTime(), new Date(2015, 8, 28).getTime(), ->
-  plotPeriod 'Oct', new Date(2015, 9, 1).getTime(), null, ->
-    log 'plot finished', new Date
+plotPeriod 'September 2015', new Date(2015,  8, 14).getTime(), 
+                             new Date(2015,  8, 28).getTime(), ->
+  plotPeriod 'October 2015', new Date(2015,  9,  1).getTime(),
+                             new Date(2015, 10,  1), ->
+    log 'plot finished', new Date().toString()[0..23]
 

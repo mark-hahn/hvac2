@@ -77,7 +77,7 @@ module.exports =
       , -> writeCodes room
 
 srvr = http.createServer (req, res) ->
-  # log 'req:', req.url
+  log 'req:', req.url
   
   if req.url is '/'
     res.writeHead 200, "Content-Type": "text/html"
@@ -90,11 +90,15 @@ srvr = http.createServer (req, res) ->
     # log 'ceil-req:', req.url
     return
   
-  if req.url[0..5] is '/usage'
-    label = req.url[7...] or 'Oct'
-    res.writeHead 200, "Content-Type": "image/svg+xml"
-    res.end fs.readFileSync '/root/apps/hvac/stats/hvac-' + label + '.svg', 'utf8'
+  if req.url[0..6] is '/usage/'
     log 'usage-req:', req.url
+    try
+      res.writeHead 200, "Content-Type": "image/svg+xml"
+      res.end fs.readFileSync req.url[6...], 'utf8'
+    catch e
+      log 'usage read error:', e
+      res.writeHead 500, "Content-Type": "text/plain"
+      res.end 'Usage file read error: ' + JSON.stringify e
     return
   
   if req.url[0..6] is '/scroll'
