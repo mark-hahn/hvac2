@@ -81,7 +81,8 @@ plotPeriod = (label, start, end=Infinity, cb) ->
         continue
         
       timeMS = Math.round new Date(+year, +month-1, +day, +hour).getTime() +
-               -24*60*60*1e3  # don't know why this is needed
+               -18.75 * 60 * 60 * 1e3  # don't know why this is needed
+               
       if timeMS < start then continue
       if timeMS >= end  then break
       

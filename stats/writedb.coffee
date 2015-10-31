@@ -17,8 +17,17 @@ put = (doc, cb) ->
         if err then log 'writedb db put err:', err; cb? err; return
         cb?()
       return
-    # log 'doc exists:', doc._id, {err, headers}
     cb?()
+
+  # db.get doc._id, (err, body) ->
+  #   if err 
+  #     # log 'db.get err', doc._id, err
+  #     cb?()
+  #     return
+  #   # if doc._id is 'hour:15-10-30-20'
+  #   #   log body
+  #   db.destroy doc._id, body._rev, (err, body) ->
+  #     if err then log 'db.destroy err', doc._id, err
     
 lineRegex = /// ^
             (\d\d)/(\d\d)\s+                  # mo day
@@ -31,7 +40,7 @@ lineRegex = /// ^
 parseLine = (line) ->
   if not (match = lineRegex.exec line) then return null
   [__, mo, day, hr, min, sec, hundreds, 
-       sysMode, actualSysMode, extAir, hallTemp, extTemp] = match  
+       sysMode, actualSysMode, extAir, hallTemp, extTemp] = match 
   {mo, day, hr, min: +min, sec: +sec, hundreds: +hundreds,          \
     sysMode, actualSysMode, extAir: (extAir.toLowerCase() is 'e'),  \
     hallTemp: +hallTemp, extTemp: +extTemp}
@@ -55,9 +64,11 @@ processLines = ->
     totalExtTemp += line.extTemp
     if line.actualSysMode in ['C', 'c']
       acSecs += nextElapsed
+      # log 'acSecs', line.actualSysMode, acSecs, nextElapsed
       
   hrBreak = (cb) ->
     if lastId
+      # log 'acSecs', acSecs
       doc = {
         type: 'hour'
         _id:   lastId
@@ -75,8 +86,8 @@ processLines = ->
       if doc.hour is 0
         log 'writing to db:', doc.year, doc.month, doc.day
         
-      # if doc.year is 2015 and doc.month is 10 and doc.day is 28
-      #   log 'writing to db:', doc.year, doc.month, doc.day, doc.hour
+      # if doc.year is 2015 and doc.month is 10 and doc.day is 30
+        # log 'writing to db:', doc.year, doc.month, doc.day, doc.hour, doc.acSecs
         
       # log 'saving ' + doc._id
       put doc, (err) ->
@@ -95,6 +106,9 @@ processLines = ->
                       new Date().toString()[0..23], '\n'
       return
 
+    # DEBUG
+    # if +line.day < 27 then process.nextTick oneLine; return
+      
     nextLine = lines[0]
     id = "hour:15-#{line.mo}-#{line.day}-#{line.hr}"
     time = line.min * 60 + line.sec + (line.hundreds) / 100 
