@@ -31,20 +31,19 @@ module.exports = ->
 # bot half
           div style:'position:relative; width:100%; height:300px; top:0px;', ->
   # time            
-          #  div '#time', style:'height:400px; width:820px; text-align:right; top:-40px;
-           div style:'height:400px; width:820px; text-align:right; top:-40px;
-                               position:relative;', '12:59'
+           div '#time', style:'height:400px; width:820px; text-align:right; top:-40px;
+                               position:relative;'
            div '#divider', style:'position:absolute; top:-300px; left:857px; height:750px; 
                                   width:6px; margin:0; background-color:#ccc;'
   # outside temp         
            div '#wx1', style:'position:absolute; top:-20px; right:350px; 
                              font-size:220px; width:350px; height:450px;', ->
-              div '#outTemp',     style:'position:absolute; top:0px;     right:20px;'
+              div '#outTemp',     style:'position:absolute; top:0px;      right:20px;'
               div '#rainRate',    style:'position:absolute; bottom:-25px; right:20px;'
               
            div '#wx2', style:'position:absolute; top:-20px; right:0; 
                              font-size:220px; width:350px; height:450px;', ->
-              div '#outHumidity', style:'position:absolute; top:0px;     right:20px;'
+              div '#outHumidity', style:'position:absolute; top:0px;      right:20px;'
               div '#windGust',    style:'position:absolute; bottom:-25px; right:20px;'
                                      
 # bottom divider                            
