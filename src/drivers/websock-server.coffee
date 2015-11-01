@@ -38,19 +38,30 @@ writeCodes = (room) ->
       codes: codes.toUpperCase().replace 'V', 'v'
 
 writeCeil = ->
-  masterCode = 
-    $.log_modeCode_master + $.log_reqCode_master + $.log_actualCode_master + ' ' +
-    $.log_elapsedCode_master
+  # masterCode = 
+  #   $.log_modeCode_master + $.log_reqCode_master + $.log_actualCode_master + ' ' +
+  #   $.log_elapsedCode_master
+  # sysCode =  
+  #   $.log_modeCode_sys + $.log_extAirCode + $.log_counts + ''
   sysCode =  
-    $.log_modeCode_sys + $.log_extAirCode + $.log_counts + ''
+    $.log_extAirCode + $.log_counts + ''
+  masterCode = 
+    $.log_reqCode_master + $.log_actualCode_master + ' ' + $.log_elapsedCode_master
   for conn in connections
-    conn.connection.write 
-      type:          'ceil'
-      master:         $.temp_master?.toFixed(1) ? '----'
-      masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----')
-      masterCode:     masterCode.toUpperCase().replace 'V', 'v'
-      outside:   '' + Math.round $.temp_outside ? '0'
-      sysCode:        sysCode.toUpperCase()
+    if (wxdata = $.weewx_data)
+      conn.connection.write 
+        type:          'ceil'
+        master:         $.temp_master?.toFixed(1) ? '----'
+        masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----')
+        masterCode:     masterCode.toUpperCase().replace 'V', 'v'
+        sysCode:        sysCode.toUpperCase()
+        outTemp:        '' + Math.round wxdata.outTemp     ? '0'
+        outHumidity:    '' + Math.round wxdata.outHumidity ? '0'
+        rainRate:       '' + Math.round wxdata.rainRate    ? '0'
+        windSpeed:      '' + Math.round wxdata.windSpeed   ? '0'
+        windDir:        '' + Math.round wxdata.windDir     ? '0'
+        windGust:       '' + Math.round wxdata.windGust    ? '0'
+        windGustDir:    '' + Math.round wxdata.windGustDir ? '0'
 
 module.exports =
   init: -> 
@@ -67,9 +78,8 @@ module.exports =
     $.react 'temp_master', 
             'log_modeCode_master', 'log_reqCode_master', 'log_actualCode_master',
             'log_elapsedCode_master', 
-            'temp_outside', 
             'log_sysMode', 'log_modeCode_sys', 'log_extAirCode', 
-            'log_counts', writeCeil
+            'weewx_data', 'log_counts', writeCeil
             
     for room in rooms then do (room) ->
       $.react 'log_modeCode_sys', 'log_extAirCode',

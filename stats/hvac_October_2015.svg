@@ -181,7 +181,7 @@
 		<text>HVAC Temp and AC usage: October 2015</text>
 	</g>
 	<g transform="translate(575.0,30.5)" style="stroke:none; fill:black; font-family:arial; font-size:10.00pt; text-anchor:end">
-		<text>10/31 15:21</text>
+		<text>10/31 18:06</text>
 	</g>
 </g>
 	<g id="gnuplot_plot_1" ><title>gnuplot_plot_1</title>
@@ -275,7 +275,7 @@
 		L476.9,116.5 L477.4,116.5 L477.9,116.5 L478.5,128.2 L479.0,151.6 L479.5,167.2 L480.0,175.0 L480.5,178.9 
 		L481.0,190.6 L481.6,194.5 L482.1,198.4 L482.6,202.3 L483.1,202.3 L483.6,206.2 L484.1,206.2 L484.7,217.9 
 		L485.2,221.8 L485.7,214.0 L486.2,186.7 L486.7,167.2 L487.2,143.8 L487.8,128.2 L488.3,120.4 L488.8,116.5 
-		L489.3,108.7 L489.8,112.6  h0.01'/></g>
+		L489.3,108.7 L489.8,112.6 L490.3,116.5 L490.9,120.4  h0.01'/></g>
 	</g>
 	<g id="gnuplot_plot_2" ><title>gnuplot_plot_2</title>
 <g style="fill:none; color:green; stroke:currentColor; stroke-width:1.00; stroke-linecap:butt; stroke-linejoin:miter">
@@ -286,7 +286,7 @@
 		L308.4,443.5 L320.8,443.5 L320.8,444.0 L333.2,444.0 L345.6,444.0 L345.6,434.5 L358.0,434.5 L358.0,444.0 
 		L370.4,444.0 L382.8,444.0 L395.2,444.0 L395.2,421.3 L407.6,421.3 L407.6,436.4 L420.0,436.4 L420.0,426.9 
 		L432.4,426.9 L432.4,439.7 L444.9,439.7 L444.9,444.0 L457.3,444.0 L457.3,439.7 L469.7,439.7 L469.7,435.1 
-		L482.1,435.1 L482.1,444.0 L489.8,444.0  h0.01'/></g>
+		L482.1,435.1 L482.1,444.0 L490.9,444.0  h0.01'/></g>
 	</g>
 	<g id="gnuplot_plot_3" ><title>gnuplot_plot_3</title>
 <g style="fill:none; color:blue; stroke:currentColor; stroke-width:1.00; stroke-linecap:butt; stroke-linejoin:miter">
@@ -297,7 +297,7 @@
 		L308.4,391.2 L320.8,391.2 L320.8,444.0 L333.2,444.0 L345.6,444.0 L345.6,428.8 L358.0,428.8 L358.0,409.3 
 		L370.4,409.3 L370.4,444.0 L382.8,444.0 L382.8,436.9 L395.2,436.9 L395.2,355.2 L407.6,355.2 L407.6,400.7 
 		L420.0,400.7 L420.0,389.0 L432.4,389.0 L432.4,395.3 L444.9,395.3 L444.9,444.0 L457.3,444.0 L457.3,386.9 
-		L469.7,386.9 L469.7,382.8 L482.1,382.8 L482.1,438.9 L489.8,438.9  h0.01'/></g>
+		L469.7,386.9 L469.7,382.8 L482.1,382.8 L482.1,437.5 L490.9,437.5  h0.01'/></g>
 	</g>
 <g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00; stroke-linecap:butt; stroke-linejoin:miter">
 	<path stroke='black'  d='M53.9,54.1 L53.9,444.0 L575.0,444.0 L575.0,54.1 L53.9,54.1 Z  h0.01'/></g>
