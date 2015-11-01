@@ -52,11 +52,12 @@ module.exports = ->
                                  margin:0; background-color:#ccc;'
             
           div '#codes', style:'position:relative; font-size: 130px;
+                               width: 800px; height:150px;
                                font-family: Arial, sans-serif;', ->
             
-              div '#sysCode', style: 'position: absolute; left:5px; top: 0;'
+              div '#sysCode', style: 'position: absolute; left:35px; top: 0;'
 									                    
-              div '#masterCode', style: 'position: absolute; left:340px; top: 0; 
+              div '#masterCode', style: 'position: absolute; right:0; top: 0; 
                                          text-align: center;'
 
         script src: 'js/jquery-2.1.4.js'

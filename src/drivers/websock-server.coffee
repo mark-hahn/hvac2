@@ -46,7 +46,7 @@ writeCeil = ->
   sysCode =  
     $.log_extAirCode + $.log_counts + ''
   masterCode = 
-    $.log_reqCode_master + $.log_actualCode_master + '\u2009' + $.log_elapsedCode_master
+    $.log_reqCode_master + $.log_actualCode_master + ' ' + $.log_elapsedCode_master
   for conn in connections
     if (wxdata = $.weewx_data)
       conn.connection.write 
