@@ -77,7 +77,7 @@ $.react '*', (name) ->
   ltr extAirCode
   int @temp_airIntake
   str '-'
-  int @temp_outside
+  int @weewx_data?.outTemp
   str ' '
   int @temp_acReturn, 3
   

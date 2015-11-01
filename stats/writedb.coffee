@@ -7,6 +7,17 @@ log ''
 log 'writedb started', new Date().toString()[0..23], '\n'
 
 put = (doc, cb) ->
+  # db.get doc._id, (err, body) ->
+  #   if err 
+  #     # log 'db.get err', doc._id, err
+  #     cb?()
+  #     return
+  #   # if doc._id is 'hour:15-10-30-20'
+  #   #   log body
+  #   db.destroy doc._id, body._rev, (err, body) ->
+  #     if err then log 'db.destroy err', doc._id, err
+  #     cb?()
+
   db.head doc._id, (err, __, headers) ->
     # if err then log 'db.head err', err
     if err?.statusCode is 404 or err?.code is 'ENOENT'
@@ -19,26 +30,18 @@ put = (doc, cb) ->
       return
     cb?()
 
-  # db.get doc._id, (err, body) ->
-  #   if err 
-  #     # log 'db.get err', doc._id, err
-  #     cb?()
-  #     return
-  #   # if doc._id is 'hour:15-10-30-20'
-  #   #   log body
-  #   db.destroy doc._id, body._rev, (err, body) ->
-  #     if err then log 'db.destroy err', doc._id, err
     
 lineRegex = /// ^
             (\d\d)/(\d\d)\s+                  # mo day
             (\d\d):(\d\d):(\d\d)\.(\d\d)\s+   # hr min sec hundreds
             (-|C|H|F)(-|C|H|F)\s+             # sysmode actualSysMode
             (i|r|e)                           # extAir
-            (\d\d)-(\d\d)                     # halltemp outsidetemp
+            (\d\d)-(--|\d\d)                  # halltemp outsidetemp
             ///i
             
 parseLine = (line) ->
   if not (match = lineRegex.exec line) then return null
+  # if line[0..1] is '11' then log line
   [__, mo, day, hr, min, sec, hundreds, 
        sysMode, actualSysMode, extAir, hallTemp, extTemp] = match 
   {mo, day, hr, min: +min, sec: +sec, hundreds: +hundreds,          \
@@ -101,13 +104,12 @@ processLines = ->
 
   do oneLine = ->
     if not (line = lines.shift()) 
-      hrBreak()
       log 'writedb finished', lineCount, 'of', lines.length, 'lines', 
                       new Date().toString()[0..23], '\n'
       return
 
-    # DEBUG
-    # if +line.day < 27 then process.nextTick oneLine; return
+    # if +line.mo < 11 then process.nextTick oneLine; return
+    if +line.mo < 11 and +line.day < 27 then process.nextTick oneLine; return
       
     nextLine = lines[0]
     id = "hour:15-#{line.mo}-#{line.day}-#{line.hr}"
@@ -159,4 +161,5 @@ do oneFile = ->
   lr.on 'close', ->
     log 'writedb: read', file, 'with', linesFromFile, 'lines covering', 
                 firstDayInLog, 'to', lastDayInLog
+    # log lines[-2...]
     oneFile()

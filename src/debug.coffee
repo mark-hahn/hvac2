@@ -53,6 +53,8 @@ dontShow = [
   'log_elapsedCode_master'
   'log_elapsedCode_guest'
   'log_counts'
+  'log_sysMode'
+  'weewx_data'
 ]
 
 pad = (str, len) ->

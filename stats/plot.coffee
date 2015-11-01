@@ -48,8 +48,9 @@ minsPc = (mins) -> (100 * mins / (24*60)).toFixed 2
 
 plotPeriod = (label, start, end=Infinity, cb) ->
   title    = 'title "HVAC Temp and AC usage: ' + label + '"'
-  filePath = '/root/dev/apps/hvac2/stats/hvac_'     + label.replace(/\s+/g, '_') + '.svg'
-  log 'plot processing file', filePath
+  titleId  = label.replace /\s+/g, '_'
+  filePath = '/root/dev/apps/hvac2/stats/hvac_' + titleId + '.svg'
+  log 'plot: processing file', filePath
   
   ###
     function(doc) {
@@ -64,10 +65,10 @@ plotPeriod = (label, start, end=Infinity, cb) ->
       
     gnuPlotDataTemp      = ["unixtime Temp"]
     gnuPlotDataUsage     = ["unixtime AllDayUsage NightUsage"]
-    lastDay = lastTime   = null
+    lastDay = lastTime = unixtime = null
     days = allDayMins = nightMins = kwHrs = dayHighTemp = 0
     firstDay = yes
-    
+
     for row in data.rows
       {_id, acSecs, avgExtTemp, year, month, day, hour} = row.value
       
@@ -82,20 +83,16 @@ plotPeriod = (label, start, end=Infinity, cb) ->
         
       timeMS = Math.round new Date(+year, +month-1, +day, +hour).getTime() +
                -18.75 * 60 * 60 * 1e3  # don't know why this is needed
-               
-      if timeMS < start then continue
-      if timeMS >= end  then break
-      
       unixtime = Math.round timeMS / 1000
       
-      if lastDay and lastDay isnt day
-        kwhrsForDay = (allDayMins / 60) * ACPwrUsage
-        kwHrs += kwhrsForDay
-        dayCharge = +chargeByKWH(kwhrsForDay, yes)
+      dayBreak = ->
+        # kwhrsForDay = (allDayMins / 60) * ACPwrUsage
+        # kwHrs += kwhrsForDay
+        # dayCharge = +chargeByKWH(kwhrsForDay, yes)
         # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
         # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
 
-        if firstDay
+        if firstDay or not lastTime
           gnuPlotDataUsage.push \
               "#{start/1000} #{minsPc allDayMins} #{minsPc nightMins}"
           firstDay = no
@@ -106,27 +103,42 @@ plotPeriod = (label, start, end=Infinity, cb) ->
         days++
         lastTime = unixtime
         dayHighTemp = allDayMins = nightMins = 0
+        # log 'day:', days,  _id
         
+      # log 'temp', _id, label, temp, timeMS, start, end
+      
+      if timeMS < start then continue
+      if timeMS >= end  then break
+      
+      if lastDay and lastDay isnt day then dayBreak()
+      
       lastDay = day
       
       if hour < 9 or hour >= 21
         nightMins += acMins
       allDayMins += acMins
-      dayHighTemp = Math.max dayHighTemp, temp
-
-      gnuPlotDataTemp.push "#{unixtime} #{temp}"
       
-    gnuPlotDataUsage.push "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"
+      if temp
+        dayHighTemp = Math.max dayHighTemp, temp
+        gnuPlotDataTemp.push "#{unixtime} #{temp}"
+        
+    dayBreak()
+    
+    if lastTime
+      gnuPlotDataUsage.push "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"
     gnuPlotDataUsage.push "#{unixtime} #{minsPc allDayMins} #{minsPc nightMins}"
     
-    kwhrsForDay = (allDayMins / 60) * ACPwrUsage
-    kwHrs += kwhrsForDay
-    dayCharge = +chargeByKWH kwhrsForDay, yes
+    # kwhrsForDay = (allDayMins / 60) * ACPwrUsage
+    # kwHrs += kwhrsForDay
+    # dayCharge = +chargeByKWH kwhrsForDay, yes
     # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
     # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
 
-    fs.writeFileSync '/tmp/gnuPlotDataUsage.txt', gnuPlotDataUsage.join '\n'
-    fs.writeFileSync '/tmp/gnuPlotDataTemp.txt',  gnuPlotDataTemp .join '\n'
+    tempPath  = "/tmp/temp-#{titleId}.txt"
+    usagePath = "/tmp/usage-#{titleId}.txt"
+    
+    fs.writeFileSync tempPath,  gnuPlotDataTemp .join '\n'
+    fs.writeFileSync usagePath, gnuPlotDataUsage.join '\n'
     
     if days
       gnuPlot()
@@ -139,9 +151,9 @@ plotPeriod = (label, start, end=Infinity, cb) ->
         .set 'xdata time'
         .set 'output "' + filePath + '"'
         .set 'format x "%d"'
-        .plot '"/tmp/gnuPlotDataTemp.txt"  using 1:2 with lines,
-               "/tmp/gnuPlotDataUsage.txt" using 1:3 with steps,
-               "/tmp/gnuPlotDataUsage.txt" using 1:2 with steps'
+        .plot "\"#{tempPath}\"  using 1:2 with lines,
+               \"#{usagePath}\" using 1:3 with steps,
+               \"#{usagePath}\" using 1:2 with steps"
         .end cb
       return
     cb()
@@ -163,7 +175,9 @@ plotPeriod = (label, start, end=Infinity, cb) ->
     # log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
 
 # month is actually one greater
-plotPeriod 'October 2015', new Date(2015,  9,  1).getTime(),
-                           new Date(2015, 10,  1), ->
-  log 'plot finished', new Date().toString()[0..23]
+plotPeriod 'October 2015', new Date(2015,  9, 1).getTime(),
+                           new Date(2015, 10, 1).getTime(), ->
+  plotPeriod 'November 2015', new Date(2015, 10, 1).getTime(),
+                              new Date(2015, 11, 1).getTime(), ->
+    log 'plot finished', new Date().toString()[0..23]
 
