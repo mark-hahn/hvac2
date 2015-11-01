@@ -38,15 +38,15 @@ writeCodes = (room) ->
       codes: codes.toUpperCase().replace 'V', 'v'
 
 writeCeil = ->
+  # sysCode =  
+  #   $.log_modeCode_sys + $.log_extAirCode + $.log_counts + ''
   # masterCode = 
   #   $.log_modeCode_master + $.log_reqCode_master + $.log_actualCode_master + ' ' +
   #   $.log_elapsedCode_master
-  # sysCode =  
-  #   $.log_modeCode_sys + $.log_extAirCode + $.log_counts + ''
   sysCode =  
     $.log_extAirCode + $.log_counts + ''
   masterCode = 
-    $.log_reqCode_master + $.log_actualCode_master + ' ' + $.log_elapsedCode_master
+    $.log_reqCode_master + $.log_actualCode_master + '\u2009' + $.log_elapsedCode_master
   for conn in connections
     if (wxdata = $.weewx_data)
       conn.connection.write 

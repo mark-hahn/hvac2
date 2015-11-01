@@ -28,12 +28,6 @@ module.exports = ->
 # main divider             
           div '#divider', style:'width:100%; height:6px; margin:0; background-color:#ccc;'
           
-          ###
-            windSpeed:    1
-            windDir:      260
-            windGustDir:  225
-          ###
-          
 # bot half
           div style:'position:relative; width:100%; height:300px; top:0px;', ->
   # time            
@@ -57,18 +51,13 @@ module.exports = ->
           div '#divider', style:'width:55%; height:6px; 
                                  margin:0; background-color:#ccc;'
             
-          div '#codes', style:'position:relative;', ->
+          div '#codes', style:'position:relative; font-size: 130px;
+                               font-family: Arial, sans-serif;', ->
             
-              div '#sysCode',  
-                  style: 'position: absolute; left:0; top: -15px; 
-									        font-size: 150px; text-align:center;
-                          font-family: Courier, monospace;'
-                          
-              div '#masterCode',  
-                  style: 'position: absolute; left:300px; top: -15px; 
-									        font-size: 150px; text-align:center;
-                          font-family: Courier, monospace;'
-		
+              div '#sysCode', style: 'position: absolute; left:5px; top: 0;'
+									                    
+              div '#masterCode', style: 'position: absolute; left:340px; top: 0; 
+                                         text-align: center;'
 
         script src: 'js/jquery-2.1.4.js'
         script src: 'js/moment.js'
