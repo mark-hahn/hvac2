@@ -27,7 +27,7 @@ color = (room, idxType) ->
     if r is room then break
   idx * 3 + idxType
 
-utc = (time) -> time - 7 * 60 * 60 * 1e3
+utc = (time) -> time - 8 * 60 * 60 * 1e3
 unixTime = -> Math.round utc(Date.now()) / 1000
 
 writeSetpoints = (room, setpoint=lastSetpoint[room], mode=lastMode[room]) ->
