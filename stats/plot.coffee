@@ -70,9 +70,12 @@ plotPeriod = (label, plotMonth, cb) ->
     firstDay = yes
 
     for row in data.rows
-      {_id, acSecs, avgExtTemp, year, month, day, hour} = row.value
+      {_id, acSecs, avgExtTemp, maxExtTemp, minExtTemp, 
+        year, month, day, hour} = row.value
       acMins = Math.round Math.ceil +acSecs/60
-      temp   = +avgExtTemp
+      if maxExtTemp is    0 then maxExtTemp = avgExtTemp
+      if minExtTemp is 1000 then minExtTemp = avgExtTemp
+      temp   = (if 9 <= +hour < 21 then +maxExtTemp else +minExtTemp)
       
       if _id in [ 'hour:15-10-09-13'
                   'hour:15-10-09-14'
@@ -92,13 +95,11 @@ plotPeriod = (label, plotMonth, cb) ->
         # log {month, day, kwhrs: kwhrsForDay.toFixed(1), dayHighTemp, dayCharge: dayCharge.toFixed(2) }
         # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
 
-        if firstDay or not lastTime
-          # log 'firstDay or not lastTime'
+        if firstDay
           gnuPlotDataUsage.push \
-              "#{unixtime} #{minsPc} #{minsPc nightMins}"
+              "#{unixtime} #{minsPc allDayMins} #{minsPc nightMins}"
           firstDay = no
         else
-          # log 'not firstDay and lastTime'
           gnuPlotDataUsage.push \
               "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"
         
@@ -106,7 +107,7 @@ plotPeriod = (label, plotMonth, cb) ->
         lastTime = unixtime
         dayHighTemp = allDayMins = nightMins = 0
         # log 'day:', days,  _id
-        
+      
       if _id[5..9] isnt plotMonth then continue
       
       # log 'hour', {_id, label, temp, acMins}
@@ -126,7 +127,7 @@ plotPeriod = (label, plotMonth, cb) ->
     dayBreak()
 
     # log 'end', {_id, label, temp, allDayMins, nightMins,\
-                # lastTime: new Date(lastTime*1e3), unixtime: new Date(unixtime*1e3)}
+    #             lastTime: new Date(lastTime*1e3), unixtime: new Date(unixtime*1e3)}
     
     if lastTime
       gnuPlotDataUsage.push "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"

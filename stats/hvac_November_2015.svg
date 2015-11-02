@@ -177,12 +177,12 @@
 		<text>HVAC Temp and AC usage: November 2015</text>
 	</g>
 	<g transform="translate(575.0,30.5)" style="stroke:none; fill:black; font-family:arial; font-size:10.00pt; text-anchor:end">
-		<text>11/01 18:08</text>
+		<text>11/01 18:49</text>
 	</g>
 </g>
 	<g id="gnuplot_plot_1" ><title>gnuplot_plot_1</title>
 <g style="fill:none; color:red; stroke:currentColor; stroke-width:1.00; stroke-linecap:butt; stroke-linejoin:miter">
-	<path stroke='red'  d='M83.4,93.1 L234.7,97.4 L385.9,110.4 L537.2,132.1  h0.01'/></g>
+	<path stroke='red'  d='M83.4,93.1 L234.7,88.8 L385.9,106.1 L537.2,119.1  h0.01'/></g>
 	</g>
 	<g id="gnuplot_plot_2" ><title>gnuplot_plot_2</title>
 <g style="fill:none; color:green; stroke:currentColor; stroke-width:1.00; stroke-linecap:butt; stroke-linejoin:miter">
