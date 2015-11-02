@@ -29,7 +29,6 @@ put = (doc, cb) ->
         cb?()
       return
     cb?()
-
     
 lineRegex = /// ^
             (\d\d)/(\d\d)\s+                  # mo day
@@ -41,7 +40,6 @@ lineRegex = /// ^
             
 parseLine = (line) ->
   if not (match = lineRegex.exec line) then return null
-  # if line[0..1] is '11' then log line
   [__, mo, day, hr, min, sec, hundreds, 
        sysMode, actualSysMode, extAir, hallTemp, extTemp] = match 
   {mo, day, hr, min: +min, sec: +sec, hundreds: +hundreds,          \
@@ -61,26 +59,26 @@ processLines = ->
     minTemp = 1000
 
   addToStats = (nextElapsed = 5, line) ->
-    samples++
-    maxTemp = Math.max maxTemp, line.extTemp
-    minTemp = Math.min minTemp, line.extTemp
-    totalExtTemp += line.extTemp
-    if line.actualSysMode in ['C', 'c']
+    if line.extTemp
+      samples++
+      maxTemp = Math.max maxTemp, line.extTemp
+      minTemp = Math.min minTemp, line.extTemp
+      totalExtTemp += line.extTemp
+    if nextElapsed and line.actualSysMode in ['C', 'c']
       acSecs += nextElapsed
       # log 'acSecs', line.actualSysMode, acSecs, nextElapsed
       
   hrBreak = (cb) ->
     if lastId
-      # log 'acSecs', acSecs
+      # log {lastId, acSecs}
       doc = {
-        type: 'hour'
-        _id:   lastId
-        year:  +('20' + lastId[ 5.. 6])
-        month: +lastId[ 8.. 9]
-        day:   +lastId[11..12]
-        hour:  +lastId[14..15]
-        samples 
-        acSecs: Math.ceil acSecs
+        type:      'hour'
+        _id:        lastId
+        year:      +('20' + lastId[ 5.. 6])
+        month:     +lastId[ 8.. 9]
+        day:       +lastId[11..12]
+        hour:      +lastId[14..15]
+        acSecs:     acSecs
         avgExtTemp: Math.round totalExtTemp / samples
         minExtTemp: minTemp
         maxExtTemp: maxTemp
@@ -108,14 +106,16 @@ processLines = ->
                       new Date().toString()[0..23], '\n'
       return
 
-    # if +line.mo < 11 then process.nextTick oneLine; return
-    if +line.mo < 11 and +line.day < 27 then process.nextTick oneLine; return
-      
-    nextLine = lines[0]
+    if +line.mo < 11 then setImmediate oneLine; return
+    # if +line.mo < 11 and +line.day < 27 then setImmediate oneLine; return
+    
+    # if +line.hr is 14 then log line
+
     id = "hour:15-#{line.mo}-#{line.day}-#{line.hr}"
     time = line.min * 60 + line.sec + (line.hundreds) / 100 
+    
     nextElapsed = null
-    if nextLine and 
+    if (nextLine = lines[0]) and 
         id is "hour:15-#{nextLine.mo}-#{nextLine.day}-#{nextLine.hr}" 
       nextTime = nextLine.min * 60 + nextLine.sec + (nextLine.hundreds) / 100 
       nextElapsed = nextTime - time

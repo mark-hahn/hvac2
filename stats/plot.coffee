@@ -18,27 +18,27 @@ db      = require('nano') 'http://localhost:5984/hvac'
 # day:   2.83 - 0.04  => 2.79
 # night: 4.11 - 1.56  => 2.55
 # night: 4.22 - 1.74  => 2.48
-ACPwrUsage = 2.6
+# ACPwrUsage = 2.6
 
 # socal edison pricing
-tiers = [
-  [0.05346 + 0.09183, 323]
-  [0.09786 + 0.09183,  97]
-  [0.14095 + 0.10998, 226]
-  [0.19607 + 0.10998, 1e9]
-]
-chargeByKWH = (kwh, topTier) ->
-  if topTier then return tiers[3][0] * kwh
-  bondCharge   = kwh * 0.00526
-  energyCredit = kwh * 0.00172
-  charge = bondCharge - energyCredit
-  for rateHrs in tiers
-    [rate, hrs] = rateHrs
-    hrsInTier = Math.min hrs, kwh
-    charge += hrsInTier * rate
-    # log {kwh, rate, hrs, hrsInTier, charge: hrsInTier * rate}
-    kwh -= hrsInTier
-  charge
+# tiers = [
+#   [0.05346 + 0.09183, 323]
+#   [0.09786 + 0.09183,  97]
+#   [0.14095 + 0.10998, 226]
+#   [0.19607 + 0.10998, 1e9]
+# ]
+# chargeByKWH = (kwh, topTier) ->
+#   if topTier then return tiers[3][0] * kwh
+#   bondCharge   = kwh * 0.00526
+#   energyCredit = kwh * 0.00172
+#   charge = bondCharge - energyCredit
+#   for rateHrs in tiers
+#     [rate, hrs] = rateHrs
+#     hrsInTier = Math.min hrs, kwh
+#     charge += hrsInTier * rate
+#     # log {kwh, rate, hrs, hrsInTier, charge: hrsInTier * rate}
+#     kwh -= hrsInTier
+#   charge
    
 # log 'billing check 8/28 to 9/28, 1203 kwhrs, 296.77:', chargeByKWH(1203).toFixed 2
 # sepBillWithSolar = chargeByKWH 1343
@@ -46,7 +46,7 @@ chargeByKWH = (kwh, topTier) ->
 
 minsPc = (mins) -> (100 * mins / (24*60)).toFixed 2
 
-plotPeriod = (label, start, end=Infinity, cb) ->
+plotPeriod = (label, plotMonth, cb) ->
   title    = 'title "HVAC Temp and AC usage: ' + label + '"'
   titleId  = label.replace /\s+/g, '_'
   filePath = '/root/dev/apps/hvac2/stats/hvac_' + titleId + '.svg'
@@ -63,15 +63,14 @@ plotPeriod = (label, start, end=Infinity, cb) ->
       process.exit 1
       return
       
-    gnuPlotDataTemp      = ["unixtime Temp"]
-    gnuPlotDataUsage     = ["unixtime AllDayUsage NightUsage"]
+    gnuPlotDataTemp    = ["unixtime Temp"]
+    gnuPlotDataUsage   = ["unixtime AllDayUsage NightUsage"]
     lastDay = lastTime = unixtime = null
-    days = allDayMins = nightMins = kwHrs = dayHighTemp = 0
+    days = allDayMins  = nightMins = kwHrs = dayHighTemp = 0
     firstDay = yes
 
     for row in data.rows
       {_id, acSecs, avgExtTemp, year, month, day, hour} = row.value
-      
       acMins = Math.round Math.ceil +acSecs/60
       temp   = +avgExtTemp
       
@@ -80,12 +79,13 @@ plotPeriod = (label, start, end=Infinity, cb) ->
                   'hour:15-10-10-13' ]
         # log 'excluded doc:', row.value
         continue
-        
+      
       timeMS = Math.round new Date(+year, +month-1, +day, +hour).getTime() +
                -18.75 * 60 * 60 * 1e3  # don't know why this is needed
       unixtime = Math.round timeMS / 1000
       
       dayBreak = ->
+        # log 'breaking day', lastDay, _id
         # kwhrsForDay = (allDayMins / 60) * ACPwrUsage
         # kwHrs += kwhrsForDay
         # dayCharge = +chargeByKWH(kwhrsForDay, yes)
@@ -93,10 +93,12 @@ plotPeriod = (label, start, end=Infinity, cb) ->
         # log {day:lastDay, kwhrs: kwhrsForDay.toFixed(0), temp: dayHighTemp, cost: dayCharge.toFixed(0) }
 
         if firstDay or not lastTime
+          # log 'firstDay or not lastTime'
           gnuPlotDataUsage.push \
-              "#{start/1000} #{minsPc allDayMins} #{minsPc nightMins}"
+              "#{unixtime} #{minsPc} #{minsPc nightMins}"
           firstDay = no
         else
+          # log 'not firstDay and lastTime'
           gnuPlotDataUsage.push \
               "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"
         
@@ -105,10 +107,9 @@ plotPeriod = (label, start, end=Infinity, cb) ->
         dayHighTemp = allDayMins = nightMins = 0
         # log 'day:', days,  _id
         
-      # log 'temp', _id, label, temp, timeMS, start, end
+      if _id[5..9] isnt plotMonth then continue
       
-      if timeMS < start then continue
-      if timeMS >= end  then break
+      # log 'hour', {_id, label, temp, acMins}
       
       if lastDay and lastDay isnt day then dayBreak()
       
@@ -123,6 +124,9 @@ plotPeriod = (label, start, end=Infinity, cb) ->
         gnuPlotDataTemp.push "#{unixtime} #{temp}"
         
     dayBreak()
+
+    # log 'end', {_id, label, temp, allDayMins, nightMins,\
+                # lastTime: new Date(lastTime*1e3), unixtime: new Date(unixtime*1e3)}
     
     if lastTime
       gnuPlotDataUsage.push "#{lastTime} #{minsPc allDayMins} #{minsPc nightMins}"
@@ -174,10 +178,7 @@ plotPeriod = (label, start, end=Infinity, cb) ->
     # log 'est. sept ALL bill:',  (estACBill + estOtherBill).toFixed 2
     # log 'ALL actual sept 2015 bill (w solar):', sepBillWithSolar.toFixed 2
 
-# month is actually one greater
-plotPeriod 'October 2015', new Date(2015,  9, 1).getTime(),
-                           new Date(2015, 10, 1).getTime(), ->
-  plotPeriod 'November 2015', new Date(2015, 10, 1).getTime(),
-                              new Date(2015, 11, 1).getTime(), ->
-    log 'plot finished', new Date().toString()[0..23]
+# plotPeriod 'October 2015', '15-10', ->
+plotPeriod 'November 2015', '15-11', ->
+  log 'plot finished', new Date().toString()[0..23]
 
