@@ -38,8 +38,8 @@ writeSetpoints = (room, setpoint=lastSetpoint[room], mode=lastMode[room]) ->
     return
   now = utc Date.now()
   # log 'lastSetWrite', room, lastSetWrite[room], now
-  if now - lastSetWrite[room] < 5 * 60*1e3 then setColor = color room,  3 \
-                                          else setColor = color room, 13
+  if now - lastSetWrite[room] < 5 * 60 * 1e3 then setColor = color room,  3 \
+                                             else setColor = color room, 13
   filePath = path room, 'setpointLo', 'txt'
   time = unixTime() + ' '
   line = time + (setpoint - hyst) + ' ' + setColor + 
@@ -159,8 +159,8 @@ module.exports = (svgFile, cb) ->
       .set 'label "`date "+%m/%d %l:%M %p"`" right at graph 1,1.03 font "arial,24"'
       .set 'timefmt "%s"'
       .set 'xdata time'
-      .set 'xrange [ time(0) - (7*60*60) - (4*60*60) : ' +
-                    'time(0) - (7*60*60) +    (5*60) ]'
+      .set 'xrange [ time(0) - (8*60*60) - (4*60*60) : ' +
+                    'time(0) - (8*60*60) +    (5*60) ]'
       .set 'xtics 900 scale 0.01'
       .set 'mxtics 3'
       .set 'format x "%l:%M"'

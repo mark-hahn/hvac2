@@ -38,8 +38,8 @@ module.exports = ->
   # outside temp         
            div '#wx1', style:'position:absolute; top:-20px; right:350px; 
                              font-size:220px; width:350px; height:450px;', ->
-              div '#outTemp',     style:'position:absolute; top:0px;      right:20px;'
-              div '#rainRate',    style:'position:absolute; bottom:-25px; right:20px;'
+              div '#outTemp', style:'position:absolute; top:0px;      right:20px;'
+              div '#rain',    style:'position:absolute; bottom:-25px; right:20px;'
               
            div '#wx2', style:'position:absolute; top:-20px; right:0; 
                              font-size:220px; width:350px; height:450px;', ->

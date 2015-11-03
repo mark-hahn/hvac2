@@ -57,7 +57,7 @@ writeCeil = ->
         sysCode:        sysCode.toUpperCase()
         outTemp:        '' + Math.round wxdata.outTemp     ? '0'
         outHumidity:    '' + Math.round wxdata.outHumidity ? '0'
-        rainRate:       '' + Math.round wxdata.rainRate    ? '0'
+        rain:           '' + Math.round (wxdata.rain ? 0) * 100
         windSpeed:      '' + Math.round wxdata.windSpeed   ? '0'
         windDir:        '' + Math.round wxdata.windDir     ? '0'
         windGust:       '' + Math.round wxdata.windGust    ? '0'

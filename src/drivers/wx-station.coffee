@@ -14,18 +14,41 @@ $.output 'weewx_data'
 db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (err) ->
   if err then log 'Error opening weewx db', err; cb? err; return
   
-  setInterval ->
-    db.get 'SELECT outTemp, outHumidity, rainRate, ' +
+  lastUpdate = null
+  
+  interval = setInterval ->
+    db.get 'SELECT dateTime, outTemp, outHumidity, ' +
                   'windSpeed, windDir, windGust, windGustDir ' +
            'FROM archive ORDER BY dateTime DESC LIMIT 1', (err, data) ->
       if err
+        clearInterval interval
         log 'Error reading weewx db', err
         db.close()
         return
         
-      $.weewx_data data
+      if data.dateTime isnt lastUpdate
+        lastUpdate = data.dateTime
+        
+        db.all 'SELECT dateTime, rain FROM archive WHERE dateTime > ' + 
+                Math.round(Date.now()/1000 - 5 * 24 * 60 * 60), (err, rainData) ->
+          if err
+            clearInterval interval
+            log 'Error reading weewx db rain', err
+            db.close()
+            return
+          lastRain  = 0
+          totalRain = 0
+          for row in rainData
+            if row.dateTime > lastRain + 2 * 24 * 60 * 60
+              totalRain = 0
+            if row.rain
+              totalRain += row.rain
+              lastRain = row.dateTime
+              
+          data.rain = totalRain
+          $.weewx_data data
       
-  , 4000
+  , 5*1e3
 
 ###
 weewx_data      
