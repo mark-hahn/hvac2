@@ -150,7 +150,7 @@ module.exports = (timeSpanHrs, res) ->
     majorMinorTickRatio = (if minsPerMajorTick < 60 then 3 else 4)
 
     plotter = gnuPlot()
-      .set 'term svg size 1920 1080 lw 3 dynamic font "Arial,24"'
+      .set 'term svg size 1920 1080 lw 3 dynamic font "Arial,18"'
       .unset 'output'
       .set 'size ratio 0.5'
       .set 'linetype  1 lc rgb "#aaaaff"' # tv room - temp
@@ -170,14 +170,14 @@ module.exports = (timeSpanHrs, res) ->
       .set 'linetype 15 lc rgb "#eeeeee"' # - minor grid
       .set 'title "HVAC Scroll Plot"'
       .set 'key off'
-      .set 'label "`date "+%m/%d %l:%M %p"`" right at graph 1,1.03 font "arial,24"'
+      .set 'label "`date "+%m/%d %l:%M %P"`" right at graph 1,1.03 font "arial,18"'
       .set 'timefmt "%s"'
       .set 'xdata time'
       .set 'xrange [ time(0) - ' + startTimeOfs + ' : ' +
                     'time(0) - ' + endTimeOfs   + ' ]'
       .set 'xtics '  + (minsPerMajorTick * 60) + ' scale 0.01'
       .set 'mxtics ' + majorMinorTickRatio
-      .set 'format x "%l:%M"'
+      .set 'format x "%l:%M %p"'
       .set 'ytics 1 scale 0.01'
       .set 'mytics 2'
       .set 'grid xtics mxtics ytics mytics lt 14, lt 15'

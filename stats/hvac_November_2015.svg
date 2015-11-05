@@ -186,7 +186,7 @@
 		<text>HVAC Temp and AC usage: November 2015</text>
 	</g>
 	<g transform="translate(575.0,30.5)" style="stroke:none; fill:black; font-family:arial; font-size:10.00pt; text-anchor:end">
-		<text>11/05 14:07</text>
+		<text>11/05 15:07</text>
 	</g>
 </g>
 	<g id="gnuplot_plot_1" ><title>gnuplot_plot_1</title>
@@ -202,15 +202,16 @@
 		L375.2,236.1 L380.2,227.4 L385.1,201.4 L390.0,162.4 L394.9,158.1 L399.8,153.7 L404.7,153.7 L409.6,153.7 
 		L414.5,158.1 L419.4,158.1 L424.3,162.4 L429.2,171.1 L434.1,175.4 L439.0,179.7 L443.9,184.1 L448.8,210.1 
 		L453.7,218.7 L458.6,218.7 L463.5,223.1 L468.4,231.7 L473.3,236.1 L478.2,240.4 L483.1,240.4 L488.0,244.7 
-		L492.9,244.7 L497.8,231.7 L502.7,201.4 L507.6,162.4 L512.5,153.7 L517.4,145.1 L522.3,140.7  h0.01'/></g>
+		L492.9,244.7 L497.8,231.7 L502.7,201.4 L507.6,162.4 L512.5,153.7 L517.4,145.1 L522.3,140.7 L527.2,136.4 
+		L532.1,140.7  h0.01'/></g>
 	</g>
 	<g id="gnuplot_plot_2" ><title>gnuplot_plot_2</title>
 <g style="fill:none; color:green; stroke:currentColor; stroke-width:1.00; stroke-linecap:butt; stroke-linejoin:miter">
-	<path stroke='green'  d='M110.5,444.0 L228.2,444.0 L345.8,444.0 L463.5,444.0 L522.3,444.0  h0.01'/></g>
+	<path stroke='green'  d='M110.5,444.0 L228.2,444.0 L345.8,444.0 L463.5,444.0 L532.1,444.0  h0.01'/></g>
 	</g>
 	<g id="gnuplot_plot_3" ><title>gnuplot_plot_3</title>
 <g style="fill:none; color:blue; stroke:currentColor; stroke-width:1.00; stroke-linecap:butt; stroke-linejoin:miter">
-	<path stroke='blue'  d='M110.5,404.0 L110.5,444.0 L228.2,444.0 L345.8,444.0 L463.5,444.0 L522.3,444.0  h0.01'/></g>
+	<path stroke='blue'  d='M110.5,404.0 L110.5,444.0 L228.2,444.0 L345.8,444.0 L463.5,444.0 L532.1,444.0  h0.01'/></g>
 	</g>
 <g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00; stroke-linecap:butt; stroke-linejoin:miter">
 	<path stroke='black'  d='M45.6,54.1 L45.6,444.0 L575.0,444.0 L575.0,54.1 L45.6,54.1 Z  h0.01'/></g>
