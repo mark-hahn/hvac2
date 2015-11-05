@@ -11,8 +11,8 @@ rimraf   = require 'rimraf'
 Stream   = require 'stream'
 
 trimDelayHrs = 48
+rightPad     = 0.01
 hyst = 0.25
-dstOfs = 8
 
 ############### append to plotline files on every change #############
 trimmingOldFileCount = 0
@@ -29,8 +29,9 @@ color = (room, idxType) ->
   for r, idx in rooms
     if r is room then break
   idx * 3 + idxType
-
-utc = (time) -> time - dstOfs * 60 * 60 * 1e3
+  
+tzOfsMins = new Date().getTimezoneOffset()
+utc = (time) -> time - tzOfsMins * 60 * 1e3
 unixTime = -> Math.round utc(Date.now()) / 1000
 
 writeSetpoints = (room, setpoint=lastSetpoint[room], mode=lastMode[room]) ->
@@ -137,14 +138,12 @@ plotCmd = cmd.join ',  '
 
   
 ############## create output SVG file to serve ############
-module.exports = (timeSpanHrs, cb) ->
-  # cb()
-  # return
+module.exports = (timeSpanHrs, res) ->
   
   if not trimmingOldFileCount
     
-    startTimeOfs =            dstOfs * 60*60 + timeSpanHrs * 60*60
-    endTimeOfs   = Math.round dstOfs * 60*60 - timeSpanHrs * 0.05
+    startTimeOfs =            tzOfsMins * 60 + timeSpanHrs * 60*60
+    endTimeOfs   = Math.round tzOfsMins * 60 - timeSpanHrs * 60*60 * rightPad
     approxMajorMins = (timeSpanHrs / 16) * 60
     minsPerMajorTick = 15
     while approxMajorMins > minsPerMajorTick then minsPerMajorTick *= 2
@@ -183,25 +182,8 @@ module.exports = (timeSpanHrs, cb) ->
       .set 'mytics 2'
       .set 'grid xtics mxtics ytics mytics lt 14, lt 15'
       .plot plotCmd, end: yes
-      
-    streamIn  = new Stream.Readable
-    streamOut = new Stream.Writable
-      
-    streamOut.prototype._write = ->
-    
-    svgString = ""
-    streamOut.on 'data', (chunk) ->
-      svgString += chunk.toString()
-      log 'stream chunk', chunk.toString()[0..100]
-      next()
-      
-    streamOut.on 'end', (chunk, encoding, next) ->
-      svgString += chunk.toString()
-      log 'stream svgString', svgString[0..100]
-      cb svgString
-      
-    streamIn.pipe(plotter).pipe streamOut
-    
+      .pipe res
+          
     return 
     
   log 'skipping gnuplot while trimming', trimmingOldFileCount
