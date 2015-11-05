@@ -8,11 +8,14 @@ $        = require('imprea')()
 gnuPlot  = require 'gnuplot'
 readline = require 'linebyline'
 rimraf   = require 'rimraf'
+Stream   = require 'stream'
 
-trimmingOldFileCount = 0
-  
-############### append to plotline files on every change #############
+trimDelayHrs = 48
 hyst = 0.25
+dstOfs = 8
+
+############### append to plotline files on every change #############
+trimmingOldFileCount = 0
 
 rooms        = ['tvRoom', 'kitchen', 'master', 'guest']
 lastSetWrite = {tvRoom:0,     kitchen:0,     master:0,     guest: 0   }
@@ -27,7 +30,7 @@ color = (room, idxType) ->
     if r is room then break
   idx * 3 + idxType
 
-utc = (time) -> time - 8 * 60 * 60 * 1e3
+utc = (time) -> time - dstOfs * 60 * 60 * 1e3
 unixTime = -> Math.round utc(Date.now()) / 1000
 
 writeSetpoints = (room, setpoint=lastSetpoint[room], mode=lastMode[room]) ->
@@ -105,7 +108,7 @@ do trimFiles = ->
 
     lr.on 'line', (line) ->
       if (match = timeRegex.exec line) and
-         +match[1] > utc(Date.now())/1000 - 6*60*60
+         +match[1] > utc(Date.now())/1000 - trimDelayHrs*60*60
         fs.appendFileSync newfile, line + '\n'
           
     lr.on 'close', ->
@@ -117,10 +120,10 @@ do trimFiles = ->
       fs.renameSync newfile, file
       trimmingOldFileCount--
   
-setInterval trimFiles, 30*60*1e3
+setInterval trimFiles, 4*60*60*1e3
 
 
-############## create output SVG file to serve ############
+############## plot command ############
 cmdPfx  = '"/tmp/hvac-gnuplot-'; 
 cmdSfx = '.txt" using 1:2:3 with lines lc variable'
 cmd = []
@@ -131,13 +134,25 @@ for room in ['guest', 'kitchen', 'master', 'tvRoom']
 for room in ['guest', 'kitchen', 'master', 'tvRoom']
   cmd.push cmdPfx +       'temp-' + room + cmdSfx
 plotCmd = cmd.join ',  '
-# log plotCmd
-# process.exit 0
 
-module.exports = (svgFile, cb) ->
+  
+############## create output SVG file to serve ############
+module.exports = (timeSpanHrs, cb) ->
+  # cb()
+  # return
+  
   if not trimmingOldFileCount
-    gnuPlot()
+    
+    startTimeOfs =            dstOfs * 60*60 + timeSpanHrs * 60*60
+    endTimeOfs   = Math.round dstOfs * 60*60 - timeSpanHrs * 0.05
+    approxMajorMins = (timeSpanHrs / 16) * 60
+    minsPerMajorTick = 15
+    while approxMajorMins > minsPerMajorTick then minsPerMajorTick *= 2
+    majorMinorTickRatio = (if minsPerMajorTick < 60 then 3 else 4)
+
+    plotter = gnuPlot()
       .set 'term svg size 1920 1080 lw 3 dynamic font "Arial,24"'
+      .unset 'output'
       .set 'size ratio 0.5'
       .set 'linetype  1 lc rgb "#aaaaff"' # tv room - temp
       .set 'linetype  2 lc rgb "#000088"' #         - temp active
@@ -159,20 +174,38 @@ module.exports = (svgFile, cb) ->
       .set 'label "`date "+%m/%d %l:%M %p"`" right at graph 1,1.03 font "arial,24"'
       .set 'timefmt "%s"'
       .set 'xdata time'
-      .set 'xrange [ time(0) - (8*60*60) - (4*60*60) : ' +
-                    'time(0) - (8*60*60) +    (5*60) ]'
-      .set 'xtics 900 scale 0.01'
-      .set 'mxtics 3'
+      .set 'xrange [ time(0) - ' + startTimeOfs + ' : ' +
+                    'time(0) - ' + endTimeOfs   + ' ]'
+      .set 'xtics '  + (minsPerMajorTick * 60) + ' scale 0.01'
+      .set 'mxtics ' + majorMinorTickRatio
       .set 'format x "%l:%M"'
       .set 'ytics 1 scale 0.01'
       .set 'mytics 2'
       .set 'grid xtics mxtics ytics mytics lt 14, lt 15'
-      .set 'output "' + svgFile + '"'
-      .plot plotCmd
-      .end cb 
+      .plot plotCmd, end: yes
+      
+    streamIn  = new Stream.Readable
+    streamOut = new Stream.Writable
+      
+    streamOut.prototype._write = ->
+    
+    svgString = ""
+    streamOut.on 'data', (chunk) ->
+      svgString += chunk.toString()
+      log 'stream chunk', chunk.toString()[0..100]
+      next()
+      
+    streamOut.on 'end', (chunk, encoding, next) ->
+      svgString += chunk.toString()
+      log 'stream svgString', svgString[0..100]
+      cb svgString
+      
+    streamIn.pipe(plotter).pipe streamOut
+    
     return 
+    
   log 'skipping gnuplot while trimming', trimmingOldFileCount
-  cb()
+  cb 'skipping gnuplot while trimming'
   
 ###
   white              #ffffff = 255 255 255
