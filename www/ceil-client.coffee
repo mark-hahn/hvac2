@@ -17,9 +17,18 @@ $ ->
     if not window.wsockSend then setTimeout tryWs, 100
     else wsockSend type: 'reqAll'
       
+  window.bumpTemp = (dir) -> 
+    wsockSend
+      type:     'setStatVar'
+      room:     'master'
+      variable: 'setpoint'
+      setData:   dir
+    
   lastTime = ''
   setInterval ->
     if (time = moment().format 'h:mm') isnt lastTime
       $('#time').text time
       lastTime = time
   , 1e3
+  
+  

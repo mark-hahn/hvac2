@@ -16,7 +16,8 @@ module.exports = ->
         div style:'width:1570px; height:760px;  
                    position:relative; border:1px solid red;', ->
 # top half
-          div style:'width:100%; height:300px; position:relative;', ->
+          div onClick:'bumpTemp("up")', \
+              style:'width:100%; height:300px; position:relative;', ->
   # temp                       
            div '#master', style:'width:820px; text-align:right;  height: 400px;
                                 position:relative; top:-40px; '
@@ -29,7 +30,8 @@ module.exports = ->
           div '#divider', style:'width:100%; height:6px; margin:0; background-color:#ccc;'
           
 # bot half
-          div style:'position:relative; width:100%; height:300px; top:0px;', ->
+          div onClick:'bumpTemp("down")', \
+              style:'position:relative; width:100%; height:300px; top:0px;', ->
   # time            
            div '#time', style:'height:400px; width:820px; text-align:right; top:-40px;
                                position:relative;'

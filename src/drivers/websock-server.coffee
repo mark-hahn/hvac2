@@ -137,6 +137,17 @@ primus.on 'connection', (connection) ->
     # log 'connection.on data', data
     
     switch data.type
+      
+      when 'setStatVar' 
+        {room, variable, setData} = data
+        if variable is 'setpoint' and tstatByRoom[room]
+          tstatByRoom[room].setpoint += (if setData is 'up' then +0.5 else -0.5)
+          if room is 'master' 
+            masterSetpoint = tstatByRoom[room].setpoint
+            writeCeil()
+          for conn in connections when conn.id isnt connId and tstatByRoom[data.room]
+            conn.connection.write tstatByRoom[data.room]
+
       when 'tstat' 
         $.ws_tstat_data data
         tstatByRoom[data.room] = data
