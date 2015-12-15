@@ -142,6 +142,7 @@ primus.on 'connection', (connection) ->
         {room, variable, setData} = data
         if variable is 'setpoint' and tstatByRoom[room]
           tstatByRoom[room].setpoint += (if setData is 'up' then +0.5 else -0.5)
+          $.ws_tstat_data tstatByRoom[room]
           if room is 'master' 
             masterSetpoint = tstatByRoom[room].setpoint
             writeCeil()
@@ -149,8 +150,8 @@ primus.on 'connection', (connection) ->
             conn.connection.write tstatByRoom[data.room]
 
       when 'tstat' 
-        $.ws_tstat_data data
         tstatByRoom[data.room] = data
+        $.ws_tstat_data data
         if data.room is 'master' 
           masterSetpoint = (if data.mode in ['cool', 'heat'] then data.setpoint)
           writeCeil()
