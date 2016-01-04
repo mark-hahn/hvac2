@@ -30,7 +30,6 @@ check = (name) ->
     setpoint = setpoints[room]
     if temp and setpoint
       delta = switch
-        when mode is 'heat' and temp >= setpoint then +1
         when temp >= setpoint + roomHysterisis   then +1
         when temp <= setpoint - roomHysterisis   then -1
         else 0
