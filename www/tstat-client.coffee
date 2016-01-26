@@ -12,7 +12,7 @@ delayMS   = 0
 blinkMS   = 200
     
 curRoom = localStorage?.getItem('room') ? 'tvRoom'
-rooms   = ['tvRoom', 'kitchen', 'master', 'guest']
+# rooms   = ['tvRoom', 'Sewing', 'master', 'guest']
 
 modes     = tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'
 fans      = tvRoom:  off,  kitchen:  off,  master: off,  guest: off

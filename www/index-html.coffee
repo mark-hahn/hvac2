@@ -28,7 +28,7 @@ module.exports = ->
                     background-color:#aaa; text-align:center; color:#666", ->
             div '#tvRoom.top',   room:'tvRoom',  style: "float:left; width:24%;
                                   clear:both;", 'TV'
-            div '#kitchen.top', room:'kitchen', style: "float:left; width:24%", 'Kit'
+            div '#kitchen.top', room:'kitchen', style: "float:left; width:24%", 'Sew'
             div '#master.top',  room:'master',  style: "float:left; width:24%", 'Mstr'
             div '#guest.top',   room:'guest',   style: "float:left; width:24%", 'Guest'
 

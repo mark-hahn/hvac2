@@ -17,7 +17,8 @@ dampening      = 30000
 offset = {tvRoom: 0, kitchen: -2.0, master: +2.0, guest: -1.5, airIntake: -3.0, acReturn:0}
 
 xbeeRadios = 
-  tvRoom : 0x0013a20040c33695
+# server:  0x0013a20040c33695  
+  tvRoom : 0x0013A20040BAFFAD
   kitchen: 0x0013a20040b3a592
   master:  0x0013a20040b3a903
   guest:   0x0013a20040b3a954
