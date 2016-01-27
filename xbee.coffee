@@ -14,22 +14,29 @@ xbeeSerialPort = new SerialPort '/dev/xbee',
 
 frameBuf = []
 
-dec2hex = (arr) ->
+dec2hex = (arr, start=0, end=arr.length) ->
+  if end < 0 then end += arr.length
   hexArr = []
-  for decimal in arr
-    hex = decimal.toString 16
+  for i in [start...end]
+    hex = arr[i].toString 16
     if hex.length < 2 then hex = '0' + hex
     hexArr.push hex
   hexArr.join ' '
   
 getFrameLen = (index) ->
   if frameBuf.length < index+4 then return 0
-  if frameBuf[index+0] is 0x7e and
-      (frameLen = frameBuf[index+1]*256 + frameBuf[index+2] + 4)# and
-      # frameLen in [22,24] and frameBuf[index+3] is 0x92
-    frameLen
-  else 0
+  if frameBuf[index+0] is 0x7e
+    frameBuf[index+1]*256 + frameBuf[index+2] + 4
+  else 
+    0
 
+addr64 = (arr, idx) ->
+  srcAddr = 0
+  for i in [idx...idx+8] by 1
+    srcAddr *= 256
+    srcAddr += arr[i]
+  srcAddr
+  
 assembleFrame = (data) ->
   # log 'recv data', data
   for i in [0...data.length] then frameBuf.push data[i]
@@ -44,18 +51,39 @@ assembleFrame = (data) ->
         log 'xBee checksum error', dec2hex frame
         frameBuf = []
       else
-        srcAddr = 0
-        for idx in [4...12] by 1
-          srcAddr *= 256
-          srcAddr += frame[idx]
-        log 'newPacket', srcAddr.toString(16), dec2hex frame
+        switch frame[3] # type
+          
+          when 0x92  #  IO Data Sample Rx
+            if frameLen not in [22,24]
+              log 'bad framelen', dec2hex frame
+            else
+              srcAddr = addr64 frame, 4
+              log 'IO  Rx', srcAddr.toString(16), '\n', dec2hex frame
+              
+          when 0x91 # explicit Rx
+            log 'exp rx', dec2hex frame
+            
+          when 0x88  # AT Command ResponseFrame
+            frameId = frame[4]
+            ATcmd = String.fromCharCode(frame[5]) + String.fromCharCode(frame[6])
+            status = ['OK', 'Error', 'Invalid Command',
+                            'Invalid Parameter', 'Tx Failure'][frame[7]]
+            whatIsThis = dec2hex [frame[8],frame[9]]
+            srcAddr = addr64 frame, 10
+            srcAddrStr = srcAddr.toString 16
+            data = frame.slice 18, -1
+            log 'AT  rx', 
+              {frameId, ATcmd, status, whatIsThis, srcAddr: srcAddrStr}, '\n', 
+               dec2hex data
+          else
+            log '??? rx', dec2hex frame
     else
       break
 
-  # for index in [0..frameBuf.length-4]
-  #   if (frameLen = getFrameLen index)
-  #     frameBuf.splice 0, index
-  #     break
+  for index in [0..frameBuf.length-4]
+    if (frameLen = getFrameLen index)
+      frameBuf.splice 0, index
+      break
 
 write = (dataArr, cb) ->
   log 'write', dec2hex dataArr
