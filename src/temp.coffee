@@ -18,11 +18,11 @@ offset = {tvRoom: 0, kitchen: -2.0, master: +2.0, guest: -1.5, airIntake: -3.0, 
 
 xbeeRadios = 
 # server:  0x0013a20040c33695  
-  tvRoom : 0x0013A20040BAFFAD
-  kitchen: 0x0013a20040b3a592
-  master:  0x0013a20040b3a903
-  guest:   0x0013a20040b3a954
-  closet:  0x0013A20040BD2529
+  tvRoom : '0013a20040baffad'
+  kitchen: '0013a20040b3a592'
+  master:  '0013a20040b3a903'
+  guest:   '0013a20040b3a954'
+  closet:  '0013a20040bd2529'
   
 voltsAtZeroC = 1.05
 voltsAt25C   = 0.83
@@ -64,12 +64,12 @@ module.exports =
       xbee.getPacketsByAddr name, addr
       obsName = 'xbeePacket_' + name
       $.react obsName, ->
-        {packet} = $[obsName]
-        volts  = ((packet[19] * 256 + packet[20]) / 1024) * 1.2
+        {analogData} = $[obsName]
+        volts  = (analogData[0] / 1024) * 1.2
         if name is 'closet'
           temp = ((voltsAtZeroC - volts ) / voltsPerC) * 9/5 + 32
           emitSrc.emit 'airIntake', temp
-          volts = ((packet[21] * 256 + packet[22]) / 1024) * 1.2
+          volts = (analogData[1] / 1024) * 1.2
           temp =  (voltsAtZeroC - volts) / voltsPerC
           emitSrc.emit 'acReturn', temp
         else
