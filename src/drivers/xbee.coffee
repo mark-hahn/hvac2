@@ -1,7 +1,5 @@
 
-# {log} = require('./utils') ' XBEE'
-
-log = ->
+{log} = require('./utils') ' XBEE'
 
 $ = require('imprea')()
 SerialPort = require('serialport').SerialPort
@@ -97,7 +95,7 @@ recvIO = (srcAddr, frame) ->
     analogData.push frame[analogOfs++] * 256 + frame[analogOfs++]
   ioData = {digitalMask: digitalMaskStr, analogMask: analogMaskStr, \
             digitalData: digitalDataStr, analogData}
-  log 'IO-data', ioData
+  # log 'IO-data', ioData
   emitSrc.emit 'ioData', srcAddr, ioData 
   
   
@@ -124,8 +122,8 @@ newFrame = (frame) ->
       # netAddrStr = netAddr.toString 16
       # srcAddr = arr2hex frame, 10, 18
       cmdData = (if frameId is 0 then [] else frame.slice 8, -1)
-      log 'AT-rx', {frameId, ATcmd, status, \
-                    netAddr: netAddrStr, srcAddr}, '\n', dumpArrAsHex cmdData
+      # log 'AT-rx', {frameId, ATcmd, status, \
+                    # netAddr: netAddrStr, srcAddr}, '\n', dumpArrAsHex cmdData
                    
     when 0x8B  # Transmit Status
       frameId    = frame[4]
@@ -158,9 +156,9 @@ newFrame = (frame) ->
         when 0x02 then 'Route Discovery'
         when 0x03 then 'Address and Route'
         when 0x40 then 'Extended Timeout Discovery'
-      log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
-                      deliveryStatus:  deliveryStatusStr,    \
-                      discoveryStatus: discoveryStatusStr}
+      # log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
+                      # deliveryStatus:  deliveryStatusStr,    \
+                      # discoveryStatus: discoveryStatusStr}
 
     when 0x91 # explicit Rx
       srcAddr = arr2hex frame, 4, 12
@@ -181,15 +179,15 @@ newFrame = (frame) ->
       rxOptionsStr = rxOptionsArr.join ' '
       transSeq = frame[21]
       if clusterId is 0x0092
-        log 'EX-rx-io', {netAddr: netAddrStr, srcAddr, profileId: profileIdStr, \
-                         transSeq, srcEndpoint, dstEndpoint, rxOptions: rxOptionsStr}
+        # log 'EX-rx-io', {netAddr: netAddrStr, srcAddr, profileId: profileIdStr, \
+                        #  transSeq, srcEndpoint, dstEndpoint, rxOptions: rxOptionsStr}
         recvIO srcAddr, frame[22...]
         return
       rxData = [22...]
-      log 'EX-rx', {netAddr: netAddrStr, srcAddr,                     \
-                    clusterId: clusterIdStr, profileId: profileIdStr, \
-                    transSeq, srcEndpoint, dstEndpoint, rxOptions: rxOptionsStr}, 
-                  '\n', dumpArrAsHex rxData
+      # log 'EX-rx', {netAddr: netAddrStr, srcAddr,                     \
+                    # clusterId: clusterIdStr, profileId: profileIdStr, \
+                    # transSeq, srcEndpoint, dstEndpoint, rxOptions: rxOptionsStr}, 
+                  # '\n', dumpArrAsHex rxData
       
     when 0x92  #  IO Data Sample Rx
       srcAddr = arr2hex frame, 4, 12
@@ -199,41 +197,47 @@ newFrame = (frame) ->
         when 0x01 then 'ACK'
         when 0x02 then 'BDCST'
       # numSamples = frame[15] --> always 1
-      log 'IO-rx', {netAddr: netAddrStr, srcAddr, rxOptions}
+      # log 'IO-rx', {netAddr: netAddrStr, srcAddr, rxOptions}
       recvIO srcAddr, frame[16...]
                                               
     else
       log 'unknown frame type\n', dumpArrAsHex frame
   
   
-################ BUILD frame ################
+################ BUILD recv frame ################
 
-frameBuf = frameLen = null
-inEscape = pastDiscardedZeros = no
+frameBuf = frameLen = discardByte = null
+discardCount = 0
+inEscape = no
 
-newBytes = (data) ->
-  # log 'recv data', data
-  
-  for byte in data
+newBytes = (buf) ->
+  # log 'recv data', buf
+  for bufIdx in [0...buf.length]
+    byte = buf[bufIdx]
     if not frameBuf
-      if byte is 0x7E then frameBuf = [0x7E]
+      do chkDiscard = ->
+        if discardCount and byte isnt discardByte
+          log '>>> discarded byte', dumpArrAsHex([discardByte]) + 
+              (if discardCount > 1 then ' (' + discardCount + ')' else '')
+          discardCount = 0
+      if byte is 0x7E
+        chkDiscard()
+        frameBuf = [0x7E]
       else 
-        if byte isnt 0 or pastDiscardedZeros
-          pastDiscardedZeros = yes
-          log 'discarding input byte', dumpArrAsHex [byte]
+        discardCount++
+        discardByte = byte
       continue
-    else
-      if inEscape
-        byte ^= 0x20
-        inEscape = no
-      else if byte is 0x7D
-        inEscape = yes
-        continue
+    if inEscape
+      byte ^= 0x20
+      inEscape = no
+    else if byte is 0x7D
+      inEscape = yes
+      continue
     frameBuf.push byte
     if not frameLen and frameBuf.length is 3
       frameLen = frameBuf[1] * 256 + frameBuf[2]
-      continue
-    # log 'new byte', {byte, inEscape, frameLen, frameBufLen: frameBuf.length, frameBuf: dumpArrAsHex frameBuf}
+    # log 'new byte', {byte: dumpArrAsHex([byte]), frameLen, \
+                    #  frameBufLen: frameBuf.length, frameBuf: dumpArrAsHex frameBuf}
     if frameLen and frameBuf.length is frameLen + 4
       newFrame frameBuf
       frameLen = null
@@ -242,23 +246,14 @@ newBytes = (data) ->
 
 ################ SEND ###################
 
-write = (dataArr, cb) ->
-  # log 'write', dumpArrAsHex dataArr
-  dataLen = dataArr.length
-  buf = new Buffer 4 + dataLen
-  buf.writeUInt8 0x7E, 0
-  buf.writeUInt16BE dataLen, 1
-  cksum = 0
-  for byte, idx in dataArr
-    buf.writeUInt8 byte, 3 + idx
-    cksum += byte
-  buf.writeUInt8 0xFF - (cksum & 0xFF), 3 + dataLen
-  log 'write frame', buf.length, '\n', buf
-  # return
+send = (frame, cb) ->
+  log 'send frame', frame.length, '\n', dumpArrAsHex frame
+  return
   
+  buf = new Buffer frame
   if not xbeeSerialPort.isOpen()
     log 'attempted write while closed', buf.toString()
-    cb 'attempted write while closed'
+    cb? 'attempted write while closed'
     return
   xbeeSerialPort.write buf, (err, writeLen) ->
     if err
@@ -280,8 +275,26 @@ write = (dataArr, cb) ->
           cb? err
           return
         cb?()
+    
         
-        
+################ BUILD send frame ################
+
+write = (data, cb) ->
+  len = data.length
+  data = [len >>> 8, len & 0xFF].concat data
+  frame = [0x7E]
+  cksum = 0
+  for byte, idx in data
+    if idx > 1 then cksum += byte
+    if byte in [0x7E, 0x7D, 0x11, 0x13]
+      frame.push 0x7D
+      frame.push byte ^= 0x20
+    else
+      frame.push byte
+  frame.push 0xFF - (cksum & 0xFF)
+  send frame, cb
+  
+  
 ############## API frames #############
 
 # talk to local module
@@ -369,13 +382,13 @@ zdoLQI = (cb) ->   # pg 99
 xbeeSerialPort.on 'error', (err) -> log 'xbee port err', err
 
 xbeeSerialPort.on 'open', ->
-  log 'xbee port open'
+  log 'port open'
   xbeeSerialPort.on 'data', newBytes
   
   
 ################# TESTING #################
   
-  zdo 
+  # netDiscovery()
 
 
   # frameCtl = 0  # Bitfield that defines the command type

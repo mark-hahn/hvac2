@@ -27,11 +27,14 @@ $ ->
   $bot       = $ '.bot'
   
   window.update = (sendData = yes)->
+    modes.kitchen = 'off'
+    fans.kitchen  =  off
+    
     $top.css border:'none', backgroundColor: '#aaa', color: 'gray'
     $('#'+curRoom).css border:'1px solid black', backgroundColor: 'yellow', color: 'black'
     $lftTemp.text (if temps[curRoom] then (+temps[curRoom]).toFixed 1 else '')
     $('#codes').text codes[curRoom]
-    $rgtTemp.text setpoints[curRoom].toFixed 1
+    $rgtTemp.text (if curRoom is 'kitchen' then '---' else setpoints[curRoom].toFixed 1)
     
     maxTemp = 80
     minTemp = 65
@@ -75,21 +78,19 @@ $ ->
       update()
       
   $bot.click (e) ->
+    if curRoom is 'kitchen' then return
     $tgt = $ e.target
     btn = $tgt.attr 'mode'
-    if btn is 'off'
-      modes[curRoom] = 'off'
-      fans[curRoom] = off
-    else if btn is 'fan'
-      fans[curRoom] = not fans[curRoom]
-    else
-      if modes[curRoom] is btn
-        modes[curRoom] = (if fans[curRoom] then 'fan' else 'off')
+    switch btn
+      when 'off'
+        modes[curRoom] = 'off'
+        fans[curRoom]  = off
+      when 'fan'
+        fans[curRoom] = not fans[curRoom]
+        if modes[curRoom] is 'off' and fans[curRoom]
+          modes[curRoom] = 'fan'
       else
         modes[curRoom] = btn
-      if btn is 'off' then fans[curRoom] = off
-    if modes[curRoom] in ['off', 'fan']
-      modes[curRoom] = (if fans[curRoom] then 'fan' else 'off')
     update()
     
   $('#rgtPlus').click  -> setpoints[curRoom] += 0.5; update()
