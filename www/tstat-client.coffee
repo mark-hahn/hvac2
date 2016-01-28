@@ -86,9 +86,10 @@ $ ->
         modes[curRoom] = 'off'
         fans[curRoom]  = off
       when 'fan'
-        fans[curRoom] = not fans[curRoom]
-        if modes[curRoom] is 'off' and fans[curRoom]
-          modes[curRoom] = 'fan'
+        if (fans[curRoom] = not fans[curRoom])
+          if modes[curRoom] is 'off' then modes[curRoom] = 'fan'
+        else
+          if modes[curRoom] is 'fan' then modes[curRoom] = 'off'
       else
         modes[curRoom] = btn
     update()
