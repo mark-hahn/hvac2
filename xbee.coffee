@@ -108,8 +108,8 @@ newFrame = (frame) ->
       # netAddrStr = netAddr.toString 16
       # srcAddr = arr2hex frame, 10, 18
       cmdData = (if frameId is 0 then [] else frame.slice 8, -1)
-      # log 'AT-rx', {frameId, ATcmd, status, \
-                    # netAddr: netAddrStr, srcAddr}, '\n', dumpArrAsHex cmdData
+      log 'AT-rx', {frameId, ATcmd, status, \
+                    netAddr: netAddrStr, srcAddr}, '\n', dumpArrAsHex cmdData
                    
     when 0x8B  # Transmit Status
       frameId    = frame[4]
@@ -142,20 +142,23 @@ newFrame = (frame) ->
         when 0x02 then 'Route Discovery'
         when 0x03 then 'Address and Route'
         when 0x40 then 'Extended Timeout Discovery'
-      # log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
-                      # deliveryStatus:  deliveryStatusStr,    \
-                      # discoveryStatus: discoveryStatusStr}
+      log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
+                      deliveryStatus:  deliveryStatusStr,    \
+                      discoveryStatus: discoveryStatusStr}
 
     when 0x91 # explicit Rx
+      # log 'explicit Rx frame\n', dumpArrAsHex frame
       srcAddr = arr2hex frame, 4, 12
       netAddr = frame[12] * 256 + frame[13]
-      netAddrStr = netAddr.toString 16
+      netAddrStr = arr2hex frame, 12, 14
       srcEndpoint = frame[14]
+      srcEndpointStr = srcEndpoint.toString 16
       dstEndpoint = frame[15]
+      dstEndpointStr = dstEndpoint.toString 16
       clusterId = frame[16] * 256 + frame[17]
-      clusterIdStr = clusterId.toString 16
+      clusterIdStr = arr2hex frame, 16, 18
       profileId = frame[18] * 256 + frame[19]
-      profileIdStr = profileId.toString 16
+      profileIdStr = arr2hex frame, 18, 20
       rxOptions = frame[20]
       rxOptionsArr = []
       if rxOptions & 0x01 then rxOptionsArr.push 'ACK'
@@ -165,15 +168,20 @@ newFrame = (frame) ->
       rxOptionsStr = rxOptionsArr.join ' '
       transSeq = frame[21]
       if clusterId is 0x0092
-        # log 'EX-rx-io', {netAddr: netAddrStr, srcAddr, profileId: profileIdStr, \
+        # log 'EX-rx-io', {srcAddr, netAddr: netAddrStr, profileId: profileIdStr, \
                         #  transSeq, srcEndpoint, dstEndpoint, rxOptions: rxOptionsStr}
+        if srcAddr is '0013a20040baffad'
+          log 'EX-rx-io', srcAddr + ', ' + netAddr + ', ' + profileIdStr + ', ' + 
+                          srcEndpointStr + ', ' + dstEndpointStr + ', ' + rxOptionsStr
         recvIO srcAddr, frame[22...]
         return
       rxData = [22...]
-      # log 'EX-rx', {netAddr: netAddrStr, srcAddr,                     \
-                    # clusterId: clusterIdStr, profileId: profileIdStr, \
-                    # transSeq, srcEndpoint, dstEndpoint, rxOptions: rxOptionsStr}, 
-                  # '\n', dumpArrAsHex rxData
+      log 'EX-rx', {srcAddr, netAddr: netAddrStr,                     \
+                    clusterId: clusterIdStr, profileId: profileIdStr, \
+                    transSeq,                                         \
+                    srcEndpoint: srcEndpointStr, dstEndpointStr,      \
+                    rxOptions: rxOptionsStr}, 
+                  '\n', dumpArrAsHex rxData
       
     when 0x92  #  IO Data Sample Rx
       srcAddr = arr2hex frame, 4, 12
@@ -183,7 +191,7 @@ newFrame = (frame) ->
         when 0x01 then 'ACK'
         when 0x02 then 'BDCST'
       # numSamples = frame[15] --> always 1
-      # log 'IO-rx', {netAddr: netAddrStr, srcAddr, rxOptions}
+      log 'IO-rx', {netAddr: netAddrStr, srcAddr, rxOptions}
       recvIO srcAddr, frame[16...]
                                               
     else
