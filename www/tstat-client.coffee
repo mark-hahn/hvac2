@@ -16,7 +16,8 @@ curRoom = localStorage?.getItem('room') ? 'tvRoom'
 
 modes     = tvRoom: 'off', kitchen: 'off', master:'off', guest: 'off'
 fans      = tvRoom:  off,  kitchen:  off,  master: off,  guest: off
-setpoints = tvRoom: 74,    kitchen: 74,    master: 74,   guest: 74
+qcs       = tvRoom:  off,  kitchen:  off,  master: off,  guest: off
+setpoints = tvRoom: 70,    kitchen: 70,    master: 70,   guest: 70
 temps     = {}
 codes     = {}
 
@@ -27,14 +28,12 @@ $ ->
   $bot       = $ '.bot'
   
   window.update = (sendData = yes)->
-    modes.kitchen = 'off'
-    fans.kitchen  =  off
-    
+    if curRoom is 'kitchen' then qcs.kitchen = (modes[curRoom] in ['heat', 'cool'])
     $top.css border:'none', backgroundColor: '#aaa', color: 'gray'
     $('#'+curRoom).css border:'1px solid black', backgroundColor: 'yellow', color: 'black'
     $lftTemp.text (if temps[curRoom] then (+temps[curRoom]).toFixed 1 else '')
     $('#codes').text codes[curRoom]
-    $rgtTemp.text (if curRoom is 'kitchen' then '---' else setpoints[curRoom].toFixed 1)
+    $rgtTemp.text setpoints[curRoom].toFixed 1
     
     maxTemp = 80
     minTemp = 65
@@ -61,12 +60,19 @@ $ ->
       backgroundColor: '#8f8'
       color: 'black'
 
+    if qcs[curRoom] 
+      $('#qc').css
+        border:'1px solid black'
+        backgroundColor: '#8f8'
+        color: 'black'
+    
     if sendData
       wsockSend
         type:     'tstat'
         room:     curRoom
         fan:      fans[curRoom]
         mode:     modes[curRoom]
+        qc:       qcs[curRoom]
         setpoint: setpoints[curRoom]
       
   $top.click (e) ->
@@ -78,18 +84,22 @@ $ ->
       update()
       
   $bot.click (e) ->
-    if curRoom is 'kitchen' then return
     $tgt = $ e.target
     btn = $tgt.attr 'mode'
     switch btn
       when 'off'
         modes[curRoom] = 'off'
         fans[curRoom]  = off
+        qcs[curRoom]   = off
       when 'fan'
         if (fans[curRoom] = not fans[curRoom])
           if modes[curRoom] is 'off' then modes[curRoom] = 'fan'
         else
           if modes[curRoom] is 'fan' then modes[curRoom] = 'off'
+      when 'qc'
+        modeActive = (modes[curRoom] in ['heat', 'cool'])
+        qcs[curRoom] = (if modeActive then not qcs[curRoom] else off)
+        if curRoom is 'kitchen' then qcs.kitchen = modeActive
       else
         modes[curRoom] = btn
     update()

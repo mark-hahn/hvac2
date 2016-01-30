@@ -35,12 +35,6 @@ dampersInsteonHubUrlPfx = insteonHubAddr + insteonIds.furnaceDampers + '/'
 send = (isDamper, obj, cb) ->
   logObj 'send ' + (if isDamper then 'damp' else 'hvac'), obj
    
-  # tie kitchen and tvroom dampers together
-  # advance preparation for adding sewing room
-  if isDamper
-    if obj.tvRoom  then obj.kitchen = yes
-    if obj.kitchen then obj.tvRoom  = yes
-  
   data = 0
   for name, val of obj
     bit = switch name

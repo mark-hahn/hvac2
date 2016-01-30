@@ -7,7 +7,7 @@ util = require 'util'
 module.exports = ->
   render ->
     doctype()
-    html ->
+    html style: 'box-sizing: border-box', ->
       head ->
         title 'thermostat'
         # meta name: "viewport", \
@@ -77,11 +77,12 @@ module.exports = ->
 
           div '#bottom', style: "clear:both; width:100%; height:25%;
                     background-color:#aaa; text-align:center; color:#666", ->
-            div '#off.bot',  mode:'off',  style: "float:left; width:24%; clear:both;",
+            div '#off.bot',  mode:'off',  style: "float:left; width:20%; clear:both;",
                                              'Off'
-            div '#fan.bot',  mode:'fan',  style: "float:left; width:24%;", 'Fan'
-            div '#heat.bot', mode:'heat', style: "float:left; width:24%;", 'Heat'
-            div '#cool.bot', mode:'cool', style: "float:left; width:24%;", 'Cool'
+            div '#fan.bot',  mode:'fan',  style: "float:left; width:21%;", 'Fan'
+            div '#heat.bot', mode:'heat', style: "float:left; width:21%;", 'Heat'
+            div '#cool.bot', mode:'cool', style: "float:left; width:21%;", 'Cool'
+            div '#qc.bot',   mode:'qc',   style: "float:left;",            'Qc'
 
         script src: 'js/jquery-2.1.4.js'
         script src: 'js/primus.js'
