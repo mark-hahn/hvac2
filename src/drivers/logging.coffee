@@ -30,7 +30,7 @@ ltr = (val, uc = no) ->
   fmts += '%1s'
   val = val or '-'
   val = if uc then val.toUpperCase() else val.toLowerCase()
-  char = val[0].replace /[Oo]/, '-'
+  char = val[0]
   args.push char
   char
 
@@ -64,14 +64,13 @@ $.react '*', (name) ->
     switch
       when @ctrl_thaw         then 'T'
       when @timing_hvac?.heat then 'H'
-      when @timing_acDelay    then 'D'
       when @timing_hvac?.cool then 'C'
       when @timing_hvac?.fan  then 'F'
       else                         '-'
       
   $.log_extAirCode extAirCode = (if @timing_extAirIn then 'E' else 'R')
     
-  $.log_sysMode ltr @ctrl_sysMode, yes
+  $.log_sysMode ltr (if @ctrl_sysMode isnt 'off' then @ctrl_sysMode), yes
   ltr modeCode_sys,  yes
   str ' '
   ltr extAirCode
@@ -114,11 +113,11 @@ $.react '*', (name) ->
     if mode isnt 'off' then roomCountNotOff++
     if active          then roomCountActive++
     
-    $['log_actualCode_' + room]  tstatActualCode =
+    $['log_actualCode_' + room] tstatActualCode =
       switch 
-        when active     then '@'
-        when damper     then 'O'
-        else                 '-'
+        when active then '@'
+        when damper then 'O'
+        else             '-'
           
     now = Date.now()
     elapsedMins = (now - lastActiveChg[room]) / (60*1e3)

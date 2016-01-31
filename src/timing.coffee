@@ -9,13 +9,12 @@ rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 hvacs = ['extAir', 'fan', 'heat', 'cool']
 
 $ = require('imprea')()
-$.output 'timing_dampers', 'timing_hvac', 'timing_extAirIn', 'timing_acDelay'
+$.output 'timing_dampers', 'timing_hvac', 'timing_extAirIn'
 
 minDampCyle     =       2e3
-fanHold         =  1 * 60e3
+minAcOff        =  4 * 60e3  
 extAirDelay     = 10 * 60e3
 dampersOffDelay = 10 * 60e3
-minAcOff        =  4 * 60e3  
 
 nextChkAgainTime  = Infinity
 allDampersOffTime = null
@@ -24,7 +23,7 @@ lastAcOffTime     = 0
 lastExtAirOnTime  = 0
 
 modes  = {}
-deltas = {}
+qcs    = {}
 
 dampersReq    = {tvRoom: on, kitchen: on, master:on, guest: on}
 lastDampers   = {tvRoom: on, kitchen: on, master:on, guest: on}
@@ -73,44 +72,11 @@ check = ->
     if not exp then checkAgainAt evtTime + delay + 100
     exp
     
-  # all room dampers closed
-  if allRoomsEqualTo dampers, off
-    allDampersOffTime ?= now
-    if not expired allDampersOffTime, dampersOffDelay
-      anyRoomActive = no
-      for room in rooms
-        if modes[room] isnt 'off'
-          anyRoomActive = yes
-          dampers[room] = on
-      if not anyRoomActive 
-        copyAllRoomsTo lastDampers, dampers
-    else
-      setAllRoomsTo dampers, on
-  else allDampersOffTime = null
-    
   # ac cycling limit
-  delaying = no
   if lastHvac.cool and not hvac.cool
     lastAcOffTime = now
   if not expired lastAcOffTime, minAcOff
     hvac.cool = off
-    delaying = yes
-    
-  # any room request while delaying?
-  timing_acDelay = no  
-  if $.ctrl_sysMode is 'cool'
-    for room in rooms
-      if delaying and modes[room] is 'cool' and deltas[room] > 0
-        timing_acDelay = yes
-        break
-  $.timing_acDelay timing_acDelay
-  
-  # any damper cycle limit
-  for room in rooms
-    if not lastDampers[room] and dampers[room]
-      dampersOnTime[room] = now
-    if not expired dampersOnTime[room], minDampCyle
-      dampers[room] = on
     
   # extAirIn cycling limit
   extAirIn = off
@@ -119,14 +85,45 @@ check = ->
   if not expired lastExtAirOnTime, extAirDelay
     hvac.extAir = extAirIn = on
   $.timing_extAirIn extAirIn
+
+  # all room dampers closed
+  if allRoomsEqualTo dampers, off
+    allDampersOffTime ?= now
+    if not expired allDampersOffTime, dampersOffDelay
+      # fan may still be running
+      copyAllRoomsTo lastDampers, dampers
+      for room in rooms when qcs[room]
+        dampers[room] = off
+      if allRoomsEqualTo dampers, off
+        dampers.master = on
+    else
+      setAllRoomsTo dampers, on
+  else allDampersOffTime = null
   
-  # min fan on after active off
-  active     = ( hvac.heat or  hvac.cool)
-  lastActive = (lastHvac.heat or lastHvac.cool)
-  if lastActive and not active
-    lastActiveOffTime = now
-  if not expired lastActiveOffTime, fanHold
-    hvac.fan = yes
+  # any damper cycle limit
+  for room in rooms
+    if not lastDampers[room] and dampers[room]
+      dampersOnTime[room] = now
+    if not expired dampersOnTime[room], minDampCyle
+      dampers[room] = on
+    
+  # enforce quiet control
+  for r in rooms when dampers[r] and qcs[r]
+    savedDampers = {}
+    copyAllRoomsTo dampers, savedDampers
+    loop 
+      numOfVentsOpen = 0
+      for room in rooms when dampers[room]
+        numOfVentsOpen += (if room is 'tvRoom' then 3 else 1)
+      if numOfVentsOpen >= 3 then break
+      if      not dampers.tvRoom   and not qcs.tvRoom  then dampers.tvRoom  = on
+      else if not dampers.master   and not qcs.master  then dampers.master  = on
+      else if not dampers.guest    and not qcs.guest   then dampers.guest   = on
+      else if not dampers.kitchen  and not qcs.kitchen then dampers.kitchen = on
+      else 
+        copyAllRoomsTo savedDampers, dampers
+        dampers.tvRoom = on
+    break
 
   $.timing_dampers dampers
   copyAllRoomsTo dampers, lastDampers
@@ -145,7 +142,7 @@ module.exports =
     $.react 'ws_tstat_data', ->
       ws = @ws_tstat_data
       modes[ws.room]  = ws.mode
-      deltas[ws.room] = ws.delta
+      qcs[ws.room]    = ws.qc
       check()
 
       

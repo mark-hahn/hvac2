@@ -28,7 +28,7 @@ $ ->
   $bot       = $ '.bot'
   
   window.update = (sendData = yes)->
-    if curRoom is 'kitchen' then qcs.kitchen = (modes[curRoom] in ['heat', 'cool'])
+    if curRoom is 'kitchen' then qcs.kitchen = (modes[curRoom] isnt 'off')
     $top.css border:'none', backgroundColor: '#aaa', color: 'gray'
     $('#'+curRoom).css border:'1px solid black', backgroundColor: 'yellow', color: 'black'
     $lftTemp.text (if temps[curRoom] then (+temps[curRoom]).toFixed 1 else '')
@@ -97,9 +97,9 @@ $ ->
         else
           if modes[curRoom] is 'fan' then modes[curRoom] = 'off'
       when 'qc'
-        modeActive = (modes[curRoom] in ['heat', 'cool'])
-        qcs[curRoom] = (if modeActive then not qcs[curRoom] else off)
-        if curRoom is 'kitchen' then qcs.kitchen = modeActive
+        modeOn = (modes[curRoom] isnt 'off')
+        qcs[curRoom] = (if modeOn then not qcs[curRoom] else off)
+        if curRoom is 'kitchen' then qcs.kitchen = modeOn
       else
         modes[curRoom] = btn
     update()
@@ -112,6 +112,7 @@ $ ->
       when 'tstat'
         modes[data.room]     = data.mode
         fans[data.room]      = data.fan
+        qcs[data.room]       = data.qc
         setpoints[data.room] = data.setpoint
         update no
         

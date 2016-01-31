@@ -18,6 +18,6 @@ modules = [
 ]
 
 for module in modules 
-  log 'starting', module
+  # log 'starting', module
   require(module).init?()
   
