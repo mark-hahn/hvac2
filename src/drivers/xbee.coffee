@@ -57,7 +57,7 @@ num2arrLE = (dec, len) ->
   for i in [1..len]
     arr.push (dec & 0xFF)
     dec >>>= 8
-    arr
+  arr
 
 arr2hex = (arr, start=0, end=arr.length) ->
   hex = ''
@@ -67,11 +67,27 @@ arr2hex = (arr, start=0, end=arr.length) ->
     hex += hexByte
   hex
   
+arr2hexLE = (arr, start=0, end=arr.length) ->
+  hex = ''
+  for idx in [start...end]
+    hexByteVal = arr[idx].toString 16
+    hexByte = (if hexByteVal.length < 2 then '0' else '') + hexByteVal
+    hex = hexByte + hex
+  hex
+  
 hex2arr = (hex, len) ->
   while hex.length < len * 2 then hex = '0' + hex
   arr = []
   for i in [1..len]
     arr.push parseInt hex[0..1], 16
+    hex = hex[2...]
+  arr
+
+hex2arrLE = (hex, len) ->
+  while hex.length < len * 2 then hex = '0' + hex
+  arr = []
+  for i in [1..len]
+    arr.unshift parseInt hex[0..1], 16
     hex = hex[2...]
   arr
 
@@ -100,30 +116,27 @@ recvIO = (srcAddr, frame) ->
   
   
 ################ RECEIVE frame ################
-
+statusByCode = (code) ->
+  ['OK', 'Error', 'Invalid Command',
+                  'Invalid Parameter', 'Tx Failure'][code]
 newFrame = (frame) ->
   # log 'newFrame\n', dumpArrAsHex frame
   # return
   
-  cksum = 0
-  for byte in frame[3...-1] then cksum += byte
-  cksum &= 0xff
-  if (0xff - cksum) isnt frame[frame.length-1]
-    log 'checksum error', dumpArrAsHex frame
-    return
-      
   switch frame[3] # type
     when 0x88  # AT Command ResponseFrame
       frameId = frame[4]
       ATcmd = String.fromCharCode(frame[5]) + String.fromCharCode(frame[6])
-      status = ['OK', 'Error', 'Invalid Command',
-                      'Invalid Parameter', 'Tx Failure'][frame[7]]
-      # netAddr = frame[8] * 256 + frame[9]
-      # netAddrStr = netAddr.toString 16
-      # srcAddr = arr2hex frame, 10, 18
+      status = statusByCode frame[7]
+      if ATcmd is 'ND'
+        netAddr = frame[8] * 256 + frame[9]
+        netAddrStr = netAddr.toString 16
+        srcAddr = arr2hex frame, 10, 18
+        log 'AT-rx-ND', {frameId, ATcmd, status, netAddr: netAddrStr, srcAddr}
+        return
       cmdData = (if frameId is 0 then [] else frame.slice 8, -1)
-      # log 'AT-rx', {frameId, ATcmd, status, \
-                    # netAddr: netAddrStr, srcAddr}, '\n', dumpArrAsHex cmdData
+      log 'AT-rx', {frameId, ATcmd, status, \
+                    netAddr: netAddrStr, srcAddr}, '\n', dumpArrAsHex cmdData
                    
     when 0x8B  # Transmit Status
       frameId    = frame[4]
@@ -156,20 +169,23 @@ newFrame = (frame) ->
         when 0x02 then 'Route Discovery'
         when 0x03 then 'Address and Route'
         when 0x40 then 'Extended Timeout Discovery'
-      # log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
-                      # deliveryStatus:  deliveryStatusStr,    \
-                      # discoveryStatus: discoveryStatusStr}
+      log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
+                      deliveryStatus:  deliveryStatusStr,    \
+                      discoveryStatus: discoveryStatusStr}
 
     when 0x91 # explicit Rx
+      # log 'explicit Rx frame\n', dumpArrAsHex frame
       srcAddr = arr2hex frame, 4, 12
       netAddr = frame[12] * 256 + frame[13]
-      netAddrStr = netAddr.toString 16
+      netAddrStr = arr2hex frame, 12, 14
       srcEndpoint = frame[14]
+      srcEndpointStr = srcEndpoint.toString 16
       dstEndpoint = frame[15]
+      dstEndpointStr = dstEndpoint.toString 16
       clusterId = frame[16] * 256 + frame[17]
-      clusterIdStr = clusterId.toString 16
+      clusterIdStr = arr2hex frame, 16, 18
       profileId = frame[18] * 256 + frame[19]
-      profileIdStr = profileId.toString 16
+      profileIdStr = arr2hex frame, 18, 20
       rxOptions = frame[20]
       rxOptionsArr = []
       if rxOptions & 0x01 then rxOptionsArr.push 'ACK'
@@ -178,16 +194,41 @@ newFrame = (frame) ->
       if rxOptions & 0x40 then rxOptionsArr.push 'EXTTO'
       rxOptionsStr = rxOptionsArr.join ' '
       transSeq = frame[21]
-      if clusterId is 0x0092
-        # log 'EX-rx-io', {netAddr: netAddrStr, srcAddr, profileId: profileIdStr, \
-                        #  transSeq, srcEndpoint, dstEndpoint, rxOptions: rxOptionsStr}
-        recvIO srcAddr, frame[22...]
-        return
-      rxData = [22...]
-      # log 'EX-rx', {netAddr: netAddrStr, srcAddr,                     \
-                    # clusterId: clusterIdStr, profileId: profileIdStr, \
-                    # transSeq, srcEndpoint, dstEndpoint, rxOptions: rxOptionsStr}, 
-                  # '\n', dumpArrAsHex rxData
+      rxFields = {
+        srcAddr, netAddr: netAddrStr
+        clusterId: clusterIdStr, profileId: profileIdStr
+        transSeq
+        srcEndpoint: srcEndpointStr
+        dstEndpoint: dstEndpointStr
+        rxOptions: rxOptionsStr
+      }
+      rxData = frame[22...]
+      switch clusterId
+        when 0x0092
+          # log 'EX-rx-io', rxFields
+          # if srcAddr is '0013a20040baffad'
+          #   log 'EX-rx-io', srcAddr + ', ' + netAddr + ', ' + profileIdStr + ', ' + 
+          #                   srcEndpointStr + ', ' + dstEndpointStr + ', ' + rxOptionsStr
+          recvIO srcAddr, rxData
+        when 0x8031
+          startIdx   = rxData[2]
+          numEntries = rxData[3]
+          log 'EX-rx-LQI', rxFields, {
+            status: statusByCode rxData[0]
+            totalEntryCount: rxData[1]
+            startIdx, numEntries
+          }
+          for i in [0...numEntries]
+            entry = rxData[4+i*22...4+(i+1)*22]
+            extPan  = arr2hexLE entry[0.. 7]
+            extAddr = arr2hexLE entry[8..15]
+            netAddr = arr2hexLE entry[16..17]
+            bits    = arr2hexLE entry[18..19]
+            depth   = entry[20]
+            LQI     = entry[21]
+            log 'LQI(' + (startIdx + i) + ')', {extPan, extAddr, netAddr, bits, depth, LQI}
+        # else
+          # log 'EX-rx other', rxFields, dumpArrAsHex rxData
       
     when 0x92  #  IO Data Sample Rx
       srcAddr = arr2hex frame, 4, 12
@@ -239,7 +280,13 @@ newBytes = (buf) ->
     # log 'new byte', {byte: dumpArrAsHex([byte]), frameLen, \
                     #  frameBufLen: frameBuf.length, frameBuf: dumpArrAsHex frameBuf}
     if frameLen and frameBuf.length is frameLen + 4
-      newFrame frameBuf
+      cksum = 0
+      for byte in frameBuf[3...-1] then cksum += byte
+      cksum &= 0xff
+      if (0xff - cksum) is frameBuf[frameBuf.length-1]
+        newFrame frameBuf
+      else
+        log 'checksum error', dumpArrAsHex frame
       frameLen = null
       frameBuf = null
 
@@ -247,8 +294,8 @@ newBytes = (buf) ->
 ################ SEND ###################
 
 send = (frame, cb) ->
-  log 'send frame', frame.length, '\n', dumpArrAsHex frame
-  return
+  # log 'send frame', frame.length, '\n', dumpArrAsHex frame
+  # return
   
   buf = new Buffer frame
   if not xbeeSerialPort.isOpen()
@@ -295,86 +342,130 @@ write = (data, cb) ->
   send frame, cb
   
   
-############## API frames #############
+################# AT commands  ################
+frameId = 0
 
 # talk to local module
-ATcmd = (frameId, cmd, data, cb) ->
+ATcmd = (cmd, data, cb) ->
+  ++frameId
   if typeof data is 'function' then cb = data; data = []
-  writeData = [0x08, frameId, cmd.charCodeAt(0), cmd.charCodeAt(1)].concat data
+  writeData = [
+    0x08
+    frameId
+    cmd.charCodeAt(0)
+    cmd.charCodeAt(1)
+  ].concat data
   write writeData, cb
 
-# talk to remote module
-transmit = (opts, cb) ->
-  {frameId, dstAddr, netAddr, bdcstRadius, xOptions, payload} = opts
-  netAddr     ?= 0xFFFE
-  bdcstRadius ?= 0
-  xOptions    ?= 0
-  if typeof payload is 'string'
-    payloadStr = payload
-    payload = []
-    for idx in [0...payloadStr.length]
-      payload.push payloadStr.charCodeAt idx
-  writeData = [0x10, frameId].concat hex2arr(dstAddr,8), num2arr(netAddr,2),  
-                                     bdcstRadius, xOptions, payload
-  write writeData, cb
+netDiscovery = (cb) ->     # pg 98, 203
+  log '\n\n--- net discovery start\n'
+  ATcmd 'ND', -> log '\n\n--- net discovery end\n'
 
-# send to specific ap layers (endpoint and cluster ID) in remote module
+
+################# Explicit (ZDO/ZCL)  ################
+
+# send to specific app layers (endpoint and cluster ID) in remote module
 explicit = (opts, cb) ->
-  {frameId, dstAddr, netAddr, srcEndpoint, dstEndpoint, \
+  ++frameId
+  {dstAddr, netAddr, srcEndpoint, dstEndpoint, \
    clusterId, profileId, bdcstRadius, xOptions, payload} = opts
-  netAddr     ?= 0xFFFE
-  bdcstRadius ?= 0
-  xOptions    ?= 0
+  dstAddr     ?= '000000000000FFFF' # ...0ffff -> broadcast
+  netAddr     ?= 0xFFFE             #   0xFFFE -> unknown
   srcEndpoint ?= 0xE8 # digi
   dstEndpoint ?= 0xE8 # digi
+  bdcstRadius ?= 0  # max hops
+  xOptions    ?= 0  # xmit bit field
+  payload     ?= []
   if typeof payload is 'string'
     payloadStr = payload
     payload = []
     for idx in [0...payloadStr.length]
       payload.push payloadStr.charCodeAt idx
-  writeData = [0x11, frameId].concat hex2arr(dstAddr,8), num2arr(netAddr,2),  
-                srcEndpoint, dstEndpoint, 
-                num2arr(clusterId,2), num2arr(profileId,2), 
-                bdcstRadius, xOptions, payload
+  log 'explicit send', {
+    frameId, dstAddr, 
+    netAddr:     netAddr    .toString(16)
+    srcEndpoint: srcEndpoint.toString(16)
+    dstEndpoint: dstEndpoint.toString(16)
+    clusterId:   clusterId  .toString(16)
+    profileId:   profileId  .toString(16)
+    bdcstRadius, xOptions, payload: dumpArrAsHex payload
+  }
+  writeData = [0x11, frameId]
+    .concat hex2arr(dstAddr,8), num2arr(netAddr,2),  
+            srcEndpoint, dstEndpoint, 
+            num2arr(clusterId,2), num2arr(profileId,2), 
+            bdcstRadius, xOptions, payload
   write writeData, cb
 
-################# ZDO/ZCL  ################
+### ZDO ###
 
 zdo = (opts, cb) ->  # pg 173
-  opts.srcEndpoint = opts.dstEndpoint = opts.profileId = 0
+  opts.srcEndpoint = 0  # 0 -> ZDO endpoint
+  opts.dstEndpoint = 0  # 0 -> ZDO endpoint
+  opts.profileId   = 0  # Zigbee Device Profile,  0 -> ZDO
+  opts.payload ?= []
   opts.payload.unshift 1 # Transaction Sequence Number
   explicit opts, cb
-  
-zcl = (zclCmd, opts, cb) ->  # pg 175
-  opts.clusterId    = zclCmd 
-  opts.xOptions     = 0
-  opts.zclFrameHdr ?= []
-  opts.payload   = opts.zclFrameHdr.concat opts.zclPayload
-  delete  opts.zclFrameHdr
-  delete  opts.zclPayload
+
+activeEnds = (netAddr) -> # example: active endpoints
+  zdo
+    clusterId: 5  # Active Endpoints Request
+    payload:   num2arrLE netAddr, 2 # net addr (guest)
+
+nar = -> # example: net addr req
+  zdo 
+    clusterId: 0 
+    payload:  hex2arrLE('0013a20040b3a592', 8).concat [0,0]
+    
+lqi = (addr, ofs) ->  # pg 99
+  zdo                        
+    clusterId: 0x0031
+    dstAddr:   addr
+    payload:   [ofs]
+
+### ZCL ###
+
+zcl = (opts, cb) ->  # pg 175
+  zclTransSeq = 1
+  zclFrameHdr = [opts.zclFrameCtl, zclTransSeq, opts.zclCmdId]
+  opts.payload = zclFrameHdr.concat opts.zclPayload
+  delete opts.zclFrameCtl
+  delete opts.zclCmdId
+  delete opts.zclPayload
   explicit opts, cb
 
-#  pg 177 -> zcl example
-
+hwv = ->    # example: read hardware version attr
+  zcl
+    dstAddr:    '0013a20040baffad'  # tv room
+    netAddr:     0x0e39             # tv room
+    srcEndpoint: 0x0
+    dstEndpoint: 0xe8
+    clusterId:   0       #                           0 -> basic 
+    profileId:   0x0104  #                         104 -> HA
+    zclFrameCtl: 0       # bit field, see docs,      8 -> server to client
+    zclCmdId:    0       # zcl command               0 -> read attrs
+    zclPayload:  num2arrLE(3, 2) # attr ids,         3 -> hw vers
+  
+  # endpoints e6 and e8 found in all xbees
+  
 # pg 179 -> Public Profile Commands
 
 
-################# Execution commands  ################
-
-netDiscovery = (cb) ->     # pg 98, 203
-  ATcmd 1, 'ND', -> log 'net discovery end'
-
-zdoLQI = (cb) ->   # pg 99
-  zcl 0x0031, 
-    dstAddr:    '13a20040b3a592'
-    srcEndpoint: 0x41
-    dstEndpoint: 0x42
-    profileId:   0xd123
-    zclFrameHdr: [0,1,0] # frame ctl, transaction seq #, cmd id, pg 178
-    zclPayload:  [3, 0] # Attribute ID (0x0003) in little endian 
-    
-# Group Table API
-# ZigBee Cluster Library Groups Cluster (0x0006) with ZCL commands (pg 104)
+################# TESTING #################
+  
+# setTimeout ->
+  # netDiscovery()
+  # activeEnds 0x0000
+  # activeEnds 0x0e39
+  # activeEnds 0x3dd1
+  # activeEnds 0x27eb
+  # activeEnds 0xfd1c
+  # activeEnds 0xcca1
+  # nar()
+  # lqi '0013a20040baffad', 0
+  # lqi '0000000000000000', 0
+  # hwv()   # ZCL
+# , 1000
 
 
 ################# SERIAL events #################
@@ -386,29 +477,27 @@ xbeeSerialPort.on 'open', ->
   xbeeSerialPort.on 'data', newBytes
   
   
-################# TESTING #################
-  
-  # netDiscovery()
-
-
-  # frameCtl = 0  # Bitfield that defines the command type
-  # transSeq = 1
-  # cmdId    = 0  #  Since the frame control “frame type” bits 
-  #               #  are 00, this byte specifies a general command.
-  #               #  Command ID 0x00 is a Read Attributes command
-  # zcl 0, # basic cluster
-  #   frameId:     1
-  #   dstAddr:       '0013A20040401234'   # arbitrary
-  #   srcEndpoint: 0x41                # arbitrary
-  #   dstEndpoint: 0x42                # arbitrary
-  #   profileId:   0xD123              # arbitrary
-  #   bdcstRadius: 0                   # max hops
-  #   
-  #   zclFrameHdr: [frameCtl, transSeq, cmdId]  # payload always in LE order
-  #   zclPayload:   num2arrLE 0x0003, 2           # attrId 
-
-
+################# NOTES #################
 ###
+  tvRoom : '0013a20040baffad'
+  kitchen: '0013a20040b3a592'
+
+  frameCtl = 0  # Bitfield that defines the command type
+  transSeq = 1
+  cmdId    = 0  #  Since the frame control “frame type” bits 
+                #  are 00, this byte specifies a general command.
+                #  Command ID 0x00 is a Read Attributes command
+  zcl 0, # basic cluster
+    frameId:     1
+    dstAddr:       '0013A20040401234'   # arbitrary
+    srcEndpoint: 0x41                # arbitrary
+    dstEndpoint: 0x42                # arbitrary
+    profileId:   0xD123              # arbitrary
+    bdcstRadius: 0                   # max hops
+    
+    zclFrameHdr: [frameCtl, transSeq, cmdId]  # payload always in LE order
+    zclPayload:   num2arrLE 0x0003, 2           # attrId 
+
 contents of /etc/udev/rules.d/99-home-serial-usb.rules
 SUBSYSTEMS=="usb-serial", DRIVERS=="cp210x", ATTRS{port_number}=="0", SYMLINK+="davis"
 SUBSYSTEMS=="usb", ATTRS{serial}=="A6028N89", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="insteon"
@@ -442,3 +531,17 @@ SUBSYSTEMS=="usb", ATTRS{serial}=="A5025MT6", ATTRS{idVendor}=="0403", ATTRS{idP
 # ID 6392
 # SC 40
 
+###
+Management Network Discovery Request
+Cluster ID:  0x0030
+Description:  Unicast transmission used to cause a remote device to 
+              perform a network scan (to discover nearby networks).
+
+  Scan Channels (4 bytes)  Bitmap indicating the channel mask that should be scanned. 
+                          Examples (big endian byte order):
+                            Channel 0x0B = 0x800
+                            All Channels (0x0B –0x1A) = 0x07FFF800
+  Scan Duration (1 byte) Time to scan on each channel
+  Start Index   (1 byte) 1Start index in the resulting network list.
+  
+###
