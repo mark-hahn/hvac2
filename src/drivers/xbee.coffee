@@ -410,7 +410,7 @@ zdo = (opts, cb) ->  # pg 173
 activeEnds = (netAddr) -> # example: active endpoints
   zdo
     clusterId: 5  # Active Endpoints Request
-    payload:   num2arrLE netAddr, 2 # net addr (guest)
+    payload:   num2arrLE netAddr, 2
 
 nar = -> # example: net addr req
   zdo 
@@ -436,37 +436,45 @@ zcl = (opts, cb) ->  # pg 175
 
 hwv = ->    # example: read hardware version attr
   zcl
-    dstAddr:    '0013a20040baffad'  # tv room
-    netAddr:     0x0e39             # tv room
-    srcEndpoint: 0x0
-    dstEndpoint: 0xe8
+    dstAddr:    'e20db9fffe0232bd'  # cree
+    netAddr:     0xbd7a             # cree
+    srcEndpoint: 0xe8 
+    dstEndpoint: 0x0a
     clusterId:   0       #                           0 -> basic 
     profileId:   0x0104  #                         104 -> HA
     zclFrameCtl: 0       # bit field, see docs,      8 -> server to client
     zclCmdId:    0       # zcl command               0 -> read attrs
     zclPayload:  num2arrLE(3, 2) # attr ids,         3 -> hw vers
   
-  # endpoints e6 and e8 found in all xbees
-  
+onOff = ->    # example: toggle light
+  zcl
+    dstAddr:    'e20db9fffe0232bd'  # cree
+    netAddr:     0xbd7a             # cree
+    srcEndpoint: 0xe8 
+    dstEndpoint: 0x0a
+    clusterId:   6       #                           6 -> on/off 
+    profileId:   0x0104  #                         104 -> HA
+    zclFrameCtl: 1       # bit field, see docs,      1 -> Cluster Specific
+    zclCmdId:    2       # zcl command,    0 -> OFF, 1 -> ON, 2 -> Toggle
+    zclPayload:  []
+
+# endpoints e6 and e8 found in all xbees
 # pg 179 -> Public Profile Commands
 
 
 ################# TESTING #################
-  
+#   
 # setTimeout ->
-  # netDiscovery()
-  # activeEnds 0x0000
-  # activeEnds 0x0e39
-  # activeEnds 0x3dd1
-  # activeEnds 0x27eb
-  # activeEnds 0xfd1c
-  # activeEnds 0xcca1
-  # nar()
-  # lqi '0013a20040baffad', 0
-  # lqi '0000000000000000', 0
-  # hwv()   # ZCL
+#   # netDiscovery()
+#   # activeEnds 0x0000  # controller
+#   # activeEnds 0xbd7a  # cree
+#   # nar()
+#   # lqi '0013a20040baffad', 4
+#   # lqi '0000000000000000', 0
+#   # hwv()   # ZCL
+#   onOff()   # ZCL
 # , 1000
-
+# 
 
 ################# SERIAL events #################
 

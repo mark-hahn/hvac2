@@ -444,25 +444,24 @@ onOff = ->    # example: toggle light
     zclFrameCtl: 1       # bit field, see docs,      1 -> Cluster Specific
     zclCmdId:    2       # zcl command,    0 -> OFF, 1 -> ON, 2 -> Toggle
     zclPayload:  []
-  # 0x100 device id ?
-  # endpoints e6 and e8 found in all xbees
-  
+
+# endpoints e6 and e8 found in all xbees
 # pg 179 -> Public Profile Commands
 
 
 ################# TESTING #################
-  
-setTimeout ->
-  # netDiscovery()
-  # activeEnds 0x0000  # controller
-  # activeEnds 0xbd7a  # cree
-  # nar()
-  # lqi '0013a20040baffad', 4
-  # lqi '0000000000000000', 0
-  # hwv()   # ZCL
-  onOff()   # ZCL
-, 1000
-
+#   
+# setTimeout ->
+#   # netDiscovery()
+#   # activeEnds 0x0000  # controller
+#   # activeEnds 0xbd7a  # cree
+#   # nar()
+#   # lqi '0013a20040baffad', 4
+#   # lqi '0000000000000000', 0
+#   # hwv()   # ZCL
+#   onOff()   # ZCL
+# , 1000
+# 
 
 ################# SERIAL events #################
 
