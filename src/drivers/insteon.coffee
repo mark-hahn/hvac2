@@ -2,44 +2,52 @@
   src/drivers/insteon.coffee
   timing dampers/hvac in -> insteon relays in closet
 ###
-
+  
 disableHvacCtrl = no
 
 {log, logObj} = require('./utils') 'INSTE'
 
 $ = require('imprea')()
-$.output 'inst_switch'
+$.output 'inst_remote'
 
-insteonIds =
+insteonIdsByName =
   serverGateway:        '2413fd'
   furnaceHvac:          '387efd'
   furnaceDampers:       '387b9e'
-  lightsRemote1:        '270b8a'
-  lightsRemote2:        '270b00'
-  controlRemote:        '27178d'
-  lftFrontBulb:         '2c5134' # was '297ebf'
+  lftFrontBulb:         '2c5134'
   midFrontBulb:         '29802b'
-  rgtFrontBulb:         '2b4f44' # '2b4c44'??   # was '298243'
+  rgtFrontBulb:         '2b4f44'
   lftRearBulb:          '2982c1'
   midRearBulb:          '298cda'
   rgtRearBulb:          '29814c'
   masterDimmer:         '24e363'
   masterLightsRemote:   '1c5a16'
+  controlRemote:        '27178d'
+  lightsRemote1:        '270b8a'
+  lightsRemote2:        '270b00'
   tVRoomHallDoorRemote: '290758'
   tVRoomFrontDoorRemote:'2902a6'
-  
-  
+
+insteonNamesById = {}
+for name, id of insteonIdsByName
+  insteonNamesById[id] = name
+
+
 ############ DRIVER ###########
 
 Insteon = require("home-controller").Insteon
 plm = new Insteon()
-
 serialDevice = '/dev/insteon'
+recvCommand = null
+plm.serial serialDevice, ->
+  log 'plm connected to ' + serialDevice
+  plm.on 'recvCommand', recvCommand
+
 device = 'io'
 cmd    = 'set'
 async  = no
 
-insteonIO = (data) ->
+insteonSend = (data) ->
   try
     deviceInstance = (if device is 'plm' then plm \
                       else id = data.shift(); plm[device](id, plm))
@@ -50,14 +58,6 @@ insteonIO = (data) ->
         if err
           msg = 'async response error: ' + req.url + ', ' + JSON.stringify err
           log msg
-          # res.writeHead 404, 'Content-Type': 'text/text'
-          # res.end msg
-        # else
-          # res.writeHead 200, 'Content-Type': 'text/json'
-          # res.end JSON.stringify asyncResp ? error: 'No async response.'
-    # if not async
-      # res.writeHead 200, 'Content-Type': 'text/json'
-      # res.end JSON.stringify syncResp ? error: 'No sync response.'
   catch e  
     log 'exception', e
     msg = 'invalid request or no plm response: ' + data[0]
@@ -65,15 +65,13 @@ insteonIO = (data) ->
     res.writeHead 404, 'Content-Type': 'text/text'
     res.end msg
 
-plm.serial serialDevice, ->
-  log 'plm connected to ' + serialDevice
 
 ############### SEND #################
 
 send = (isDamper, obj, cb) ->
   logObj 'send ' + (if isDamper then 'damp' else 'hvac'), obj
-  id = (if isDamper then insteonIds.furnaceDampers  \
-                    else insteonIds.furnaceHvac)
+  id = (if isDamper then insteonIdsByName.furnaceDampers  \
+                    else insteonIdsByName.furnaceHvac)
   data = 0
   for name, val of obj
     bit = switch name
@@ -84,7 +82,7 @@ send = (isDamper, obj, cb) ->
     if isDamper and not val or not isDamper and val
       data += bit
   dataHex = '0' + data.toString(16).toUpperCase()
-  insteonIO [id, dataHex]
+  insteonSend [id, dataHex]
   
 tryTO = {}
 
@@ -105,9 +103,42 @@ sendWretry = (isDamper, obj) ->
 
 
 ######### RECEIVE ########
-###
-#  lightsRemote1:        '270b8a'
 
+cmdTimeout  = 500
+lastCmdHash = null
+lastTime = emitSeq = 0
+
+recvCommand = (cmd) ->
+  # log 'recvCommand', cmd
+  now = Date.now()
+  if cmd.standard?.type isnt '50' then return
+  {id, gatewayId:btn, command1:cmd1, command2:cmd2} = cmd.standard
+  if btn > '000008' then return
+  btn = +btn
+  cmdHash = [id, btn, cmd1, cmd2].join '~'
+  if cmdHash is lastCmdHash and now < lastTime + cmdTimeout
+    lastCmdHash = null
+    lastTime    = 0
+    return
+  lastCmdHash = cmdHash
+  lastTime = now
+  
+  action = switch cmd1
+    when '11' then 'click'
+    when '12' then 'dblClick'
+    when '13' then 'click'
+    when '14' then 'dblClick'
+    when '17' then 'down'
+    when '18' then 'up'
+    else cmd
+  
+  # log 'button', btn, action, 'on', insteonNamesById[id]
+  $.inst_remote {
+    remote: insteonNamesById[id]
+    btn, action
+    __: ++emitSeq
+  }
+  
 maxRetries    =     3
 nakRetry      =  1000
 IMtimeout 	  =  4000
@@ -380,19 +411,20 @@ parser = ->
 			emitter.emit 'message', msg
 		messages = []
 
-serial.port = new SerialPort portName,
-    baudrate: 19200,
-    databits: 8,
-    stopbits: 1,
-    parity: 0,
-    flowcontrol: 0,
-    parser: parser()
+# serial.port = new SerialPort portName,
+#     baudrate: 19200,
+#     databits: 8,
+#     stopbits: 1,
+#     parity: 0,
+#     flowcontrol: 0,
+#     parser: parser()
+# 
+# serial.port.on 'error', (err) ->
+# 	console.log 'ERROR from port', err
+# 
 
-serial.port.on 'error', (err) ->
-	console.log 'ERROR from port', err
-
-###
 ############# MODULE ##############
+
 module.exports =
   init: -> 
     $.react 'timing_dampers', ->
@@ -405,7 +437,4 @@ module.exports =
     sendWretry yes, {tvRoom: on,  kitchen: on, master:on, guest: on}
     
     log 'relays cleared'
-
-    setTimeout ->
-      $.inst_switch 'test'
-    , 3000
+  

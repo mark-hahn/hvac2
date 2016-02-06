@@ -153,9 +153,9 @@ newFrame = (frame) ->
         when 0x02 then 'Route Discovery'
         when 0x03 then 'Address and Route'
         when 0x40 then 'Extended Timeout Discovery'
-      log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
-                      deliveryStatus:  deliveryStatusStr,    \
-                      discoveryStatus: discoveryStatusStr}
+      # log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
+                      # deliveryStatus:  deliveryStatusStr,    \
+                      # discoveryStatus: discoveryStatusStr}
 
     when 0x91 # explicit Rx
       # log 'explicit Rx frame\n', dumpArrAsHex frame
@@ -211,8 +211,8 @@ newFrame = (frame) ->
             depth   = entry[20]
             LQI     = entry[21]
             log 'LQI(' + (startIdx + i) + ')', {extPan, extAddr, netAddr, bits, depth, LQI}
-        else
-          log 'EX-rx other', rxFields, dumpArrAsHex rxData
+        # else
+          # log 'EX-rx other', rxFields, dumpArrAsHex rxData
       
     when 0x92  #  IO Data Sample Rx
       srcAddr = arr2hex frame, 4, 12
@@ -241,10 +241,10 @@ newBytes = (buf) ->
     byte = buf[bufIdx]
     if not frameBuf
       do chkDiscard = ->
-        if discardCount and byte isnt discardByte
-          log '>>> discarded byte', dumpArrAsHex([discardByte]) + 
-              (if discardCount > 1 then ' (' + discardCount + ')' else '')
-          discardCount = 0
+        # if discardCount and byte isnt discardByte
+        #   log '>>> discarded byte', dumpArrAsHex([discardByte]) + 
+        #       (if discardCount > 1 then ' (' + discardCount + ')' else '')
+        #   discardCount = 0
       if byte is 0x7E
         chkDiscard()
         frameBuf = [0x7E]
@@ -365,15 +365,15 @@ explicit = (opts, cb) ->
     payload = []
     for idx in [0...payloadStr.length]
       payload.push payloadStr.charCodeAt idx
-  log 'explicit send', {
-    frameId, dstAddr, 
-    netAddr:     netAddr    .toString(16)
-    srcEndpoint: srcEndpoint.toString(16)
-    dstEndpoint: dstEndpoint.toString(16)
-    clusterId:   clusterId  .toString(16)
-    profileId:   profileId  .toString(16)
-    bdcstRadius, xOptions, payload: dumpArrAsHex payload
-  }
+  # log 'explicit send', {
+  #   frameId, dstAddr, 
+  #   netAddr:     netAddr    .toString(16)
+  #   srcEndpoint: srcEndpoint.toString(16)
+  #   dstEndpoint: dstEndpoint.toString(16)
+  #   clusterId:   clusterId  .toString(16)
+  #   profileId:   profileId  .toString(16)
+  #   bdcstRadius, xOptions, payload: dumpArrAsHex payload
+  # }
   writeData = [0x11, frameId]
     .concat hex2arr(dstAddr,8), num2arr(netAddr,2),  
             srcEndpoint, dstEndpoint, 
@@ -461,7 +461,9 @@ allOnOff = (action='toggle') ->
 
 ################# TESTING #################
 
+
 setTimeout ->
+  allOnOff process.argv[2]
   # netDiscovery()   # xbee modules only
   # activeEnds 0x0000  # controller
   # activeEnds 0xe622
@@ -479,10 +481,11 @@ setTimeout ->
   # setTimeout (-> lqi '7ce5240000116393', 10), 11000
   # setTimeout (-> lqi '7ce5240000116393', 11), 12000
   # hwv()   # ZCL
-  allOnOff 'on'
+  # allOnOff 'on'
   # onOff '7ce5240000116393', 0x31bd, 'on'  # no response
   # onOff '7ce524000013c315', 0x32c0, 'on'
   # onOff '7ce5240000116ccc', 0x823d, 'on'
+  setTimeout (-> xbeeSerialPort.close()), 1000
 , 1000
 
 

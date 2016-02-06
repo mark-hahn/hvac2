@@ -16,13 +16,7 @@ dampening      = 30000
 
 offset = {tvRoom: -2.0, kitchen: -2.0, master: +2.0, guest: -1.5, airIntake: -3.0, acReturn:0}
 
-xbeeRadios = 
-# server:  0x0013a20040c33695  # 0000
-  tvRoom : '0013a20040baffad'  # b229 (4)
-  kitchen: '0013a20040b3a592'  # b3fb (5)
-  master:  '0013a20040b3a903'  # 3f17 ()
-  guest:   '0013a20040b3a954'  # 16e9 (1)
-  closet:  '0013a20040bd2529'  # 6bef (2)
+rooms = ['tvRoom', 'kitchen', 'master', 'guest', 'closet']
   
 voltsAtZeroC = 1.05
 voltsAt25C   = 0.83
@@ -60,22 +54,21 @@ module.exports =
         if history.length > numHistory then history.pop()
         $[obsName] rndedTemp + offset[name] ? 0
 
-    for name, addr of xbeeRadios then do (name, addr) ->        
-      xbee.getPacketsByAddr name, addr
-      obsName = 'xbeePacket_' + name
+    for room in rooms then do (room) ->        
+      obsName = 'xbeePacket_' + room
       $.react obsName, ->
         {analogData} = $[obsName]
         volts  = (analogData[0] / 1024) * 1.2
-        if name is 'closet'
+        if room is 'closet'
           temp = ((voltsAtZeroC - volts ) / voltsPerC) * 9/5 + 32
           emitSrc.emit 'airIntake', temp
           volts = (analogData[1] / 1024) * 1.2
           temp =  (voltsAtZeroC - volts) / voltsPerC
           emitSrc.emit 'acReturn', temp
         else
-          emitSrc.emit name, volts * 100 
+          emitSrc.emit room, volts * 100 
           
-    for name of xbeeRadios when name isnt 'closet' then addObs name
-    for name in ['airIntake', 'acReturn']          then addObs name
+    for room in rooms when room isnt 'closet' then addObs room
+    for name in ['airIntake', 'acReturn']     then addObs name
           
           

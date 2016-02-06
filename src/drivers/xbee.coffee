@@ -7,20 +7,36 @@ emitSrc = new (require('events').EventEmitter)
 
 $.output 'allXbeePackets'
 
+addrForRoom = 
+# server:  0x0013a20040c33695  # 0000
+  tvRoom : '0013a20040baffad'  # b229 (4)
+  kitchen: '0013a20040b3a592'  # b3fb (5)
+  master:  '0013a20040b3a903'  # 3f17 ()
+  guest:   '0013a20040b3a954'  # 16e9 (1)
+  closet:  '0013a20040bd2529'  # 6bef (2)
+
+addrsForBulb = 
+  frontLeft:   ['7ce5240000116393', 0x31bd]
+  frontMiddle: ['7ce524000013c315', 0x32c0]
+  frontRight:  ['7ce5240000116ccc', 0x823d]
+  backLeft:    ['7ce52400001465bd', 0x096d]
+  backMiddle:  ['7ce5240000124e6f', 0xfcba]
+  backRight:   ['7ce524000013c38c', 0xda60]
+
 module.exports =
   init: -> 
     emitSrc.on 'ioData', (srcAddr, ioData) ->
       $.allXbeePackets {srcAddr, ioData}
-      
-    initLights()
   
-  getPacketsByAddr: (name, addr) ->
-    name = 'xbeePacket_' + name
-    $.output name
-    emitSrc.on 'ioData', (srcAddr, ioData) ->
-      if srcAddr is addr
-        $[name] ioData
+    for room, addr of addrForRoom then do (room, addr) ->
+      name = 'xbeePacket_' + room
+      $.output name
+      emitSrc.on 'ioData', (srcAddr, ioData) ->
+        if srcAddr is addr
+          $[name] ioData
 
+    initLights()
+    
 SerialPort = require('serialport').SerialPort
   
 xbeeSerialPort = new SerialPort '/dev/xbee',
@@ -171,9 +187,9 @@ newFrame = (frame) ->
         when 0x02 then 'Route Discovery'
         when 0x03 then 'Address and Route'
         when 0x40 then 'Extended Timeout Discovery'
-      log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
-                      deliveryStatus:  deliveryStatusStr,    \
-                      discoveryStatus: discoveryStatusStr}
+      # log 'TS-rx\n', {frameId, dstAddr: dstAddrStr, retries, \
+                      # deliveryStatus:  deliveryStatusStr,    \
+                      # discoveryStatus: discoveryStatusStr}
 
     when 0x91 # explicit Rx
       # log 'explicit Rx frame\n', dumpArrAsHex frame
@@ -259,10 +275,10 @@ newBytes = (buf) ->
     byte = buf[bufIdx]
     if not frameBuf
       do chkDiscard = ->
-        if discardCount and byte isnt discardByte
-          log '>>> discarded byte', dumpArrAsHex([discardByte]) + 
-              (if discardCount > 1 then ' (' + discardCount + ')' else '')
-          discardCount = 0
+        # if discardCount and byte isnt discardByte
+          # log '>>> discarded byte', dumpArrAsHex([discardByte]) + 
+              # (if discardCount > 1 then ' (' + discardCount + ')' else '')
+          # discardCount = 0
       if byte is 0x7E
         chkDiscard()
         frameBuf = [0x7E]
@@ -383,15 +399,15 @@ explicit = (opts, cb) ->
     payload = []
     for idx in [0...payloadStr.length]
       payload.push payloadStr.charCodeAt idx
-  log 'explicit send', {
-    frameId, dstAddr, 
-    netAddr:     netAddr    .toString(16)
-    srcEndpoint: srcEndpoint.toString(16)
-    dstEndpoint: dstEndpoint.toString(16)
-    clusterId:   clusterId  .toString(16)
-    profileId:   profileId  .toString(16)
-    bdcstRadius, xOptions, payload: dumpArrAsHex payload
-  }
+  # log 'explicit send', {
+  #   frameId, dstAddr, 
+  #   netAddr:     netAddr    .toString(16)
+  #   srcEndpoint: srcEndpoint.toString(16)
+  #   dstEndpoint: dstEndpoint.toString(16)
+  #   clusterId:   clusterId  .toString(16)
+  #   profileId:   profileId  .toString(16)
+  #   bdcstRadius, xOptions, payload: dumpArrAsHex payload
+  # }
   writeData = [0x11, frameId]
     .concat hex2arr(dstAddr,8), num2arr(netAddr,2),  
             srcEndpoint, dstEndpoint, 
@@ -466,17 +482,6 @@ onOff = (dstAddr, netAddr, action='toggle') ->
     zclPayload:  []
   }
 
-allOnOff = (action='toggle') ->
-  onOff '7ce5240000116393', 0x31bd, action  # no response
-  onOff '7ce524000013c315', 0x32c0, action
-  onOff '7ce5240000116ccc', 0x823d, action
-  onOff '7ce52400001465bd', 0x096d, action
-  onOff '7ce5240000124e6f', 0xfcba, action
-  onOff '7ce524000013c38c', 0xda60, action
-
-# endpoints e6 and e8 found in all xbees
-# pg 179 -> Public Profile Commands
-
 ################# TESTING #################
 
 # setTimeout ->
@@ -511,13 +516,15 @@ xbeeSerialPort.on 'error', (err) -> log 'xbee port err', err
 xbeeSerialPort.on 'open', ->
   log 'port open'
   xbeeSerialPort.on 'data', newBytes
-  
-  
-################# SERIAL events #################
+
+
+################# LIGHT COMMANDS #################
 
 initLights = ->
-  $.react 'light_onOff', ->
-    # log 'recvd light_onOff', $.light_onOff
+  $.react 'light_cmd', ->
+    addrs = addrsForBulb[$.light_cmd.bulb]
+    # log 'onOff', [addrs[0], addrs[1], $.light_cmd.action]
+    onOff addrs[0], addrs[1], $.light_cmd.action
   
 ################# NOTES #################
 ###
