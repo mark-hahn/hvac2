@@ -18,11 +18,11 @@ offset = {tvRoom: -2.0, kitchen: -2.0, master: +2.0, guest: -1.5, airIntake: -3.
 
 xbeeRadios = 
 # server:  0x0013a20040c33695  # 0000
-  tvRoom : '0013a20040baffad'  # 0e39
-  kitchen: '0013a20040b3a592'  # 3dd1
-  master:  '0013a20040b3a903'  # 27eb
-  guest:   '0013a20040b3a954'  # fd1c
-  closet:  '0013a20040bd2529'  # cca1
+  tvRoom : '0013a20040baffad'  # b229 (4)
+  kitchen: '0013a20040b3a592'  # b3fb (5)
+  master:  '0013a20040b3a903'  # 3f17 ()
+  guest:   '0013a20040b3a954'  # 16e9 (1)
+  closet:  '0013a20040bd2529'  # 6bef (2)
   
 voltsAtZeroC = 1.05
 voltsAt25C   = 0.83

@@ -7,6 +7,8 @@ util   = require 'util'
 dontShow = [
   'allXbeePackets'
   'temp_outside'
+  # 'inst_switch'
+  # 'light_onOff'
   'xbeePacket_tvRoom'
   'xbeePacket_kitchen'
   'xbeePacket_master'

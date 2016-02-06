@@ -11,6 +11,8 @@ module.exports =
   init: -> 
     emitSrc.on 'ioData', (srcAddr, ioData) ->
       $.allXbeePackets {srcAddr, ioData}
+      
+    initLights()
   
   getPacketsByAddr: (name, addr) ->
     name = 'xbeePacket_' + name
@@ -286,7 +288,7 @@ newBytes = (buf) ->
       if (0xff - cksum) is frameBuf[frameBuf.length-1]
         newFrame frameBuf
       else
-        log 'checksum error', dumpArrAsHex frame
+        log 'checksum error', dumpArrAsHex frameBuf
       frameLen = null
       frameBuf = null
 
@@ -412,10 +414,10 @@ activeEnds = (netAddr) -> # example: active endpoints
     clusterId: 5  # Active Endpoints Request
     payload:   num2arrLE netAddr, 2
 
-nar = -> # example: net addr req
+nar = (dstAddr) -> # example: net addr req
   zdo 
     clusterId: 0 
-    payload:  hex2arrLE('0013a20040b3a592', 8).concat [0,0]
+    payload:  hex2arrLE(dstAddr, 8).concat [0,0]
     
 lqi = (addr, ofs) ->  # pg 99
   zdo                        
@@ -445,36 +447,62 @@ hwv = ->    # example: read hardware version attr
     zclFrameCtl: 0       # bit field, see docs,      8 -> server to client
     zclCmdId:    0       # zcl command               0 -> read attrs
     zclPayload:  num2arrLE(3, 2) # attr ids,         3 -> hw vers
-  
-onOff = ->    # example: toggle light
-  zcl
-    dstAddr:    'e20db9fffe0232bd'  # cree
-    netAddr:     0xbd7a             # cree
+
+onOff = (dstAddr, netAddr, action='toggle') ->
+  zclCmdId = switch action
+    when 'off'    then 0
+    when 'on'     then 1
+    when 'toggle' then 2
+  dstEndpoint = switch dstAddr[0..7]
+    when '0013a200' then 0x0a  # xbee
+    when 'e20db9ff' then 0x0a  # cree
+    when '7ce52400' then 0x01  # ge
+  zcl {
+    dstAddr, netAddr, zclCmdId, dstEndpoint
     srcEndpoint: 0xe8 
-    dstEndpoint: 0x0a
-    clusterId:   6       #                           6 -> on/off 
-    profileId:   0x0104  #                         104 -> HA
-    zclFrameCtl: 1       # bit field, see docs,      1 -> Cluster Specific
-    zclCmdId:    2       # zcl command,    0 -> OFF, 1 -> ON, 2 -> Toggle
+    clusterId:   6          #                           6 -> on/off 
+    profileId:   0x0104     #                         104 -> HA
+    zclFrameCtl: 1          # bit field, see docs,      1 -> Cluster Specific
     zclPayload:  []
+  }
+
+allOnOff = (action='toggle') ->
+  onOff '7ce5240000116393', 0x31bd, action  # no response
+  onOff '7ce524000013c315', 0x32c0, action
+  onOff '7ce5240000116ccc', 0x823d, action
+  onOff '7ce52400001465bd', 0x096d, action
+  onOff '7ce5240000124e6f', 0xfcba, action
+  onOff '7ce524000013c38c', 0xda60, action
 
 # endpoints e6 and e8 found in all xbees
 # pg 179 -> Public Profile Commands
 
-
 ################# TESTING #################
-#   
+
 # setTimeout ->
-#   # netDiscovery()
-#   # activeEnds 0x0000  # controller
-#   # activeEnds 0xbd7a  # cree
-#   # nar()
-#   # lqi '0013a20040baffad', 4
-#   # lqi '0000000000000000', 0
-#   # hwv()   # ZCL
-#   onOff()   # ZCL
+  # netDiscovery()   # xbee modules only
+  # activeEnds 0x0000  # controller
+  # activeEnds 0xe622
+  # nar '7ce524000013c315'
+  # setTimeout (-> lqi '7ce5240000116393', 0), 1000
+  # setTimeout (-> lqi '7ce5240000116393', 1), 2000
+  # setTimeout (-> lqi '7ce5240000116393', 2), 3000
+  # setTimeout (-> lqi '7ce5240000116393', 3), 4000
+  # setTimeout (-> lqi '7ce5240000116393', 4), 5000
+  # setTimeout (-> lqi '7ce5240000116393', 5), 6000
+  # setTimeout (-> lqi '7ce5240000116393', 6), 7000
+  # setTimeout (-> lqi '7ce5240000116393', 7), 8000
+  # setTimeout (-> lqi '7ce5240000116393', 8), 9000
+  # setTimeout (-> lqi '7ce5240000116393', 9), 10000
+  # setTimeout (-> lqi '7ce5240000116393', 10), 11000
+  # setTimeout (-> lqi '7ce5240000116393', 11), 12000
+  # hwv()   # ZCL
+  # allOnOff 'on'
+  # onOff '7ce5240000116393', 0x31bd, 'on'  # no response
+  # onOff '7ce524000013c315', 0x32c0, 'on'
+  # onOff '7ce5240000116ccc', 0x823d, 'on'
 # , 1000
-# 
+
 
 ################# SERIAL events #################
 
@@ -484,6 +512,12 @@ xbeeSerialPort.on 'open', ->
   log 'port open'
   xbeeSerialPort.on 'data', newBytes
   
+  
+################# SERIAL events #################
+
+initLights = ->
+  $.react 'light_onOff', ->
+    # log 'recvd light_onOff', $.light_onOff
   
 ################# NOTES #################
 ###
@@ -551,5 +585,14 @@ Description:  Unicast transmission used to cause a remote device to
                             All Channels (0x0B –0x1A) = 0x07FFF800
   Scan Duration (1 byte) Time to scan on each channel
   Start Index   (1 byte) 1Start index in the resulting network list.
-  
+
+cree e20db9fffe0232bd  # bd7a (6)
+
+ge   7ce5240000116393  # 31bd  ( ) light tv room front left
+ge   7ce524000013c315  # 32c0  (8) light tv room front middle
+ge   7ce5240000116ccc  # 823d  (3) light tv room front right
+ge   7ce52400001465bd  # 096d  (0) light tv room back left
+ge   7ce5240000124e6f  # fcba  (9) light tv room back middle
+ge   7ce524000013c38c  # da60  (7) light tv room back right  
+
 ###

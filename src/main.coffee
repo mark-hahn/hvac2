@@ -12,6 +12,7 @@ modules = [
   './control'
   './timing'
   './insteon'
+  './lighting'
   './logging'
   './scroll'
   './debug'

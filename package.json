@@ -15,6 +15,7 @@
   "homepage": "https://github.com/mark-hahn/hvac2",
   "dependencies": {
     "gnuplot": "^0.2.0",
+    "home-controller": "^0.6.0",
     "imprea": "^1.0.0",
     "linebyline": "^1.1.0",
     "moment": "^2.10.6",
