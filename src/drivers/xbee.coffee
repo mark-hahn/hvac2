@@ -309,7 +309,17 @@ newBytes = (buf) ->
       frameBuf = null
 
 
+################# SERIAL events #################
+
+xbeeSerialPort.on 'error', (err) -> log 'xbee port err', err
+
+xbeeSerialPort.on 'open', ->
+  log 'port open'
+  xbeeSerialPort.on 'data', newBytes
+
+
 ################ SEND ###################
+globalSeq = 0
 
 send = (frame, cb) ->
   # log 'send frame', frame.length, '\n', dumpArrAsHex frame
@@ -361,30 +371,25 @@ write = (data, cb) ->
   
   
 ################# AT commands  ################
-frameId = 0
 
 # talk to local module
 ATcmd = (cmd, data, cb) ->
-  ++frameId
   if typeof data is 'function' then cb = data; data = []
   writeData = [
     0x08
-    frameId
+    ++globalSeq
     cmd.charCodeAt(0)
     cmd.charCodeAt(1)
   ].concat data
   write writeData, cb
-
-netDiscovery = (cb) ->     # pg 98, 203
-  log '\n\n--- net discovery start\n'
-  ATcmd 'ND', -> log '\n\n--- net discovery end\n'
+  cb? globalSeq
 
 
 ################# Explicit (ZDO/ZCL)  ################
 
 # send to specific app layers (endpoint and cluster ID) in remote module
 explicit = (opts, cb) ->
-  ++frameId
+  ++globalSeq
   {dstAddr, netAddr, srcEndpoint, dstEndpoint, \
    clusterId, profileId, bdcstRadius, xOptions, payload} = opts
   dstAddr     ?= '000000000000FFFF' # ...0ffff -> broadcast
@@ -399,8 +404,9 @@ explicit = (opts, cb) ->
     payload = []
     for idx in [0...payloadStr.length]
       payload.push payloadStr.charCodeAt idx
+  # log 'payload', payload
   # log 'explicit send', {
-  #   frameId, dstAddr, 
+  #   globalSeq, dstAddr, 
   #   netAddr:     netAddr    .toString(16)
   #   srcEndpoint: srcEndpoint.toString(16)
   #   dstEndpoint: dstEndpoint.toString(16)
@@ -408,14 +414,13 @@ explicit = (opts, cb) ->
   #   profileId:   profileId  .toString(16)
   #   bdcstRadius, xOptions, payload: dumpArrAsHex payload
   # }
-  writeData = [0x11, frameId]
+  writeData = [0x11, globalSeq]
     .concat hex2arr(dstAddr,8), num2arr(netAddr,2),  
             srcEndpoint, dstEndpoint, 
             num2arr(clusterId,2), num2arr(profileId,2), 
             bdcstRadius, xOptions, payload
   write writeData, cb
-
-### ZDO ###
+  cb? globalSeq
 
 zdo = (opts, cb) ->  # pg 173
   opts.srcEndpoint = 0  # 0 -> ZDO endpoint
@@ -424,6 +429,78 @@ zdo = (opts, cb) ->  # pg 173
   opts.payload ?= []
   opts.payload.unshift 1 # Transaction Sequence Number
   explicit opts, cb
+
+zcl = (opts, cb) ->  # pg 175
+  zclFrameHdr = [opts.zclFrameCtl, ++globalSeq, opts.zclCmdId]
+  opts.payload = zclFrameHdr.concat opts.zclPayload
+  delete opts.zclFrameCtl
+  delete opts.zclCmdId
+  delete opts.zclPayload
+  explicit opts, cb
+  cb? globalSeq
+
+
+################# LIGHT COMMANDS #################
+###
+   zcl book 
+     scenes cluster 3.7  pg 141
+     on/off cluster 3.8  pg 155
+     level cluster  3.10 pg 160
+###
+
+lightCtrl = (dstAddr, netAddr, cmd, val) ->
+  clusterId  = 8 # level
+  time       = num2arrLE (val.time ? 1), 2
+  upDown     = (if val.upDown is 'up' then 0 else 1)
+  zclPayload = []
+  switch cmd
+    when 'onOff' 
+      clusterId = 6  # onOff
+      zclCmdId = switch val.action
+        when 'off'    then 0
+        when 'on'     then 1
+        when 'toggle' then 2
+    when 'moveTo'
+      zclCmdId = 4
+      zclPayload = [val.level].concat time
+    when 'moveToLimit'
+      zclCmdId = 5
+      zclPayload = [upDown, val.rate]  # (steps per second)
+    when 'step'
+      zclCmdId = 6
+      zclPayload = [upDown, val.size].concat time
+    when 'stop'
+      zclCmdId = 3
+  if val.noOnOff then zclCmdId -= 4
+    
+  dstEndpoint = switch dstAddr[0..7]
+    when '0013a200' then 0x0a  # xbee
+    when 'e20db9ff' then 0x0a  # cree
+    when '7ce52400' then 0x01  # ge
+  zcl {
+    dstAddr, netAddr, clusterId, zclCmdId, dstEndpoint, zclPayload
+    srcEndpoint: 0xe8       # zigbee
+    profileId:   0x0104     # 104 -> HA
+    zclFrameCtl: 1          #   1 -> Cluster Specific
+  }
+
+initLights = ->
+  $.react 'light_cmd', ->
+    addrs = addrsForBulb[$.light_cmd.bulb]
+    lightCtrl addrs[0], addrs[1], $.light_cmd.cmd, $.light_cmd.val
+    
+    
+################# TESTING #################
+
+netDiscovery = (cb) ->     # pg 98, 203
+  log '\n\n--- net discovery start\n'
+  ATcmd 'ND', -> log '\n\n--- net discovery end\n'
+
+lqi = (addr, ofs) ->  # pg 99
+  zdo                        
+    clusterId: 0x0031
+    dstAddr:   addr
+    payload:   [ofs]
 
 activeEnds = (netAddr) -> # example: active endpoints
   zdo
@@ -435,23 +512,6 @@ nar = (dstAddr) -> # example: net addr req
     clusterId: 0 
     payload:  hex2arrLE(dstAddr, 8).concat [0,0]
     
-lqi = (addr, ofs) ->  # pg 99
-  zdo                        
-    clusterId: 0x0031
-    dstAddr:   addr
-    payload:   [ofs]
-
-### ZCL ###
-
-zcl = (opts, cb) ->  # pg 175
-  zclTransSeq = 1
-  zclFrameHdr = [opts.zclFrameCtl, zclTransSeq, opts.zclCmdId]
-  opts.payload = zclFrameHdr.concat opts.zclPayload
-  delete opts.zclFrameCtl
-  delete opts.zclCmdId
-  delete opts.zclPayload
-  explicit opts, cb
-
 hwv = ->    # example: read hardware version attr
   zcl
     dstAddr:    'e20db9fffe0232bd'  # cree
@@ -460,146 +520,14 @@ hwv = ->    # example: read hardware version attr
     dstEndpoint: 0x0a
     clusterId:   0       #                           0 -> basic 
     profileId:   0x0104  #                         104 -> HA
-    zclFrameCtl: 0       # bit field, see docs,      8 -> server to client
+    zclFrameCtl: 0       # bit field
     zclCmdId:    0       # zcl command               0 -> read attrs
     zclPayload:  num2arrLE(3, 2) # attr ids,         3 -> hw vers
 
-onOff = (dstAddr, netAddr, action='toggle') ->
-  zclCmdId = switch action
-    when 'off'    then 0
-    when 'on'     then 1
-    when 'toggle' then 2
-  dstEndpoint = switch dstAddr[0..7]
-    when '0013a200' then 0x0a  # xbee
-    when 'e20db9ff' then 0x0a  # cree
-    when '7ce52400' then 0x01  # ge
-  zcl {
-    dstAddr, netAddr, zclCmdId, dstEndpoint
-    srcEndpoint: 0xe8 
-    clusterId:   6          #                           6 -> on/off 
-    profileId:   0x0104     #                         104 -> HA
-    zclFrameCtl: 1          # bit field, see docs,      1 -> Cluster Specific
-    zclPayload:  []
-  }
-
-################# TESTING #################
-
 # setTimeout ->
-  # netDiscovery()   # xbee modules only
-  # activeEnds 0x0000  # controller
-  # activeEnds 0xe622
-  # nar '7ce524000013c315'
-  # setTimeout (-> lqi '7ce5240000116393', 0), 1000
-  # setTimeout (-> lqi '7ce5240000116393', 1), 2000
-  # setTimeout (-> lqi '7ce5240000116393', 2), 3000
-  # setTimeout (-> lqi '7ce5240000116393', 3), 4000
-  # setTimeout (-> lqi '7ce5240000116393', 4), 5000
-  # setTimeout (-> lqi '7ce5240000116393', 5), 6000
-  # setTimeout (-> lqi '7ce5240000116393', 6), 7000
-  # setTimeout (-> lqi '7ce5240000116393', 7), 8000
-  # setTimeout (-> lqi '7ce5240000116393', 8), 9000
-  # setTimeout (-> lqi '7ce5240000116393', 9), 10000
-  # setTimeout (-> lqi '7ce5240000116393', 10), 11000
-  # setTimeout (-> lqi '7ce5240000116393', 11), 12000
-  # hwv()   # ZCL
-  # allOnOff 'on'
-  # onOff '7ce5240000116393', 0x31bd, 'on'  # no response
-  # onOff '7ce524000013c315', 0x32c0, 'on'
-  # onOff '7ce5240000116ccc', 0x823d, 'on'
-# , 1000
-
-
-################# SERIAL events #################
-
-xbeeSerialPort.on 'error', (err) -> log 'xbee port err', err
-
-xbeeSerialPort.on 'open', ->
-  log 'port open'
-  xbeeSerialPort.on 'data', newBytes
-
-
-################# LIGHT COMMANDS #################
-
-initLights = ->
-  $.react 'light_cmd', ->
-    addrs = addrsForBulb[$.light_cmd.bulb]
-    # log 'onOff', [addrs[0], addrs[1], $.light_cmd.action]
-    onOff addrs[0], addrs[1], $.light_cmd.action
-  
-################# NOTES #################
-###
-  tvRoom : '0013a20040baffad'
-  kitchen: '0013a20040b3a592'
-
-  frameCtl = 0  # Bitfield that defines the command type
-  transSeq = 1
-  cmdId    = 0  #  Since the frame control “frame type” bits 
-                #  are 00, this byte specifies a general command.
-                #  Command ID 0x00 is a Read Attributes command
-  zcl 0, # basic cluster
-    frameId:     1
-    dstAddr:       '0013A20040401234'   # arbitrary
-    srcEndpoint: 0x41                # arbitrary
-    dstEndpoint: 0x42                # arbitrary
-    profileId:   0xD123              # arbitrary
-    bdcstRadius: 0                   # max hops
-    
-    zclFrameHdr: [frameCtl, transSeq, cmdId]  # payload always in LE order
-    zclPayload:   num2arrLE 0x0003, 2           # attrId 
-
-contents of /etc/udev/rules.d/99-home-serial-usb.rules
-SUBSYSTEMS=="usb-serial", DRIVERS=="cp210x", ATTRS{port_number}=="0", SYMLINK+="davis"
-SUBSYSTEMS=="usb", ATTRS{serial}=="A6028N89", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="insteon"
-SUBSYSTEMS=="usb", ATTRS{serial}=="A5025MT6", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="xbee"
-###
-
-# sensors
-# function set ZigBee Router AT
-# Firmware 22A7
-# ID 6392
-# SC 40
-# D1 ADC[2]
-# PR 1FF7
-# IR 1000
-
-# acline
-# function set ZigBee Router AT
-# Firmware 22A7
-# ID 6392
-# SC 40
-# D1 ADC[2]
-# D2 ADC[2]
-# PR 1FF3
-# IR 1000
-
-#server
-# product family XB24-ZB
-# function set ZigBee Coordinator API
-# Firmware 21A7
-# MAC: 0013A20040BAFFAD
-# ID 6392
-# SC 40
-
-###
-Management Network Discovery Request
-Cluster ID:  0x0030
-Description:  Unicast transmission used to cause a remote device to 
-              perform a network scan (to discover nearby networks).
-
-  Scan Channels (4 bytes)  Bitmap indicating the channel mask that should be scanned. 
-                          Examples (big endian byte order):
-                            Channel 0x0B = 0x800
-                            All Channels (0x0B –0x1A) = 0x07FFF800
-  Scan Duration (1 byte) Time to scan on each channel
-  Start Index   (1 byte) 1Start index in the resulting network list.
-
-cree e20db9fffe0232bd  # bd7a (6)
-
-ge   7ce5240000116393  # 31bd  ( ) light tv room front left
-ge   7ce524000013c315  # 32c0  (8) light tv room front middle
-ge   7ce5240000116ccc  # 823d  (3) light tv room front right
-ge   7ce52400001465bd  # 096d  (0) light tv room back left
-ge   7ce5240000124e6f  # fcba  (9) light tv room back middle
-ge   7ce524000013c38c  # da60  (7) light tv room back right  
-
-###
+#   lightCtrl '7ce5240000116393', 0x31bd, 'moveTo', level: 255
+#   setTimeout ->
+#     lightCtrl '7ce5240000116393', 0x31bd, 'onOff', action: 'toggle'
+#   , 5000
+# , 2000
+# 

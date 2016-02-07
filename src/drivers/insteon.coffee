@@ -9,11 +9,9 @@ plm = new Insteon()
 $ = require('imprea')()
 $.output 'inst_remote'
 
-
-############ CONSTANTS ###########
-
 disableHvacCtrl = no
 
+############ CONSTANTS ###########
 serialDevice = '/dev/insteon'
   
 insteonIdsByName =
@@ -120,12 +118,12 @@ recvCommand = (cmd) ->
   lastCmdHash = cmdHash
   lastTime = now
   action = switch cmd1
-    when '11' then 'click'    # bottom (off)
+    when '11' then 'click'   
     when '12' then 'dblClick'
-    when '13' then 'click'    # top (on)
+    when '13' then 'click'   
     when '14' then 'dblClick'
-    when '17' then 'down'     # btn1 1701 (top)  btn1 1700 (bot)
-    when '18' then 'up'       # btn1 1800 (top)  btn1 1800 (bot)
+    when '17' then 'down'    
+    when '18' then 'up'      
     else cmd
   name = insteonNamesById[id]
   btn = switch name[0..5]
@@ -136,8 +134,8 @@ recvCommand = (cmd) ->
         when '13', '14' then 2
         when '17'       then 2 - +cmd2
         when '18'       then 0
-  log 'button', btn, action, 'on', name
-  $.inst_remote {remote: name, btn, action, __: ++emitSeq}
+  # log 'button', btn, action, 'on', name
+  $.inst_remote {remote: name, btn, action, seq: ++emitSeq}
   
 plm.serial serialDevice, ->
   log 'plm connected to ' + serialDevice
