@@ -134,7 +134,7 @@ recvCommand = (cmd) ->
         when '13', '14' then 2
         when '17'       then 2 - +cmd2
         when '18'       then 0
-  # log 'button', btn, action, 'on', name
+  log 'button', btn, action, 'on', name
   $.inst_remote {remote: name, btn, action, seq: ++emitSeq}
   
 plm.serial serialDevice, ->

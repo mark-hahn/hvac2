@@ -20,13 +20,27 @@ scenes = [
   [1,0,1, 1,0,1]
   [0,0,0, 0,0,1]
   [0,0,0, 1,0,0]
-  [1,1,1, 0,0,0]
-  [0,0,0, 1,1,1]
+  [0,0,0, 1,0,1]
 ]
 scene   = [1,1,1, 1,1,1]
 level   = 32
 dimmed  = no
 lastBtn = sceneIdx = 0
+
+sceneIdxTO = null
+resetSceneIdx = ->
+  if sceneIdxTO then clearTimeout sceneIdxTO
+  sceneIdxTO = null
+  lastBtn = sceneIdx = 0 
+
+setLights = (scene, btn, dimmed, level) ->
+  for val, i in scene
+    $.light_cmd 
+      bulb:  bulbs[i]
+      cmd:  'moveTo'
+      val:   
+        level: val * (if dimmed then level else 255)
+        time: (if btn is 3 then 0 else 1)
 
 module.exports =
   init: -> 
@@ -41,6 +55,8 @@ module.exports =
           [0,0,0, 0,0,0]
         when 3
           if lastBtn is 3 then sceneIdx++
+          if sceneIdxTO then clearTimeout sceneIdxTO
+          sceneIdxTO = setTimeout resetSceneIdx, 3e3
           scenes[sceneIdx % scenes.length]
         when 4
           dimmed = not dimmed
@@ -55,10 +71,10 @@ module.exports =
           scene
         else scene
       lastBtn = btn
-      for val, i in scene
-        $.light_cmd 
-          bulb:  bulbs[i]
-          cmd:  'moveTo'
-          val:   
-            level: val * (if dimmed then level else 255)
-            time: (if btn is 3 then 0 else 1)
+      
+      setLights scene, btn, dimmed, level
+      if btn is 2
+        setTimeout ->
+          setLights scene, btn, dimmed, level
+        , 1000
+
