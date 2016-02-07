@@ -38,7 +38,7 @@ setLights = (scene, btn, dimmed, level) ->
     $.light_cmd 
       bulb:  bulbs[i]
       cmd:  'moveTo'
-      val:   
+      val:
         level: val * (if dimmed then level else 255)
         time: (if btn is 3 then 0 else 1)
 
@@ -46,6 +46,7 @@ module.exports =
   init: -> 
     $.react 'inst_remote', ->
       btn = $.inst_remote.btn
+      if btn > 6 then return
       scene = switch btn
         when 1 
           dimmed = no

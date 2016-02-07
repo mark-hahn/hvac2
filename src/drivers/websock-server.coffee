@@ -75,7 +75,18 @@ module.exports =
         for conn in connections
           conn.connection.write tempData
           
-    $.react 'temp_master', 
+      $.react 'inst_remote', ->
+        if room isnt 'tvRoom' then return
+        {remote, btn, action} = $.inst_remote
+        if btn < 7 or not tstatByRoom.tvRoom or action isnt 'click' or
+           remote not in ['lightsRemote1', 'lightsRemote2']
+          return
+        tstatByRoom.tvRoom.setpoint += (if btn is 7 then +0.5 else -0.5)
+        $.ws_tstat_data tstatByRoom.tvRoom
+        for conn in connections
+          conn.connection.write tstatByRoom.tvRoom
+        
+      $.react 'temp_master', 
             'log_modeCode_master', 'log_reqCode_master', 'log_actualCode_master',
             'log_elapsedCode_master', 
             'log_sysMode', 'log_modeCode_sys', 'log_extAirCode', 
