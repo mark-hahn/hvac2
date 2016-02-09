@@ -25,10 +25,8 @@ for ele, idx in document.querySelectorAll '.light'
   bulb = bulbs[idx]
   do (bulb) ->
     ele.onclick = (e) ->
-      if e.target.classList.contains 'topLight'
-        sendLightCmd bulb, 'onOff', action: 'on'
-      else
-        sendLightCmd bulb, 'onOff', action: 'off'
+      action = (if e.target.classList.contains 'topLight' then 'on' else 'off')
+      sendLightCmd bulb, 'onOff', {action}
 
 do winResize = ->
   h = window.innerHeight - 30
