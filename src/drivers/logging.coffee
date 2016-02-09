@@ -3,8 +3,11 @@
 ###
 
 {log, logObj} = require('./log') 'LOGNG'
-$ = require('imprea')()
 
+{noNet} = require './global'
+if noNet then return
+  
+$       = require('imprea')()
 sprintf = require('sprintf-js').sprintf
 moment  = require 'moment'
 _       = require 'underscore'

@@ -1,19 +1,52 @@
 
 util = require 'util'
 
-{render, doctype, html, head, title, body, div, script} = require 'teacup'
+{render, doctype, html, head, title, body, component, \
+ div, script, style, text} = require 'teacup'
+
+noNet = 'noNet = true'
+
+allStyles = '
+  html {box-sizing: border-box}
+  *, *:before, *:after {box-sizing: inherit}
+  body {font-family:tahoma}
+  .page {
+    display:none;
+  }
+  .tvroom {
+    width: 86%;
+    height: 50%;
+    border:1px solid red;
+  }
+  .backyard {
+    width: 86%;
+    height: 50%; 
+    border:1px solid red;
+  }
+  .light {
+    border: 1px solid blue;
+    width: 20%;
+    height: 20%;
+  }
+' 
+
+light = component () ->
+  div '.light', ->
+    text 'hello world'
 
 module.exports = ->
   render ->
     doctype()
-    html style: 'box-sizing: border-box; font-size: 12px', ->
+    html ->
       head ->
         title 'lights'
-        style: '*, *:before, *:after {box-sizing: inherit}'
-        
-      body style:'font-size:320px; 
-                  font-family:tahoma', ->
-        div '.page', style: 'border:1px solid red', ->
+        style  allStyles
+        script noNet
+      body ->
+        div '.page', ->
+          div '.tvroom', ->
+            light()
+          div '.backyard', ->
           
 
 

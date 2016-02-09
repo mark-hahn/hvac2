@@ -2,8 +2,12 @@
   src/drivers/insteon.coffee
   timing dampers/hvac in -> insteon relays in closet
 ###
-  
+
 {log, logObj} = require('./log') 'INSTE'
+  
+{noNet} = require './global'
+if noNet then return
+  
 Insteon = require("home-controller").Insteon
 plm = new Insteon()
 $ = require('imprea')()

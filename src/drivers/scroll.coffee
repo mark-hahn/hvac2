@@ -3,6 +3,10 @@
 ###
 
 {log, logObj} = require('./log') 'SCROL'
+
+{noNet} = require './global'
+if noNet then return
+  
 fs       = require 'fs'
 $        = require('imprea')()
 gnuPlot  = require 'gnuplot'

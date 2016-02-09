@@ -4,16 +4,18 @@
 ###
 
 {log, logObj} = require('./log') 'WSOCK'
-scroll = require '../js/scroll'
 
-port = 1339
+{noNet} = require './global'
+port = (if noNet then 2339 else 1339)
 
 fs          = require 'fs'
+url         = require 'url'
 $           = require('imprea')()
 http        = require 'http'
 Primus      = require 'primus'
 url         = require 'url'
 nodeStatic  = require 'node-static'
+scroll      = require '../js/scroll'
 html        = require('../www/js/index-html')()
 lightsHtml  = require('../www/js/lights-html')()
 ceilHtml    = require('../www/js/ceil-html')()
@@ -25,7 +27,7 @@ rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 tempsByRoom = {}
 tstatByRoom = {}
 
-$.output 'ws_tstat_data'
+$.output 'ws_tstat_data', 'light_cmd'
 
 masterSetpoint = null
 
@@ -98,17 +100,21 @@ module.exports =
         
 
 srvr = http.createServer (req, res) ->
-  log 'req:', req.url
+  if req.url isnt '/favicon.ico'
+    log 'req:', req.url
   
   if req.url is '/'
     res.writeHead 200, "Content-Type": "text/html"
     res.end html
     return
     
-  if req.url is '/lights'
+  if req.url[0..6] is '/lights'
     res.writeHead 200, "Content-Type": "text/html"
-    res.end lightsHtml
-    # log 'lights-req:', req.url
+    if req.url[0..11] is '/lights/ajax'
+      $.light_cmd JSON.parse url.parse(req.url, yes).query.json
+      res.end()
+    else
+      res.end lightsHtml
     return
   
   if req.url is '/ceil'

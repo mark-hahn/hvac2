@@ -8,7 +8,7 @@ dontShow = [
   'allXbeePackets'
   'temp_outside'
   'inst_remote'
-  'light_cmd'
+  # 'light_cmd'
   'xbeePacket_tvRoom'
   'xbeePacket_kitchen'
   'xbeePacket_master'

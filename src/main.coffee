@@ -1,7 +1,8 @@
 
 {log, logObj} = require('./log') ' MAIN'
-
 console.log ''
+
+{noNet} = require './global'
 
 modules = [
   './xbee', 
@@ -19,6 +20,8 @@ modules = [
 ]
 
 for module in modules 
+  if noNet and module in ['./xbee', './timing']
+    continue
   # log 'starting', module
   require(module).init?()
   

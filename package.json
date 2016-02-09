@@ -24,7 +24,7 @@
     "node-static": "^0.7.7",
     "plotter": "^0.5.0",
     "primus": "^3.2.2",
-    "request": "^2.61.0",
+    "request": "^2.69.0",
     "rimraf": "^2.4.3",
     "serialport": "^1.7.4",
     "sprintf-js": "^1.0.3",

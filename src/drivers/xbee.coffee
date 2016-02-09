@@ -1,6 +1,9 @@
 
 {log} = require('./log') ' XBEE'
 
+{noNet} = require './global'
+if noNet then return
+  
 $ = require('imprea')()
 SerialPort = require('serialport').SerialPort
 emitSrc = new (require('events').EventEmitter)

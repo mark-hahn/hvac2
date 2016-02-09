@@ -7,19 +7,23 @@ fi
 
 if [ $(pwd) == "/root/dev/apps/hvac2" ]; then isdev=true; else isdev=false; fi
 
-echo "killing all hvac apps"
-kill $(pgrep -f "hvac") 2> /dev/null  
-
 if $isdev
   then 
+    export hvaclog="hvac-debug.log"
+    echo "killing dev hvac app"
+    kill $(pgrep -f "hvac dev") 2> /dev/null  
     echo "Running hvac2 in debug mode"
+    cd /root/dev/apps/hvac2
   else 
+    export hvaclog="hvac.log"
+    echo "killing all hvac apps"
+    kill $(pgrep -f "hvac") 2> /dev/null  
     echo "Running hvac in normal mode"
     cd /root/apps/hvac
 fi
 
 killall tail > /dev/null 2>&1
-tail -fn 0 ~/logs/hvac.log &
+tail -fn 0 ~/logs/$hvaclog &
 
 set -e
 
@@ -32,7 +36,7 @@ fi
 
 # export DEBUG=*
 if $isdev
-  then nohup node js/main.js hvac dev >> ~/logs/hvac.log 2>&1 &
-  else nohup node js/main.js hvac     >> ~/logs/hvac.log 2>&1 &
+  then nohup node js/main.js hvac dev >> ~/logs/$hvaclog 2>&1 &
+  else nohup node js/main.js hvac     >> ~/logs/$hvaclog 2>&1 &
 fi
 
