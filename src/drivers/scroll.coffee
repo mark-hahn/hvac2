@@ -2,7 +2,7 @@
   src/drivers/scroll.coffee
 ###
 
-{log, logObj} = require('./utils') 'SCROL'
+{log, logObj} = require('./log') 'SCROL'
 fs       = require 'fs'
 $        = require('imprea')()
 gnuPlot  = require 'gnuplot'

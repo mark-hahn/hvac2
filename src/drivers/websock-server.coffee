@@ -3,7 +3,7 @@
   http server / websocket <-> rx
 ###
 
-{log, logObj} = require('./utils') 'WSOCK'
+{log, logObj} = require('./log') 'WSOCK'
 scroll = require '../js/scroll'
 
 port = 1339
@@ -15,6 +15,7 @@ Primus      = require 'primus'
 url         = require 'url'
 nodeStatic  = require 'node-static'
 html        = require('../www/js/index-html')()
+lightsHtml  = require('../www/js/lights-html')()
 ceilHtml    = require('../www/js/ceil-html')()
 moment      = require 'moment'
 fileServer  = new nodeStatic.Server 'www', cache: 0
@@ -104,6 +105,12 @@ srvr = http.createServer (req, res) ->
     res.end html
     return
     
+  if req.url is '/lights'
+    res.writeHead 200, "Content-Type": "text/html"
+    res.end lightsHtml
+    # log 'lights-req:', req.url
+    return
+  
   if req.url is '/ceil'
     res.writeHead 200, "Content-Type": "text/html"
     res.end ceilHtml

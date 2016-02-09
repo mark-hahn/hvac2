@@ -3,7 +3,7 @@
   xbee packet stream -> filtered/rounded/unique temp streams for each sensor
 ###
 
-{log, logObj} = require('./utils') ' TEMP'
+{log, logObj} = require('./log') ' TEMP'
 
 $       = require('imprea')()
 xbee    = require './xbee'

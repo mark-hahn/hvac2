@@ -3,7 +3,7 @@
   per name: mode and compare tsat setting to setpoint -> -1, 0, +1
 ###
 
-{log, logObj} = require('./utils') 'TSTAT'
+{log, logObj} = require('./log') 'TSTAT'
 $ = require('imprea')()
 
 roomHysterisis  = 0.25

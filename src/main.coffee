@@ -1,5 +1,5 @@
 
-{log, logObj} = require('./utils') ' MAIN'
+{log, logObj} = require('./log') ' MAIN'
 
 console.log ''
 

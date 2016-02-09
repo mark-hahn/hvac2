@@ -2,7 +2,7 @@
   src/drivers/logging.coffee
 ###
 
-{log, logObj} = require('./utils') 'LOGNG'
+{log, logObj} = require('./log') 'LOGNG'
 $ = require('imprea')()
 
 sprintf = require('sprintf-js').sprintf

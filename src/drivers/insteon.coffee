@@ -3,13 +3,13 @@
   timing dampers/hvac in -> insteon relays in closet
 ###
   
-{log, logObj} = require('./utils') 'INSTE'
+{log, logObj} = require('./log') 'INSTE'
 Insteon = require("home-controller").Insteon
 plm = new Insteon()
 $ = require('imprea')()
 $.output 'inst_remote'
 
-disableHvacCtrl = no
+disableHvacCtrl = yes
 
 ############ CONSTANTS ###########
 serialDevice = '/dev/insteon'

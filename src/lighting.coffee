@@ -2,7 +2,7 @@
   src/lighting.coffee
 ###
 
-{log, logObj} = require('./utils') 'LIGHT'
+{log, logObj} = require('./log') 'LIGHT'
 
 $ = require('imprea')()
 $.output 'light_cmd'

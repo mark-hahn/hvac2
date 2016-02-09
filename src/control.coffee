@@ -4,7 +4,7 @@
   There is nothing timing dependent, that is all in timing.coffee
 ###
 
-{log, logObj} = require('./utils') ' CTRL'
+{log, logObj} = require('./log') ' CTRL'
 
 $ = require('imprea')()
 _ = require 'underscore'

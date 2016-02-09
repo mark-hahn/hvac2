@@ -3,7 +3,7 @@
   control(dampers/hvac) in and timing(dampers/hvac) out
 ###
 
-{log, logObj} = require('./utils') 'TIMNG'
+{log, logObj} = require('./log') 'TIMNG'
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 hvacs = ['extAir', 'fan', 'heat', 'cool']

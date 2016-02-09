@@ -4,7 +4,7 @@
   xbee packet stream -> filtered/rounded temp streams for each sensor
 ###
 
-{log, logObj} = require('./utils') 'WXSTA'
+{log, logObj} = require('./log') 'WXSTA'
 
 $       = require('imprea')()
 sqlite3 = require("sqlite3").verbose()

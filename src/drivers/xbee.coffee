@@ -1,5 +1,5 @@
 
-{log} = require('./utils') ' XBEE'
+{log} = require('./log') ' XBEE'
 
 $ = require('imprea')()
 SerialPort = require('serialport').SerialPort
