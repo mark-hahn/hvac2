@@ -8,6 +8,7 @@ port = (if noNet then 2339 else 1339)
 winW = winH = lastLevel = null
 
 bulbs = [
+  'tvall'
   'frontLeft'
   'frontMiddle'
   'frontRight' 

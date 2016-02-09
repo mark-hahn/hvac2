@@ -100,8 +100,8 @@ module.exports =
         
 
 srvr = http.createServer (req, res) ->
-  if req.url isnt '/favicon.ico'
-    log 'req:', req.url
+  # if req.url isnt '/favicon.ico'
+    # log 'req:', req.url
   
   if req.url is '/'
     res.writeHead 200, "Content-Type": "text/html"

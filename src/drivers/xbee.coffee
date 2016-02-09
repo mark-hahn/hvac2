@@ -25,6 +25,15 @@ addrsForBulb =
   backLeft:    ['7ce52400001465bd', 0x096d]
   backMiddle:  ['7ce5240000124e6f', 0xfcba]
   backRight:   ['7ce524000013c38c', 0xda60]
+  
+tvBulbs = [
+  'frontLeft'
+  'frontMiddle'
+  'frontRight'
+  'backLeft' 
+  'backMiddle'
+  'backRight' 
+]
 
 module.exports =
   init: -> 
@@ -489,6 +498,11 @@ lightCtrl = (dstAddr, netAddr, cmd, val) ->
 
 initLights = ->
   $.react 'light_cmd', ->
+    if $.light_cmd.bulb is 'tvall'
+      for bulb in tvBulbs
+        addrs = addrsForBulb[bulb]
+        lightCtrl addrs[0], addrs[1], $.light_cmd.cmd, $.light_cmd.val
+      return
     addrs = addrsForBulb[$.light_cmd.bulb]
     if not addrs
       log 'no addrs', $.light_cmd
