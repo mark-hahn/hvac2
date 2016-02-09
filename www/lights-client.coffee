@@ -5,12 +5,7 @@
 log = (args...) -> console.log ' LGHT:', args...
 
 port = (if noNet then 2339 else 1339)
-sendLightCmd = (bulb, cmd, val) ->
-  json = JSON.stringify {bulb, cmd, val}
-  url = "http://hahnca.com:#{port}/lights/ajax?json=#{json}"
-  oReq = new XMLHttpRequest()
-  oReq.open "GET", url
-  oReq.send();
+winW = winH = lastLevel = null
 
 bulbs = [
   'frontLeft'
@@ -21,19 +16,61 @@ bulbs = [
   'backRight'
 ]
 
+sendLightCmd = (bulb, cmd, val) ->
+  json = JSON.stringify {bulb, cmd, val}
+  url = "http://hahnca.com:#{port}/lights/ajax?json=#{json}"
+  oReq = new XMLHttpRequest()
+  oReq.open "GET", url
+  oReq.send();
+
+dim = (bulb, pageX) ->
+  dragW    = winW * 0.80
+  dragOfsX = winW * 0.10
+  dragX = Math.max 0, Math.min dragW, pageX - dragOfsX
+  level = Math.round (dragX/dragW) * 8
+  if level isnt lastLevel
+    sendLightCmd bulb, 'moveTo', level: (1 << level) - 1
+  lastLevel = level
+  
+mouseDraggingBulb = null
+
+page = document.querySelector '.page'
+log page
+page.onmousemove = (e) ->
+  if not mouseDraggingBulb then return
+  e.preventDefault()
+  log 'onmousemove', mouseDraggingBulb
+  dim mouseDraggingBulb, e.pageX
+page.onmouseup    = -> mouseDraggingBulb = null; lastLevel = null
+# page.onmouseout   = -> mouseDraggingBulb = null; lastLevel = null
+page.onmouseleave = -> mouseDraggingBulb = null; lastLevel = null
+
 for ele, idx in document.querySelectorAll '.light'
   bulb = bulbs[idx]
+  
   do (bulb) ->
     ele.onclick = (e) ->
-      action = (if e.target.classList.contains 'topLight' then 'on' else 'off')
-      sendLightCmd bulb, 'onOff', {action}
-
+      e.preventDefault()
+      mouseDraggingBulb = null; lastLevel = null
+      pageX = (if e.target.classList.contains 'topLight' then winW else 0)
+      dim bulb, pageX
+      
+    ele.ontouchmove = (e) ->
+      e.preventDefault()
+      dim bulb, e.changedTouches[0].pageX
+      
+    ele.onmousedown = (e) ->
+      log 'onmousedown', bulb
+      e.preventDefault()
+      lastLevel = null
+      mouseDraggingBulb = bulb
+      
 do winResize = ->
-  h = window.innerHeight - 30
-  w = h * (9/16) * 1.15
-  document.querySelector('html').style.fontSize = (w/20) + 'px'
+  winH = window.innerHeight - 30
+  winW = winH * (9/16) * 1.15
+  document.querySelector('html').style.fontSize = (winW/20) + 'px'
   style = document.querySelector('.page').style
-  style.width   = w + 'px'
-  style.height  = h + 'px'
+  style.width   = winW + 'px'
+  style.height  = winH + 'px'
   style.display = 'block'
 window.onresize = winResize

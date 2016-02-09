@@ -13,7 +13,7 @@ plm = new Insteon()
 $ = require('imprea')()
 $.output 'inst_remote'
 
-disableHvacCtrl = yes
+disableHvacCtrl = no
 
 ############ CONSTANTS ###########
 serialDevice = '/dev/insteon'
