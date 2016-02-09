@@ -20,7 +20,7 @@ sendLightCmd = (bulb, cmd, val) ->
 
 do winResize = ->
   h = window.innerHeight - 30
-  w = h * (9/16) * 1.15
+  w = h * (9/16) * 1.2
   document.querySelector('html').style.fontSize = (w/20) + 'px'
   style = document.querySelector('.page').style
   style.width   = w + 'px'
