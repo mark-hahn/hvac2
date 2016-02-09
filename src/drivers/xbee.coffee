@@ -490,6 +490,9 @@ lightCtrl = (dstAddr, netAddr, cmd, val) ->
 initLights = ->
   $.react 'light_cmd', ->
     addrs = addrsForBulb[$.light_cmd.bulb]
+    if not addrs
+      log 'no addrs', $.light_cmd
+      return
     lightCtrl addrs[0], addrs[1], $.light_cmd.cmd, $.light_cmd.val
     
     

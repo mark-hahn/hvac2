@@ -35,14 +35,11 @@ dim = (bulb, pageX) ->
 mouseDraggingBulb = null
 
 page = document.querySelector '.page'
-log page
 page.onmousemove = (e) ->
   if not mouseDraggingBulb then return
   e.preventDefault()
-  log 'onmousemove', mouseDraggingBulb
   dim mouseDraggingBulb, e.pageX
 page.onmouseup    = -> mouseDraggingBulb = null; lastLevel = null
-# page.onmouseout   = -> mouseDraggingBulb = null; lastLevel = null
 page.onmouseleave = -> mouseDraggingBulb = null; lastLevel = null
 
 for ele, idx in document.querySelectorAll '.light'
@@ -60,7 +57,6 @@ for ele, idx in document.querySelectorAll '.light'
       dim bulb, e.changedTouches[0].pageX
       
     ele.onmousedown = (e) ->
-      log 'onmousedown', bulb
       e.preventDefault()
       lastLevel = null
       mouseDraggingBulb = bulb
