@@ -86,7 +86,7 @@ allStyles = '
     color:white;
   }
   .tvroom .rowTitle {
-    bottom: 86%;
+    top: 8%;
   }
   .topLight {
     width:80%;
