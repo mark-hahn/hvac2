@@ -69,6 +69,7 @@ allStyles = '
     margin: 6%;
     position: relative;
     top: -11%;
+    left:32%;
   }
   .patio .light {
     display: inline-block;
@@ -77,6 +78,7 @@ allStyles = '
     margin: 6%;
     position: relative;
     top: -11%;
+    left:32%;
   }
   .rowTitle {
     position:absolute;
@@ -151,14 +153,11 @@ module.exports = ->
           hr style: 'margin:1%'
           div '.deck', ->
             div '.rowTitle', 'Deck'
-            light '.invis'
             light '.bbq'
             light '.table'
           hr style: 'margin:1%'
           div '.patio', ->
             div '.rowTitle', 'Patio'
-            light '.invis'
-            light '.left'
-            light '.right'
+            light '.lights'
 
         script src: 'js/lights-client.js'

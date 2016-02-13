@@ -30,6 +30,7 @@ tstatByRoom = {}
 $.output 'ws_tstat_data', 'light_cmd'
 
 masterSetpoint = null
+seq = 0
 
 writeCodes = (room) ->
   codes = '' + $.log_modeCode_sys + $.log_extAirCode +
@@ -111,7 +112,10 @@ srvr = http.createServer (req, res) ->
   if req.url[0..6] is '/lights'
     res.writeHead 200, "Content-Type": "text/html"
     if req.url[0..11] is '/lights/ajax'
-      $.light_cmd JSON.parse url.parse(req.url, yes).query.json
+      light_cmd = JSON.parse url.parse(req.url, yes).query.json
+      light_cmd.__ = seq++
+      # log light_cmd
+      $.light_cmd light_cmd
       res.end()
     else
       res.end lightsHtml

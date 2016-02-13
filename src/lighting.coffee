@@ -10,10 +10,13 @@ $.output 'light_cmd'
 bulbs = [
   'frontLeft'
   'frontMiddle'
-  'frontRight' 
-  'backLeft'
+  'frontRight'
+  'backLeft' 
   'backMiddle'
-  'backRight'
+  'backRight' 
+  'deckBbq'
+  'deckTable'
+  'patio'
 ]
 scenes = [
   [1,0,1, 0,0,1]
@@ -25,7 +28,7 @@ scenes = [
 scene   = [1,1,1, 1,1,1]
 level   = 32
 dimmed  = no
-lastBtn = sceneIdx = 0
+lastBtn = sceneIdx = seq = 0
 
 sceneIdxTO = null
 resetSceneIdx = ->
@@ -36,6 +39,7 @@ resetSceneIdx = ->
 setLights = (scene, btn, dimmed, level) ->
   for val, i in scene
     $.light_cmd 
+      __:    seq++
       bulb:  bulbs[i]
       cmd:  'moveTo'
       val:
@@ -45,7 +49,8 @@ setLights = (scene, btn, dimmed, level) ->
 module.exports =
   init: -> 
     $.react 'inst_remote', ->
-      btn = $.inst_remote.btn
+      {remote, btn, action} = $.inst_remote
+      if remote not in ['lightsRemote1', 'lightsRemote2'] then return
       if btn > 6 then return
       scene = switch btn
         when 1 

@@ -12,10 +12,10 @@ $.output 'allXbeePackets'
 
 addrForRoom = 
 # server:  0x0013a20040c33695  # 0000
-  tvRoom : '0013a20040baffad'  # b229 (4)
+  tvRoom : '0013a20040b3a954'  # b229 (4)
   kitchen: '0013a20040b3a592'  # b3fb (5)
   master:  '0013a20040b3a903'  # 3f17 ()
-  guest:   '0013a20040b3a954'  # 16e9 (1)
+  guest:   '0013a20040baffad'  # 16e9 (1)
   closet:  '0013a20040bd2529'  # 6bef (2)
 
 addrsForBulb = 
@@ -25,7 +25,9 @@ addrsForBulb =
   backLeft:    ['7ce52400001465bd', 0x096d]
   backMiddle:  ['7ce5240000124e6f', 0xfcba]
   backRight:   ['7ce524000013c38c', 0xda60]
-  
+
+ofs = 6
+
 tvBulbs = [
   'frontLeft'
   'frontMiddle'
@@ -416,7 +418,6 @@ explicit = (opts, cb) ->
     payload = []
     for idx in [0...payloadStr.length]
       payload.push payloadStr.charCodeAt idx
-  # log 'payload', payload
   # log 'explicit send', {
   #   globalSeq, dstAddr, 
   #   netAddr:     netAddr    .toString(16)
@@ -498,16 +499,18 @@ lightCtrl = (dstAddr, netAddr, cmd, val) ->
 
 initLights = ->
   $.react 'light_cmd', ->
-    if $.light_cmd.bulb is 'tvall'
+    {bulb, cmd, val} = $.light_cmd
+    if bulb not in tvBulbs and bulb isnt 'tvall' then return
+    if bulb is 'tvall'
       for bulb in tvBulbs
         addrs = addrsForBulb[bulb]
-        lightCtrl addrs[0], addrs[1], $.light_cmd.cmd, $.light_cmd.val
+        lightCtrl addrs[0], addrs[1], cmd, val
       return
-    addrs = addrsForBulb[$.light_cmd.bulb]
+    addrs = addrsForBulb[bulb]
     if not addrs
       log 'no addrs', $.light_cmd
       return
-    lightCtrl addrs[0], addrs[1], $.light_cmd.cmd, $.light_cmd.val
+    lightCtrl addrs[0], addrs[1], cmd, val
     
     
 ################# TESTING #################
@@ -544,10 +547,8 @@ hwv = ->    # example: read hardware version attr
     zclCmdId:    0       # zcl command               0 -> read attrs
     zclPayload:  num2arrLE(3, 2) # attr ids,         3 -> hw vers
 
-# setTimeout ->
-#   lightCtrl '7ce5240000116393', 0x31bd, 'moveTo', level: 255
-#   setTimeout ->
-#     lightCtrl '7ce5240000116393', 0x31bd, 'onOff', action: 'toggle'
-#   , 5000
-# , 2000
-# 
+setTimeout ->
+  # lqi '0013a20040b3a903', ofs
+  activeEnds 0x4f19
+, 2000
+

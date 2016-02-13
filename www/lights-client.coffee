@@ -15,6 +15,9 @@ bulbs = [
   'backLeft'
   'backMiddle'
   'backRight'
+  'deckBbq'
+  'deckTable'
+  'patio'
 ]
 
 sendLightCmd = (bulb, cmd, val) ->
@@ -43,6 +46,8 @@ page.onmousemove = (e) ->
 page.onmouseup    = -> mouseDraggingBulb = null; lastLevel = null
 page.onmouseleave = -> mouseDraggingBulb = null; lastLevel = null
 
+TO = null
+
 for ele, idx in document.querySelectorAll '.light'
   bulb = bulbs[idx]
   
@@ -52,7 +57,13 @@ for ele, idx in document.querySelectorAll '.light'
       mouseDraggingBulb = null; lastLevel = null
       pageX = (if e.target.classList.contains 'topLight' then winW else 0)
       dim bulb, pageX
-      
+      if TO then return
+      e.target.classList.add 'invis'
+      TO = setTimeout ->
+        if TO then clearTimeout TO
+        TO = null
+        e.target.classList.remove 'invis'
+      , 100
     ele.ontouchmove = (e) ->
       e.preventDefault()
       dim bulb, e.changedTouches[0].pageX

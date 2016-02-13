@@ -4,6 +4,8 @@
 ###
 
 {log, logObj} = require('./log') 'INSTE'
+
+disableHvacCtrl = no
   
 {noNet} = require './global'
 if noNet then return
@@ -11,23 +13,14 @@ if noNet then return
 Insteon = require("home-controller").Insteon
 plm = new Insteon()
 $ = require('imprea')()
-$.output 'inst_remote'
-
-disableHvacCtrl = no
 
 ############ CONSTANTS ###########
 serialDevice = '/dev/insteon'
-  
+
 insteonIdsByName =
   serverGateway:        '2413fd'
   furnaceHvac:          '387efd'
   furnaceDampers:       '387b9e'
-  lftFrontBulb:         '2c5134'
-  midFrontBulb:         '29802b'
-  rgtFrontBulb:         '2b4f44'
-  lftRearBulb:          '2982c1'
-  midRearBulb:          '298cda'
-  rgtRearBulb:          '29814c'
   lightsRemote1:        '270b8a'
   lightsRemote2:        '270b00'
   lightsRemote3:        '27178d'
@@ -35,6 +28,15 @@ insteonIdsByName =
   dimmerTvFrontDoor:    '2902a6'
   dimmerTvHallDoor:     '290758'
   dimmerMaster:         '24e363'
+  deckTable:            '29814c'
+  deckBbq:              '2b4f44'
+  patio:                '3d4128'
+  # lftFrontBulb:         '2c5134'
+  # midFrontBulb:         '29802b'
+  # rgtFrontBulb:         '2b4f44'
+  # lftRearBulb:          '2982c1'
+  # midRearBulb:          '298cda'
+  # rgtRearBulb:          '29814c'
 
 insteonNamesById = {}
 for name, id of insteonIdsByName
@@ -48,6 +50,7 @@ cmd    = 'set'
 async  = no
 
 insteonSend = (data) ->
+  if disableHvacCtrl then return
   try
     deviceInstance = (if device is 'plm' then plm \
                       else id = data.shift(); plm[device](id, plm))
@@ -157,5 +160,17 @@ module.exports =
     sendWretry no,  {extAir: off, fan: off,    heat: off, cool: off}
     sendWretry yes, {tvRoom: on,  kitchen: on, master:on, guest: on}
     
-    log 'relays cleared'
+    $.react 'light_cmd', ->
+      {bulb, cmd, val} = $.light_cmd
+      if bulb not in ['deckTable', 'deckBbq', 'patio'] or cmd isnt 'moveTo'
+        return
+      {level, time} = val
+      light = plm.light insteonIdsByName[bulb]
+      level = Math.round level * 100 / 255
+      # log bulb, level
+      switch level
+        when 0   then light.turnOff()
+        when 100 then light.turnOn()
+        else          light.turnOn level,'fast'
+      
   
