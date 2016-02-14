@@ -12,7 +12,9 @@ if noNet then return
   
 Insteon = require("home-controller").Insteon
 plm = new Insteon()
+
 $ = require('imprea')()
+$.output 'inst_remote'
 
 ############ CONSTANTS ###########
 serialDevice = '/dev/insteon'
@@ -43,34 +45,12 @@ for name, id of insteonIdsByName
   insteonNamesById[id] = name
 
 
-############ DRIVER ###########
-
-device = 'io'
-cmd    = 'set'
-async  = no
-
-insteonSend = (data) ->
-  if disableHvacCtrl then return
-  try
-    deviceInstance = (if device is 'plm' then plm \
-                      else id = data.shift(); plm[device](id, plm))
-    syncResp = deviceInstance[cmd].call deviceInstance, data...
-    , (err, asyncResp) ->
-      log 'async cb', {async, err, asyncResp}
-      if async
-        if err
-          msg = 'async response error: ' + req.url + ', ' + JSON.stringify err
-          log msg
-  catch e  
-    log 'exception', e
-    msg = 'invalid request or no plm response: ' + data[0]
-    log msg
-
-
 ############### SEND #################
 
 send = (isDamper, obj, cb) ->
   logObj 'send ' + (if isDamper then 'damp' else 'hvac'), obj
+  if disableHvacCtrl then cb?(); return
+
   id = (if isDamper then insteonIdsByName.furnaceDampers  \
                     else insteonIdsByName.furnaceHvac)
   data = 0
@@ -82,23 +62,25 @@ send = (isDamper, obj, cb) ->
       when 'guest',   'extAir' then 8
     if isDamper and not val or not isDamper and val
       data += bit
-  dataHex = '0' + data.toString(16).toUpperCase()
-  insteonSend [id, dataHex]
-  
+  data = '0' + data.toString(16).toUpperCase()
+  try
+    plm.io(id).set data
+  catch e  
+    log 'exception', e
+    log 'ioSet: invalid request or no plm response', {id, data}
+    cb? e
+  cb?()
+
 tryTO = {}
 
 sendWretry = (isDamper, obj) ->
-  if tryTO[''+isDamper]
-    clearTimeout tryTO[''+isDamper]
-    delete tryTO[''+isDamper]
-    
+  if tryTO[''+isDamper] then clearTimeout tryTO[''+isDamper]
   do tryOnce = (isDamper, obj, tries = 0) ->
     delete tryTO[''+isDamper]
-    
     send isDamper, obj, (err) ->
       if err
         if ++tries > 12
-          log 'giving up, too many retries of insteon command'
+          log 'giving up, too many retries of insteon command', isDamper, obj
           return
         tryTO[''+isDamper] = setTimeout (-> tryOnce isDamper, obj, tries), 5e3
 
