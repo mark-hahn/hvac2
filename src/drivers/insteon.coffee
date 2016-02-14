@@ -65,8 +65,6 @@ insteonSend = (data) ->
     log 'exception', e
     msg = 'invalid request or no plm response: ' + data[0]
     log msg
-    res.writeHead 404, 'Content-Type': 'text/text'
-    res.end msg
 
 
 ############### SEND #################
