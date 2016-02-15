@@ -45,12 +45,47 @@ setLights = (scene, btn, dimmed, level) ->
       val:
         level: val * (if dimmed then level else 255)
         time: (if btn is 3 then 0 else 1)
+        
+lastBulb        = 'deckBbq'
+deckPatioDimIdx = 5
 
 module.exports =
   init: -> 
     $.react 'inst_remote', ->
       {remote, btn, action} = $.inst_remote
-      if remote not in ['lightsRemote1', 'lightsRemote2'] then return
+      if remote is 'lightsRemote3'
+        [bulb, level] = switch btn
+          when 1 then ['deckBbq',   255]
+          when 2 then ['deckBbq',     0]
+          when 3 then ['deckTable', 255]
+          when 4 then ['deckTable',   0]
+          when 5 then ['patio',     255]
+          when 6 then ['patio',       0]
+          when 7 then deckPatioDimIdx++; ['last']
+          when 8 then deckPatioDimIdx--; ['last']
+        if bulb is 'last'
+          deckPatioDimIdx = Math.max 0, Math.min 8, deckPatioDimIdx
+          deckPatioLevel  = (1 << deckPatioDimIdx) - 1
+          # log 'inst_remote last', {lastBulb, deckPatioDimIdx, deckPatioLevel}
+          $.light_cmd 
+            __:    seq++
+            bulb:  lastBulb
+            cmd:  'moveTo'
+            val: level: deckPatioLevel
+        else
+          lastBulb = bulb
+          deckPatioDimIdx = 5
+          # log 'inst_remote', {bulb, level}
+          $.light_cmd 
+            __:    seq++
+            bulb:  bulb
+            cmd:  'moveTo'
+            val: level: level
+        return
+        
+      if remote not in [
+        'lightsRemote1', 'lightsRemote2' 
+        'dimmerTvFrontDoor', 'dimmerTvHallDoor'] then return
       if btn > 6 then return
       scene = switch btn
         when 1 

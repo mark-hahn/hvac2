@@ -30,8 +30,8 @@ insteonIdsByName =
   dimmerTvFrontDoor:    '2902a6'
   dimmerTvHallDoor:     '290758'
   dimmerMaster:         '24e363'
-  deckTable:            '29814c'
   deckBbq:              '2b4f44'
+  deckTable:            '29814c'
   patio:                '3d4128'
   # lftFrontBulb:         '2c5134'
   # midFrontBulb:         '29802b'
@@ -66,8 +66,7 @@ send = (isDamper, obj, cb) ->
   try
     plm.io(id).set data
   catch e  
-    log 'exception', e
-    log 'ioSet: invalid request or no plm response', {id, data}
+    log 'ioSet exception: bad request or no response', {id, data}, e
     cb? e
   cb?()
 
@@ -142,15 +141,19 @@ module.exports =
     
     $.react 'light_cmd', ->
       {bulb, cmd, val} = $.light_cmd
-      if bulb not in ['deckTable', 'deckBbq', 'patio'] or cmd isnt 'moveTo'
+      if bulb not in ['deckBbq', 'deckTable', 'patio'] or cmd isnt 'moveTo'
         return
       {level, time} = val
       light = plm.light insteonIdsByName[bulb]
-      level = Math.round level * 100 / 255
-      # log bulb, level
-      switch level
-        when 0   then light.turnOff()
-        when 100 then light.turnOn()
-        else          light.turnOn level,'fast'
+      level100 = Math.round level * 100 / 255
+      disp = {bulb, level}
+      log 'sending light              ',  disp
+      chkErr = (err) ->
+        if err then log 'error sending light command', disp, err
+        else        log 'light send successful      ', disp
+      switch level100
+        when 0   then light.turnOff null, chkErr
+        when 100 then light.turnOn  null, chkErr
+        else          light.turnOn  level100,'fast', null, chkErr
       
   
