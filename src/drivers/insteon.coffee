@@ -10,7 +10,7 @@ disableHvacCtrl = no
 {noNet} = require './global'
 if noNet then return
   
-Insteon = require("home-controller").Insteon
+Insteon = require("hahn-controller").Insteon
 plm = new Insteon()
 
 $ = require('imprea')()
@@ -48,7 +48,6 @@ for name, id of insteonIdsByName
 ############### SEND #################
 
 send = (isDamper, obj, cb) ->
-  logObj 'send ' + (if isDamper then 'damp' else 'hvac'), obj
   if disableHvacCtrl then cb?(); return
 
   id = (if isDamper then insteonIdsByName.furnaceDampers  \
@@ -64,24 +63,25 @@ send = (isDamper, obj, cb) ->
       data += bit
   data = '0' + data.toString(16).toUpperCase()
   try
+    # log 'sending', id, data
     plm.io(id).set data
   catch e  
     log 'ioSet exception: bad request or no response', {id, data}, e
     cb? e
   cb?()
 
-tryTO = {}
+trying = true: {}, false: {}
 
 sendWretry = (isDamper, obj) ->
-  if tryTO[''+isDamper] then clearTimeout tryTO[''+isDamper]
-  do tryOnce = (isDamper, obj, tries = 0) ->
-    delete tryTO[''+isDamper]
-    send isDamper, obj, (err) ->
-      if err
-        if ++tries > 12
-          log 'giving up, too many retries of insteon command', isDamper, obj
-          return
-        tryTO[''+isDamper] = setTimeout (-> tryOnce isDamper, obj, tries), 5e3
+  logObj 'send ' + (if isDamper then 'damp' else 'hvac'), obj
+  trying[isDamper].obj   = obj
+  trying[isDamper].count = 4
+  if trying[isDamper].TO then return
+  do tryOnce = (isDamper) ->
+    delete trying[isDamper].TO
+    send isDamper, trying[isDamper].obj, ->
+      if trying[isDamper].count-- > 0
+        trying[isDamper].TO = setTimeout (-> tryOnce isDamper), 5e3
 
 
 ######### RECEIVE REMOTES #########
