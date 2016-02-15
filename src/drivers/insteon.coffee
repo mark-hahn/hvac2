@@ -145,15 +145,11 @@ module.exports =
         return
       {level, time} = val
       light = plm.light insteonIdsByName[bulb]
-      level100 = Math.round level * 100 / 255
-      disp = {bulb, level}
-      log 'sending light              ',  disp
-      chkErr = (err) ->
-        if err then log 'error sending light command', disp, err
-        else        log 'light send successful      ', disp
-      switch level100
-        when 0   then light.turnOff null, chkErr
-        when 100 then light.turnOn  null, chkErr
-        else          light.turnOn  level100,'fast', null, chkErr
+      level = Math.round level * 100 / 255
+      log 'send light:', bulb, level, light.id
+      switch level
+        when 0   then light.turnOff()
+        when 100 then light.turnOn()
+        else          light.turnOn level,'fast'
       
   
