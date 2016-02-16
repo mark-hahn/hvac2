@@ -61,7 +61,7 @@ send = (isDamper, obj, cb) ->
       when 'guest',   'extAir' then 8
     if isDamper and not val or not isDamper and val
       data += bit
-  data = '0' + data.toString(16).toUpperCase()
+  # data = '0' + data.toString(16).toUpperCase()  ???? WTF how did this ever work?
   try
     # log 'sending', id, data
     plm.io(id).set data
@@ -76,9 +76,10 @@ sendWretry = (isDamper, obj) ->
   logObj 'send ' + (if isDamper then 'damp' else 'hvac'), obj
   trying[isDamper].obj   = obj
   trying[isDamper].count = 4
-  if trying[isDamper].TO then return
   do tryOnce = (isDamper) ->
-    delete trying[isDamper].TO
+    if trying[isDamper].TO
+      clearTimeout trying[isDamper].TO
+      delete trying[isDamper].TO
     send isDamper, trying[isDamper].obj, ->
       if trying[isDamper].count-- > 0
         trying[isDamper].TO = setTimeout (-> tryOnce isDamper), 5e3
