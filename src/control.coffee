@@ -79,9 +79,18 @@ check = ->
           active[room] = yes        
         if active[room] then dampers[room] = on
     else 
-      for room in rooms when fans[room]
-        hvac.fan = on 
-        dampers[room] = on
+      haveFan   = no
+      savedFans = {}
+      for room in rooms
+        if (savedFans[room] = fans[room])
+          haveFan = yes
+          hvac.fan = on 
+          dampers[room] = on
+        else
+          dampers[room] = off
+      if not haveFan
+        for room in rooms
+          fans[room] = savedFans[room]
         
     if thaw
       hvac.cool = hvac.heat = off

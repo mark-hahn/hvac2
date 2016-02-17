@@ -11,7 +11,7 @@ hvacs = ['extAir', 'fan', 'heat', 'cool']
 $ = require('imprea')()
 $.output 'timing_dampers', 'timing_hvac', 'timing_extAirIn'
 
-minDampCyle     =       2e3
+minDampCyle     =       5e3
 minAcOff        =  4 * 60e3  
 extAirDelay     = 10 * 60e3
 dampersOffDelay = 10 * 60e3
@@ -57,11 +57,6 @@ check = ->
     else chks.push pendingCheck
   pendingChecks = chks
   
-  dampers = {}
-  hvac    = {}
-  copyAllRoomsTo dampersReq, dampers
-  copyAllHvacsTo hvacReq,    hvac
-    
   checkAgainAt = (time) ->
     if time > now
       TO = setTimeout check, time - now
@@ -71,6 +66,11 @@ check = ->
     exp = now > evtTime + delay
     if not exp then checkAgainAt evtTime + delay + 100
     exp
+    
+  dampers = {}
+  hvac    = {}
+  copyAllRoomsTo dampersReq, dampers
+  copyAllHvacsTo hvacReq,    hvac
     
   # ac cycling limit
   if lastHvac.cool and not hvac.cool
