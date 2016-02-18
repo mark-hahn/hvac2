@@ -25,10 +25,10 @@ scenes = [
   [0,0,0, 1,0,0]
   [0,0,0, 1,0,1]
 ]
-scene   = [1,1,1, 1,1,1]
-level   = 32
-dimmed  = no
-lastBtn = sceneIdx = seq = 0
+scene     = [1,1,1, 1,1,1]
+levelShft = 5
+dimmed    = no
+lastBtn   = sceneIdx = seq = 0
 
 sceneIdxTO = null
 resetSceneIdx = ->
@@ -43,10 +43,10 @@ setLights = (scene, btn, dimmed, level) ->
       bulb:  bulbs[i]
       cmd:  'moveTo'
       val:
-        level: val * (if dimmed then level else 255)
+        level: val * (if dimmed then 1 << levelShft else 255)
         time: (if btn is 3 then 0 else 1)
         
-lastBulb        = 'deckBbq'
+lastBulb = 'deckBbq'
 deckPatioDimIdx = 5
 
 module.exports =
@@ -103,11 +103,11 @@ module.exports =
           dimmed = not dimmed
           scene
         when 5
-          level = Math.min 255, level*2
+          levelShft = Math.min 7, levelShft + 1
           dimmed = yes
           scene
         when 6
-          level = Math.max 0, level/2; scene
+          levelShft = Math.max 1, levelShft - 1
           dimmed = yes
           scene
         else scene
