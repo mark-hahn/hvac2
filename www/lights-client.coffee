@@ -46,8 +46,19 @@ page.onmousemove = (e) ->
 page.onmouseup    = -> mouseDraggingBulb = null; lastLevel = null
 page.onmouseleave = -> mouseDraggingBulb = null; lastLevel = null
 
-TO = null
+dimTO = null
+dimBtn = document.querySelector '.dimBtn'
+dimBtn.onclick = -> 
+  sendLightCmd 'patio', 'dim', {}
+  if dimTO then return
+  dimBtn.classList.add 'invis'
+  dimTO = setTimeout ->
+    if dimTO then clearTimeout dimTO
+    dimTO = null
+    dimBtn.classList.remove 'invis'
+  , 100
 
+TO = null
 for ele, idx in document.querySelectorAll '.light'
   bulb = bulbs[idx]
   

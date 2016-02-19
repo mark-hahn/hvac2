@@ -32,13 +32,7 @@ insteonIdsByName =
   dimmerMaster:         '24e363'
   deckBbq:              '2b4f44'
   deckTable:            '29814c'
-  patio:                '3d4128'
-  # lftFrontBulb:         '2c5134'
-  # midFrontBulb:         '29802b'
-  # rgtFrontBulb:         '2b4f44'
-  # lftRearBulb:          '2982c1'
-  # midRearBulb:          '298cda'
-  # rgtRearBulb:          '29814c'
+  patio:                '3e11a8'
 
 insteonNamesById = {}
 for name, id of insteonIdsByName
@@ -92,7 +86,8 @@ lastCmdHash = null
 lastTime = emitSeq = 0
 
 recvCommand = (cmd) ->
-  # log 'recvCommand', cmd
+  # if cmd.standard?.command1 isnt '62'
+    # log 'recvCommand', cmd
   now = Date.now()
   if cmd.standard?.type isnt '50' then return
   {id, gatewayId:gw, command1:cmd1, command2:cmd2} = cmd.standard
@@ -142,15 +137,19 @@ module.exports =
     
     $.react 'light_cmd', ->
       {bulb, cmd, val} = $.light_cmd
-      if bulb not in ['deckBbq', 'deckTable', 'patio'] or cmd isnt 'moveTo'
+      if bulb not in ['deckBbq', 'deckTable', 'patio'] or cmd not in ['moveTo', 'dim']
         return
       {level, time} = val
       light = plm.light insteonIdsByName[bulb]
+      if cmd is 'dim'
+        # log 'dim light:', bulb, light.id
+        light.brighten()
+        return
       level = Math.round level * 100 / 255
-      log 'send light:', bulb, level, light.id
+      # log 'send light:', bulb, level, light.id
       switch level
         when 0   then light.turnOff()
         when 100 then light.turnOn()
-        else          light.turnOn level,'fast'
+        else          light.turnOn level
       
   

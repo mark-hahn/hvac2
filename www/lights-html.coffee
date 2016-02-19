@@ -121,6 +121,21 @@ allStyles = '
   .invis {
     visibility: hidden;
   }
+  .dimBtn {
+    width: 25%;
+    height: 50%;
+    margin: 1%;
+    border: 1px solid red;
+    text-align: center;
+    position: absolute;
+    left: 64%;
+    top: 20%;
+    font-size: 1rem;
+    font-weight: bold;
+    padding-top: 4%;
+    background-color: #aaa;
+    border-radius: 10%;
+  }
 ' 
 
 light = component (bulb) ->
@@ -159,5 +174,6 @@ module.exports = ->
           div '.patio', ->
             div '.rowTitle', 'Patio'
             light '.lights'
+            div '.dimBtn', 'Dim ^'
 
         script src: 'js/lights-client.js'
