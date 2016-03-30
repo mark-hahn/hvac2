@@ -98,27 +98,40 @@ module.exports =
       $.ws_tstat_data tstatByRoom.tvRoom
       for conn in connections
         conn.connection.write tstatByRoom.tvRoom
-        
 
 srvr = http.createServer (req, res) ->
-  # if req.url isnt '/favicon.ico'
-    # log 'req:', req.url
+  log 'req:', req.url
+  if req.url.length > 1 and req.url[-1..-1] is '/'  
+    req.url = req.url[0..-2]
+  req.url = switch req.url[0..4]
+    when '/hvac' then page = 'hvac';   req.url[5...] or '/'
+    when '/ceil' then page = 'ceil';   req.url[5...] or '/'
+    when '/ligh' then page = 'lights'; req.url[7...] or '/'
+    when '/scro' then req.url
+    else ''
+  if not req.url
+    log req.url, 'not found, page:', page
+    res.writeHead 404, "Content-Type": "text/plain"
+    res.end req.url + ' not found, page:' + page
+    return
+  log 'processed req:', page, req.url
   
   if req.url is '/'
     res.writeHead 200, "Content-Type": "text/html"
-    res.end html
+    res.end switch page
+      when 'hvac'   then html
+      when 'ceil'   then ceilHtml
+      when 'lights' then lightsHtml
+      else ''
     return
     
-  if req.url[0..6] is '/lights'
-    res.writeHead 200, "Content-Type": "text/html"
-    if req.url[0..11] is '/lights/ajax'
-      light_cmd = JSON.parse url.parse(req.url, yes).query.json
-      light_cmd.__ = seq++
-      # log light_cmd
-      $.light_cmd light_cmd
-      res.end()
-    else
-      res.end lightsHtml
+  if page is 'lights' and req.url[0..4] is '/ajax'
+    # res.writeHead 200, "Content-Type": "text/html"
+    light_cmd = JSON.parse url.parse(req.url, yes).query.json
+    light_cmd.__ = seq++
+    log light_cmd
+    $.light_cmd light_cmd
+    res.end()
     return
   
   if req.url is '/ceil'
@@ -147,13 +160,13 @@ srvr = http.createServer (req, res) ->
   req.addListener('end', ->
     fileServer.serve req, res, (err) ->
       if err and req.url[-4..-1] not in ['.map', '.ico']
-        log 'BAD URL:', req.url, err
+        log 'No file for:', req.url, err
   ).resume()
 
 srvr.listen port
 log 'Listening on port', port
 
-primus = new Primus srvr, iknowhttpsisbetter: yes
+primus = new Primus srvr, iknowhttpsisbetter: yes, pathname: 'hvac/primus'
 primus.save 'www/js/primus.js'
 
 primus.on 'connection', (connection) ->

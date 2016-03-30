@@ -2,7 +2,7 @@
 $      = require('imprea')()
 util   = require 'util'
 
-{log, logObj} = require('./log') '     '
+{log, logObj} = require('./log')
 
 dontShow = [
   'allXbeePackets'

@@ -1,7 +1,7 @@
 
 log = (args...) -> console.log 'WSOCK:', args...
 
-primus = Primus.connect '',
+primus = Primus.connect 'http://hahnca.com/hvca/',
   websockets: yes
   timeout: 10e3
   reconnect:

@@ -1,7 +1,7 @@
 
 util = require 'util'
 
-{render, doctype, html, head, title, meta, 
+{render, doctype, html, head, title, base, meta, 
  body, div, img, raw, text, script} = require 'teacup'
 
 module.exports = ->
@@ -10,6 +10,7 @@ module.exports = ->
     html style: 'box-sizing: border-box', ->
       head ->
         title 'thermostat'
+        base href:"http://hahnca.com/hvac/"
         # meta name: "viewport", \
         #      content: "width=device-width; height=device-height;
         #                initial-scale=1.0; maximum-scale=1.0; 

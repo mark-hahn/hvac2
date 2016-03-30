@@ -1,7 +1,7 @@
 
 util = require 'util'
 
-{render, doctype, html, head, title, body, component, \
+{render, doctype, html, head, title, base, body, component, \
  div, script, style, text, hr} = require 'teacup'
 
 noNet = 'noNet = false'
@@ -149,6 +149,7 @@ module.exports = ->
     html ->
       head ->
         title 'lights'
+        base href:"http://hahnca.com/lights/"
         style  allStyles
         script noNet
       body ->

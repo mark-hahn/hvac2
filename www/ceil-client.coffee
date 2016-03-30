@@ -18,12 +18,12 @@ $ ->
     else wsockSend type: 'reqAll'
       
   window.bumpTemp = (dir) -> 
-    wsockSend
+    window.wsockSend?(
       type:     'setStatVar'
       room:     'master'
       variable: 'setpoint'
       setData:   dir
-    
+    )  
   lastTime = ''
   setInterval ->
     if (time = moment().format 'h:mm') isnt lastTime

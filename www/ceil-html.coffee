@@ -1,7 +1,7 @@
 
 util = require 'util'
 
-{render, doctype, html, head, title, body, div, script} = require 'teacup'
+{render, doctype, html, head, title, base, body, div, script} = require 'teacup'
 
 module.exports = ->
   render ->
@@ -9,6 +9,7 @@ module.exports = ->
     html ->
       head ->
         title 'ceil'
+        base href:"http://hahnca.com/ceil/"
       body style:'background-color:black; color:white;
                   font-size:320px; 
                   font-family:tahoma', ->

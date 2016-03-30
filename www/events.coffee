@@ -75,5 +75,5 @@ else if typeof document.webkitHidden isnt "undefined"
 if visibilityChange
   $(document).on visibilityChange, (e) ->
     if not document[hidden] 
-      wsockSend type: 'reqAll'
+      window.wsockSend? type: 'reqAll'
       

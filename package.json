@@ -23,15 +23,16 @@
     "nano": "^6.1.5",
     "node-static": "^0.7.7",
     "plotter": "^0.5.0",
-    "primus": "^3.2.2",
+    "primus": "^5.0.1",
     "request": "^2.69.0",
     "rimraf": "^2.4.3",
     "serialport": "^1.7.4",
     "sprintf-js": "^1.0.3",
     "sprintf.js": "^0.1.4",
-    "sqlite3": "^3.0.10",
+    "sqlite3": "^3.1.2",
     "teacup": "^2.0.0",
     "underscore": "^1.8.3",
-    "ws": "^0.8.0"
+    "websockets": "^0.2.0",
+    "ws": "^0.8.1"
   }
 }
