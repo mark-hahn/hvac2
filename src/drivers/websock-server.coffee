@@ -100,7 +100,7 @@ module.exports =
         conn.connection.write tstatByRoom.tvRoom
 
 srvr = http.createServer (req, res) ->
-  log 'req:', req.url
+  # log 'req:', req.url
   if req.url.length > 1 and req.url[-1..-1] is '/'  
     req.url = req.url[0..-2]
   req.url = switch req.url[0..4]
@@ -114,7 +114,6 @@ srvr = http.createServer (req, res) ->
     res.writeHead 404, "Content-Type": "text/plain"
     res.end req.url + ' not found, page:' + page
     return
-  log 'processed req:', page, req.url
   
   if req.url is '/'
     res.writeHead 200, "Content-Type": "text/html"
@@ -129,7 +128,7 @@ srvr = http.createServer (req, res) ->
     # res.writeHead 200, "Content-Type": "text/html"
     light_cmd = JSON.parse url.parse(req.url, yes).query.json
     light_cmd.__ = seq++
-    log light_cmd
+    # log light_cmd
     $.light_cmd light_cmd
     res.end()
     return

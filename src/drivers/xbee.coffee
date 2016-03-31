@@ -12,21 +12,21 @@ $.output 'allXbeePackets'
 
 addrForRoom = 
 # server:  0x0013a20040c33695  # 0000
-  tvRoom : '0013a20040b3a954'  # b229 (4)
-  kitchen: '0013a20040b3a592'  # b3fb (5)
-  master:  '0013a20040b3a903'  # 3f17 ()
-  guest:   '0013a20040baffad'  # 16e9 (1)
-  closet:  '0013a20040bd2529'  # 6bef (2)
+  tvRoom : '0013a20040b3a954'  # b229 
+  kitchen: '0013a20040b3a592'  # b3fb 
+  master:  '0013a20040b3a903'  # 3f17 
+  guest:   '0013a20040baffad'  # 16e9 
+  closet:  '0013a20040bd2529'  # 6bef 
 
 addrsForBulb = 
-  frontLeft:   ['7ce5240000116393', 0x31bd]
-  frontMiddle: ['7ce524000013c315', 0x32c0]
-  frontRight:  ['7ce5240000116ccc', 0x823d]
-  backLeft:    ['7ce52400001465bd', 0x096d]
-  backMiddle:  ['7ce5240000124e6f', 0xfcba]
-  backRight:   ['7ce524000013c38c', 0xda60]
+  frontLeft:   ['7ce5240000116393', 0x83c8] # net addr changed !!!
+  frontMiddle: ['7ce524000013c315', 0x32c0] 
+  frontRight:  ['7ce5240000116ccc', 0x823d] 
+  backLeft:    ['7ce52400001465bd', 0x096d] 
+  backMiddle:  ['7ce5240000124e6f', 0xfcba] 
+  backRight:   ['7ce524000013c38c', 0xda60] 
 
-ofs = 6
+ofs = 0
 
 tvBulbs = [
   'frontLeft'
@@ -500,17 +500,13 @@ lightCtrl = (dstAddr, netAddr, cmd, val) ->
 initLights = ->
   $.react 'light_cmd', ->
     {bulb, cmd, val} = $.light_cmd
-    if bulb not in tvBulbs and bulb isnt 'tvall' then return
     if bulb is 'tvall'
       for bulb in tvBulbs
         addrs = addrsForBulb[bulb]
         lightCtrl addrs[0], addrs[1], cmd, val
       return
-    addrs = addrsForBulb[bulb]
-    if not addrs
-      log 'no addrs', $.light_cmd
-      return
-    lightCtrl addrs[0], addrs[1], cmd, val
+    if (addrs = addrsForBulb[bulb])
+      lightCtrl addrs[0], addrs[1], cmd, val
     
     
 ################# TESTING #################
@@ -548,7 +544,8 @@ hwv = ->    # example: read hardware version attr
     zclPayload:  num2arrLE(3, 2) # attr ids,         3 -> hw vers
 
 setTimeout ->
-  # lqi '0013a20040b3a903', ofs
-  activeEnds 0x4f19
+  lqi '7ce5240000116393', ofs
+  # activeEnds 0x31bd
+  # netDiscovery()
 , 2000
 
