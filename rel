@@ -1,17 +1,17 @@
 #   -*-  grammar-ext: sh  -*-
 
-if [ $LOCATION != "server" ]; then 
+if [ $LOCATION != "server" ]; then
   echo "rel can only run on the server"
   exit
 fi
 
-if [ $(pwd) != "/root/apps/hvac" ]; then 
+if [ $(pwd) != "/root/apps/hvac" ]; then
   echo "rel can only run in /root/apps/hvac"
   exit
 fi
 
 echo "killing all hvac apps"
-kill $(pgrep -f "hvac") 2> /dev/null  
+kill $(pgrep -f "hvac") 2> /dev/null
 
 echo "Releasing hvac2 -> hvac"
 cd /root/apps/hvac

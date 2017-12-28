@@ -11,9 +11,9 @@ bulbs = [
   'frontLeft'
   'frontMiddle'
   'frontRight'
-  'backLeft' 
+  'backLeft'
   'backMiddle'
-  'backRight' 
+  'backRight'
   'deckBbq'
   'deckTable'
   'patio'
@@ -34,23 +34,30 @@ sceneIdxTO = null
 resetSceneIdx = ->
   if sceneIdxTO then clearTimeout sceneIdxTO
   sceneIdxTO = null
-  lastBtn = sceneIdx = 0 
+  lastBtn = sceneIdx = 0
+
+curLights = resendLights = null
 
 setLights = (scene, btn, dimmed, level) ->
-  for val, i in scene
-    $.light_cmd 
+  curLights = {scene, btn, dimmed, level}
+  resendLights()
+
+resendLights = () =>
+  for val, i in curLights.scene
+    $.light_cmd
       __:    seq++
       bulb:  bulbs[i]
       cmd:  'moveTo'
       val:
-        level: val * (if dimmed then 1 << levelShft else 255)
-        time: (if btn is 3 then 0 else 1)
-        
+        level: val * (if curLights.dimmed then 1 << levelShft else 255)
+        time: (if curLights.btn is 3 then 0 else 1)
+    setTimeout resendLights, 2000
+
 lastBulb = 'deckBbq'
 deckPatioDimIdx = 5
 
 module.exports =
-  init: -> 
+  init: ->
     $.react 'inst_remote', ->
       {remote, btn, action} = $.inst_remote
       if remote is 'lightsRemote3'
@@ -67,7 +74,7 @@ module.exports =
           deckPatioDimIdx = Math.max 0, Math.min 8, deckPatioDimIdx
           deckPatioLevel  = (1 << deckPatioDimIdx) - 1
           # log 'inst_remote last', {lastBulb, deckPatioDimIdx, deckPatioLevel}
-          $.light_cmd 
+          $.light_cmd
             __:    seq++
             bulb:  lastBulb
             cmd:  'moveTo'
@@ -76,19 +83,19 @@ module.exports =
           lastBulb = bulb
           deckPatioDimIdx = 5
           # log 'inst_remote', {bulb, level}
-          $.light_cmd 
+          $.light_cmd
             __:    seq++
             bulb:  bulb
             cmd:  'moveTo'
             val: level: level
         return
-        
+
       if remote not in [
-        'lightsRemote1', 'lightsRemote2' 
+        'lightsRemote1', 'lightsRemote2'
         'dimmerTvFrontDoor', 'dimmerTvHallDoor'] then return
       if btn > 6 then return
       scene = switch btn
-        when 1 
+        when 1
           dimmed = no
           [1,1,1, 1,1,1]
         when 2
@@ -112,10 +119,9 @@ module.exports =
           scene
         else scene
       lastBtn = btn
-      
+
       setLights scene, btn, dimmed, level
       if btn is 2
         setTimeout ->
           setLights scene, btn, dimmed, level
         , 1000
-

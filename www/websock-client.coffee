@@ -1,5 +1,5 @@
 
-log = (args...) -> console.log 'WSOCK:', args...
+log = (args) -> console.log 'WSOCK:', args
 
 primus = Primus.connect 'http://hahnca.com/hvca/',
   websockets: yes
@@ -11,7 +11,7 @@ primus = Primus.connect 'http://hahnca.com/hvca/',
 
 primus.on 'open', ->
   log 'connected'
-  
+
   primus.write type: 'reqAll'
 
   primus.on 'data', (data) ->
@@ -20,7 +20,7 @@ primus.on 'open', ->
       wsockRecv data
     if window.ceilWsRecv and data.type is 'ceil'
       ceilWsRecv data
-  
+
   primus.on 'error', (err) ->
     log 'ERROR:', err
 

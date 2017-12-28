@@ -3,28 +3,28 @@
 
 {noNet} = require './global'
 if noNet then return
-  
+
 $ = require('imprea')()
-SerialPort = require('serialport').SerialPort
+SerialPort = require 'serialport'
 emitSrc = new (require('events').EventEmitter)
 
 $.output 'allXbeePackets'
 
-addrForRoom = 
+addrForRoom =
 # server:  0x0013a20040c33695  # 0000
-  tvRoom : '0013a20040b3a954'  # b229 
-  kitchen: '0013a20040b3a592'  # b3fb 
-  master:  '0013a20040b3a903'  # 3f17 
-  guest:   '0013a20040baffad'  # 16e9 
-  closet:  '0013a20040bd2529'  # 6bef 
+  tvRoom : '0013a20040b3a954'  # b229
+  kitchen: '0013a20040b3a592'  # b3fb
+  master:  '0013a20040b3a903'  # 3f17
+  guest:   '0013a20040baffad'  # 16e9
+  closet:  '0013a20040bd2529'  # 6bef
 
-addrsForBulb = 
+addrsForBulb =
   frontLeft:   ['7ce5240000116393', 0x83c8] # net addr changed !!!
-  frontMiddle: ['7ce524000013c315', 0x32c0] 
-  frontRight:  ['7ce5240000116ccc', 0x823d] 
-  backLeft:    ['7ce52400001465bd', 0x096d] 
-  backMiddle:  ['7ce5240000124e6f', 0xfcba] 
-  backRight:   ['7ce524000013c38c', 0xda60] 
+  frontMiddle: ['7ce524000013c315', 0x32c0]
+  frontRight:  ['7ce5240000116ccc', 0x823d]
+  backLeft:    ['7ce52400001465bd', 0x096d]
+  backMiddle:  ['7ce5240000124e6f', 0xfcba]
+  backRight:   ['7ce524000013c38c', 0xda60]
 
 ofs = 0
 
@@ -32,16 +32,16 @@ tvBulbs = [
   'frontLeft'
   'frontMiddle'
   'frontRight'
-  'backLeft' 
+  'backLeft'
   'backMiddle'
-  'backRight' 
+  'backRight'
 ]
 
 module.exports =
-  init: -> 
+  init: ->
     emitSrc.on 'ioData', (srcAddr, ioData) ->
       $.allXbeePackets {srcAddr, ioData}
-  
+
     for room, addr of addrForRoom then do (room, addr) ->
       name = 'xbeePacket_' + room
       $.output name
@@ -50,15 +50,16 @@ module.exports =
           $[name] ioData
 
     initLights()
-    
-SerialPort = require('serialport').SerialPort
-  
+
+SerialPort = require 'serialport'
+
 xbeeSerialPort = new SerialPort '/dev/xbee',
-  baudrate: 9600,
+  baudRate: 9600,
   databits: 8,
   stopbits: 1,
-  parity: 0,
-  flowcontrol: 0,
+  parity: 'none',
+  flowcontrol: 'none',
+console.log 'created xbee port'
 
 ################## DATA utils ######################
 
@@ -76,14 +77,14 @@ arr2num = (arr, start=0, end=arr.length) ->
     num *= 256
     num += arr[i]
   num
-    
+
 num2arr = (dec, len) ->
   arr = []
   for i in [1..len]
     arr.unshift (dec & 0xFF)
     dec >>>= 8
   arr
-  
+
 num2arrLE = (dec, len) ->
   arr = []
   for i in [1..len]
@@ -98,7 +99,7 @@ arr2hex = (arr, start=0, end=arr.length) ->
     hexByte = (if hexByteVal.length < 2 then '0' else '') + hexByteVal
     hex += hexByte
   hex
-  
+
 arr2hexLE = (arr, start=0, end=arr.length) ->
   hex = ''
   for idx in [start...end]
@@ -106,7 +107,7 @@ arr2hexLE = (arr, start=0, end=arr.length) ->
     hexByte = (if hexByteVal.length < 2 then '0' else '') + hexByteVal
     hex = hexByte + hex
   hex
-  
+
 hex2arr = (hex, len) ->
   while hex.length < len * 2 then hex = '0' + hex
   arr = []
@@ -131,7 +132,7 @@ recvIO = (srcAddr, frame) ->
   digitalMaskStr = digitalMask.toString 16
   analogMask     = frame[2]
   analogMaskStr  = analogMask.toString 16
-  if digitalMask > 0 
+  if digitalMask > 0
     digitalData = frame[3] * 256 + frame[4]
     analogOfs = 5
   else
@@ -144,9 +145,9 @@ recvIO = (srcAddr, frame) ->
   ioData = {digitalMask: digitalMaskStr, analogMask: analogMaskStr, \
             digitalData: digitalDataStr, analogData}
   # log 'IO-data', ioData
-  emitSrc.emit 'ioData', srcAddr, ioData 
-  
-  
+  emitSrc.emit 'ioData', srcAddr, ioData
+
+
 ################ RECEIVE frame ################
 statusByCode = (code) ->
   ['OK', 'Error', 'Invalid Command',
@@ -154,7 +155,7 @@ statusByCode = (code) ->
 newFrame = (frame) ->
   # log 'newFrame\n', dumpArrAsHex frame
   # return
-  
+
   switch frame[3] # type
     when 0x88  # AT Command ResponseFrame
       frameId = frame[4]
@@ -169,12 +170,12 @@ newFrame = (frame) ->
       cmdData = (if frameId is 0 then [] else frame.slice 8, -1)
       log 'AT-rx', {frameId, ATcmd, status, \
                     netAddr: netAddrStr, srcAddr}, '\n', dumpArrAsHex cmdData
-                   
+
     when 0x8B  # Transmit Status
       frameId    = frame[4]
       dstAddr    = frame[5] * 256 + frame[6]
       dstAddrStr = dstAddr.toString 16
-      retries    = frame[7] 
+      retries    = frame[7]
       deliveryStatus    = frame[8]
       deliveryStatusStr = switch deliveryStatus
         when 0x00 then 'Success'
@@ -239,7 +240,7 @@ newFrame = (frame) ->
         when 0x0092
           # log 'EX-rx-io', rxFields
           # if srcAddr is '0013a20040baffad'
-          #   log 'EX-rx-io', srcAddr + ', ' + netAddr + ', ' + profileIdStr + ', ' + 
+          #   log 'EX-rx-io', srcAddr + ', ' + netAddr + ', ' + profileIdStr + ', ' +
           #                   srcEndpointStr + ', ' + dstEndpointStr + ', ' + rxOptionsStr
           recvIO srcAddr, rxData
         when 0x8031
@@ -261,7 +262,7 @@ newFrame = (frame) ->
             log 'LQI(' + (startIdx + i) + ')', {extPan, extAddr, netAddr, bits, depth, LQI}
         # else
           # log 'EX-rx other', rxFields, dumpArrAsHex rxData
-      
+
     when 0x92  #  IO Data Sample Rx
       srcAddr = arr2hex frame, 4, 12
       netAddr = frame[12] * 256 + frame[13]
@@ -272,11 +273,11 @@ newFrame = (frame) ->
       # numSamples = frame[15] --> always 1
       # log 'IO-rx', {netAddr: netAddrStr, srcAddr, rxOptions}
       recvIO srcAddr, frame[16...]
-                                              
+
     else
       log 'unknown frame type\n', dumpArrAsHex frame
-  
-  
+
+
 ################ BUILD recv frame ################
 
 frameBuf = frameLen = discardByte = null
@@ -290,13 +291,13 @@ newBytes = (buf) ->
     if not frameBuf
       do chkDiscard = ->
         # if discardCount and byte isnt discardByte
-          # log '>>> discarded byte', dumpArrAsHex([discardByte]) + 
+          # log '>>> discarded byte', dumpArrAsHex([discardByte]) +
               # (if discardCount > 1 then ' (' + discardCount + ')' else '')
           # discardCount = 0
       if byte is 0x7E
         chkDiscard()
         frameBuf = [0x7E]
-      else 
+      else
         discardCount++
         discardByte = byte
       continue
@@ -336,23 +337,24 @@ xbeeSerialPort.on 'open', ->
 globalSeq = 0
 
 send = (frame, cb) ->
+  log 'send frame'
   # log 'send frame', frame.length, '\n', dumpArrAsHex frame
   # return
-  
+
   buf = new Buffer frame
-  if not xbeeSerialPort.isOpen()
-    log 'attempted write while closed', buf.toString()
-    cb? 'attempted write while closed'
-    return
-  xbeeSerialPort.write buf, (err, writeLen) ->
+  # if not xbeeSerialPort.isOpen()
+  #   log 'attempted write while closed', buf.toString()
+  #   cb? 'attempted write while closed'
+  #   return
+  xbeeSerialPort.write buf, (err) ->
     if err
       log 'write err', {buf, err}
       cb? err
       return
-    if writeLen isnt buf.length
-      log 'write length wrong', {buf, writeLen}
-      cb? 'write length wrong'
-      return
+    # if writeLen isnt buf.length
+    #   log 'write length wrong', {buf, writeLen}
+    #   cb? 'write length wrong'
+    #   return
     xbeeSerialPort.flush (err) ->
       if err
         log 'flush err', {buf, err}
@@ -364,8 +366,8 @@ send = (frame, cb) ->
           cb? err
           return
         cb?()
-    
-        
+
+
 ################ BUILD send frame ################
 
 write = (data, cb) ->
@@ -382,8 +384,8 @@ write = (data, cb) ->
       frame.push byte
   frame.push 0xFF - (cksum & 0xFF)
   send frame, cb
-  
-  
+
+
 ################# AT commands  ################
 
 # talk to local module
@@ -419,7 +421,7 @@ explicit = (opts, cb) ->
     for idx in [0...payloadStr.length]
       payload.push payloadStr.charCodeAt idx
   # log 'explicit send', {
-  #   globalSeq, dstAddr, 
+  #   globalSeq, dstAddr,
   #   netAddr:     netAddr    .toString(16)
   #   srcEndpoint: srcEndpoint.toString(16)
   #   dstEndpoint: dstEndpoint.toString(16)
@@ -428,9 +430,9 @@ explicit = (opts, cb) ->
   #   bdcstRadius, xOptions, payload: dumpArrAsHex payload
   # }
   writeData = [0x11, globalSeq]
-    .concat hex2arr(dstAddr,8), num2arr(netAddr,2),  
-            srcEndpoint, dstEndpoint, 
-            num2arr(clusterId,2), num2arr(profileId,2), 
+    .concat hex2arr(dstAddr,8), num2arr(netAddr,2),
+            srcEndpoint, dstEndpoint,
+            num2arr(clusterId,2), num2arr(profileId,2),
             bdcstRadius, xOptions, payload
   write writeData, cb
   cb? globalSeq
@@ -455,19 +457,20 @@ zcl = (opts, cb) ->  # pg 175
 
 ################# LIGHT COMMANDS #################
 ###
-   zcl book 
+   zcl book
      scenes cluster 3.7  pg 141
      on/off cluster 3.8  pg 155
      level cluster  3.10 pg 160
 ###
 
 lightCtrl = (dstAddr, netAddr, cmd, val) ->
+  log {dstAddr, netAddr, cmd, val}
   clusterId  = 8 # level
   time       = num2arrLE (val.time ? 1), 2
   upDown     = (if val.upDown is 'up' then 0 else 1)
   zclPayload = []
   switch cmd
-    when 'onOff' 
+    when 'onOff'
       clusterId = 6  # onOff
       zclCmdId = switch val.action
         when 'off'    then 0
@@ -485,7 +488,7 @@ lightCtrl = (dstAddr, netAddr, cmd, val) ->
     when 'stop'
       zclCmdId = 3
   if val.noOnOff then zclCmdId -= 4
-    
+
   dstEndpoint = switch dstAddr[0..7]
     when '0013a200' then 0x0a  # xbee
     when 'e20db9ff' then 0x0a  # cree
@@ -507,8 +510,8 @@ initLights = ->
       return
     if (addrs = addrsForBulb[bulb])
       lightCtrl addrs[0], addrs[1], cmd, val
-    
-    
+
+
 ################# TESTING #################
 
 netDiscovery = (cb) ->     # pg 98, 203
@@ -516,7 +519,7 @@ netDiscovery = (cb) ->     # pg 98, 203
   ATcmd 'ND', -> log '\n\n--- net discovery end\n'
 
 lqi = (addr, ofs) ->  # pg 99
-  zdo                        
+  zdo
     clusterId: 0x0031
     dstAddr:   addr
     payload:   [ofs]
@@ -527,17 +530,17 @@ activeEnds = (netAddr) -> # example: active endpoints
     payload:   num2arrLE netAddr, 2
 
 nar = (dstAddr) -> # example: net addr req
-  zdo 
-    clusterId: 0 
+  zdo
+    clusterId: 0
     payload:  hex2arrLE(dstAddr, 8).concat [0,0]
-    
+
 hwv = ->    # example: read hardware version attr
   zcl
     dstAddr:    'e20db9fffe0232bd'  # cree
     netAddr:     0xbd7a             # cree
-    srcEndpoint: 0xe8 
+    srcEndpoint: 0xe8
     dstEndpoint: 0x0a
-    clusterId:   0       #                           0 -> basic 
+    clusterId:   0       #                           0 -> basic
     profileId:   0x0104  #                         104 -> HA
     zclFrameCtl: 0       # bit field
     zclCmdId:    0       # zcl command               0 -> read attrs
@@ -548,4 +551,3 @@ setTimeout ->
   # activeEnds 0x31bd
   # netDiscovery()
 , 2000
-
