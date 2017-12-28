@@ -36,7 +36,7 @@ resetSceneIdx = ->
   sceneIdxTO = null
   lastBtn = sceneIdx = 0
 
-curLights = resendLights = null
+curLights = resendLights = lightsTo = null
 
 setLights = (scene, btn, dimmed, level) ->
   curLights = {scene, btn, dimmed, level}
@@ -51,7 +51,8 @@ resendLights = () =>
       val:
         level: val * (if curLights.dimmed then 1 << levelShft else 255)
         time: (if curLights.btn is 3 then 0 else 1)
-    setTimeout resendLights, 2000
+  if lightsTo then clearTimeout lightsTo
+  lightsTo = setTimeout resendLights, 2000
 
 lastBulb = 'deckBbq'
 deckPatioDimIdx = 5
