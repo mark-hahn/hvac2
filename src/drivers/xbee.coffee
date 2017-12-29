@@ -337,6 +337,7 @@ xbeeSerialPort.on 'open', ->
 globalSeq = 0
 
 send = (frame, cb) ->
+  # log 'send frame'
   # log 'send frame', frame.length, '\n', dumpArrAsHex frame
   # return
 
@@ -463,6 +464,7 @@ zcl = (opts, cb) ->  # pg 175
 ###
 
 lightCtrl = (dstAddr, netAddr, cmd, val) ->
+  # log {dstAddr, netAddr, cmd, val}
   clusterId  = 8 # level
   time       = num2arrLE (val.time ? 1), 2
   upDown     = (if val.upDown is 'up' then 0 else 1)
@@ -500,6 +502,7 @@ lightCtrl = (dstAddr, netAddr, cmd, val) ->
 
 initLights = ->
   $.react 'light_cmd', ->
+    # log 'light_cmd'
     {bulb, cmd, val} = $.light_cmd
     if bulb is 'tvall'
       for bulb in tvBulbs

@@ -57,7 +57,7 @@ send = (isDamper, obj, cb) ->
       data += bit
   # data = '0' + data.toString(16).toUpperCase()  ???? WTF how did this ever work?
   try
-    # log 'sending', id, data
+    # log 'sending', id, data`
     plm.io(id).set data
   catch e
     log 'ioSet exception: bad request or no response', {id, data}, e
