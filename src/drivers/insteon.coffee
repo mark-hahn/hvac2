@@ -6,10 +6,10 @@
 {log, logObj} = require('./log') 'INSTE'
 
 disableHvacCtrl = no
-  
+
 {noNet} = require './global'
 if noNet then return
-  
+
 Insteon = require("hahn-controller").Insteon
 plm = new Insteon()
 
@@ -20,7 +20,7 @@ $.output 'inst_remote'
 serialDevice = '/dev/insteon'
 
 insteonIdsByName =
-  serverGateway:        '2413fd'
+  serverGateway:        '448728' # '2413fd'
   furnaceHvac:          '387efd'
   furnaceDampers:       '387b9e'
   lightsRemote1:        '270b8a'
@@ -59,7 +59,7 @@ send = (isDamper, obj, cb) ->
   try
     # log 'sending', id, data
     plm.io(id).set data
-  catch e  
+  catch e
     log 'ioSet exception: bad request or no response', {id, data}, e
     cb? e
   cb?()
@@ -100,14 +100,16 @@ recvCommand = (cmd) ->
   lastCmdHash = cmdHash
   lastTime = now
   action = switch cmd1
-    when '11' then 'click'   
+    when '11' then 'click'
     when '12' then 'dblClick'
-    when '13' then 'click'   
+    when '13' then 'click'
     when '14' then 'dblClick'
-    when '17' then 'down'    
-    when '18' then 'up'      
+    when '17' then 'down'
+    when '18' then 'up'
     else cmd
   name = insteonNamesById[id]
+  if not name then return
+
   btn = switch name[0..5]
     when 'lights' then +gw
     when 'dimmer'
@@ -118,23 +120,24 @@ recvCommand = (cmd) ->
         when '18'       then 0
   # log 'button', btn, action, 'on', name
   $.inst_remote {remote: name, btn, action, seq: ++emitSeq}
-  
+
 plm.serial serialDevice, ->
   log 'plm connected to ' + serialDevice
   plm.on 'recvCommand', recvCommand
 
+plm.on 'error', (err) -> log 'insteon port err', err
 
 ############# MODULE ##############
 
 module.exports =
-  init: -> 
+  init: ->
     $.react 'timing_dampers', ->
       sendWretry yes, @timing_dampers
     $.react 'timing_hvac', ->
       sendWretry no, @timing_hvac
     sendWretry no,  {extAir: off, fan: off,    heat: off, cool: off}
     sendWretry yes, {tvRoom: on,  kitchen: on, master:on, guest: on}
-    
+
     $.react 'light_cmd', ->
       {bulb, cmd, val} = $.light_cmd
       if bulb not in ['deckBbq', 'deckTable', 'patio'] or cmd not in ['moveTo', 'dim']
@@ -151,5 +154,3 @@ module.exports =
         when 0   then light.turnOff()
         when 100 then light.turnOn()
         else          light.turnOn level
-      
-  
