@@ -36,23 +36,15 @@ resetSceneIdx = ->
   sceneIdxTO = null
   lastBtn = sceneIdx = 0
 
-curLights = resendLights = lightsTo = null
-
 setLights = (scene, btn, dimmed, level) ->
-  curLights = {scene, btn, dimmed, level}
-  resendLights()
-
-resendLights = () =>
-  for val, i in curLights.scene
+  for val, i in scene
     $.light_cmd
       __:    seq++
       bulb:  bulbs[i]
       cmd:  'moveTo'
       val:
-        level: val * (if curLights.dimmed then 1 << levelShft else 255)
-        time: (if curLights.btn is 3 then 0 else 1)
-  if lightsTo then clearTimeout lightsTo
-  lightsTo = setTimeout resendLights, 2000
+        level: val * (if dimmed then 1 << levelShft else 255)
+        time: (if btn is 3 then 0 else 1)
 
 lastBulb = 'deckBbq'
 deckPatioDimIdx = 5
