@@ -19,12 +19,17 @@ addrForRoom =
   closet:  '0013a20040bd2529'  # 6bef
 
 addrsForBulb =
-  frontLeft:   ['7ce5240000116393', 0x83c8] # net addr changed !!!
-  frontMiddle: ['7ce524000013c315', 0x32c0]
-  frontRight:  ['7ce5240000116ccc', 0x823d]
-  backLeft:    ['7ce52400001465bd', 0x096d]
-  backMiddle:  ['7ce5240000124e6f', 0xfcba]
-  backRight:   ['7ce524000013c38c', 0xda60]
+  frontMiddle:   ['7ce5240000116393', 0x83c8] # net addr changed !!!
+  backLeft:      ['7ce52400001465bd', 0x096d]
+  backMiddle:    ['7ce5240000124e6f', 0xfcba]
+  backRight:     ['7ce5240000116ccc', 0x823d]
+
+  # frontLeft:   ['7ce5240000116393', 0x83c8] # net addr changed !!!
+  # frontMiddle: ['7ce524000013c315', 0x32c0]
+  # frontRight:  ['7ce5240000116ccc', 0x823d]
+  # backLeft:    ['7ce52400001465bd', 0x096d]
+  # backMiddle:  ['7ce5240000124e6f', 0xfcba]
+  # backRight:   ['7ce524000013c38c', 0xda60]
 
 ofs = 0
 
@@ -507,10 +512,12 @@ initLights = ->
     if bulb is 'tvall'
       for bulb in tvBulbs
         addrs = addrsForBulb[bulb]
-        lightCtrl addrs[0], addrs[1], cmd, val
+        if addrs
+          lightCtrl addrs[0], addrs[1], cmd, val
       return
     if (addrs = addrsForBulb[bulb])
-      lightCtrl addrs[0], addrs[1], cmd, val
+      if addrs
+        lightCtrl addrs[0], addrs[1], cmd, val
 
 
 ################# TESTING #################

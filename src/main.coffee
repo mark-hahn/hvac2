@@ -5,7 +5,8 @@ console.log ''
 {noNet} = require './global'
 
 modules = [
-  './xbee', 
+  './xbee',
+  './wifi',
   './wx-station'
   './temp'
   './websock-server'
@@ -19,9 +20,8 @@ modules = [
   './debug'
 ]
 
-for module in modules 
+for module in modules
   if noNet and module in ['./xbee', './timing']
     continue
   # log 'starting', module
   require(module).init?()
-  

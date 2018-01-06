@@ -14,7 +14,7 @@
   },
   "homepage": "https://github.com/mark-hahn/hvac2",
   "dependencies": {
-    "gnuplot": "^0.2.0",
+    "gnuplot": "^0.3.1",
     "hahn-controller": "^0.6.0",
     "imprea": "^1.0.0",
     "linebyline": "^1.1.0",
@@ -24,16 +24,17 @@
     "node-pre-gyp": "^0.6.39",
     "node-static": "^0.7.7",
     "plotter": "^0.5.0",
-    "primus": "^5.0.1",
+    "primus": "^7.1.0",
     "request": "^2.69.0",
     "rimraf": "^2.4.3",
-    "serialport": "^1.7.4",
+    "serialport": "^6.0.4",
     "sprintf-js": "^1.0.3",
     "sprintf.js": "^0.1.4",
     "sqlite3": "^3.1.13",
     "teacup": "^2.0.0",
+    "tplink-lightbulb": "^1.4.1",
     "underscore": "^1.8.3",
     "websockets": "^0.2.0",
-    "ws": "^0.8.1"
+    "ws": "^4.0.0"
   }
 }
