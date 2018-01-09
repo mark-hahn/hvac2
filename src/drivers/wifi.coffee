@@ -23,8 +23,8 @@ exports.init = ->
         if val.level == 0
           light.power(false).catch (e) => log e
         else
-          log ((val.level/255)*100).toFixed(0), brightness: ((val.level/255)*100).toFixed(0)
-          light.power brightness: ((val.level/255)*100).toFixed(0)
+          log val.level, brightness: Math.round((val.level/255)*100)
+          light.power on, 0, brightness: Math.round((val.level/255)*100)
               .then (response) => log response
               .catch (e) => log e
         return
