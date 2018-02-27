@@ -101,7 +101,7 @@ module.exports =
         conn.connection.write tstatByRoom.tvRoom
 
 srvr = http.createServer (req, res) ->
-  log 'req:', req.url
+  # log 'req:', req.url
 
   if req.method == 'POST' and req.url[0..4] == '/echo'
     body = ''
@@ -109,7 +109,7 @@ srvr = http.createServer (req, res) ->
       body += data
     req.on 'end', () =>
       alexaReq body, res
-    log "getting post data"
+    # log "getting post data"
     return
 
   if req.url.length > 1 and req.url[-1..-1] is '/'

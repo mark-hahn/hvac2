@@ -10,9 +10,7 @@ disableHvacCtrl = no
 {noNet} = require './global'
 if noNet then return
 
-log "1"
 Insteon = require("hahn-controller").Insteon
-log "2"
 
 plm = new Insteon()
 
@@ -143,7 +141,7 @@ module.exports =
 
     $.react 'light_cmd', ->
       {bulb, cmd, val} = $.light_cmd
-      log 'lights', {bulb, cmd, val}
+      # log 'lights', {bulb, cmd, val}
       if bulb not in ['deckBbq', 'deckTable', 'patio'] or
           cmd not in ['moveTo', 'dim']
         return

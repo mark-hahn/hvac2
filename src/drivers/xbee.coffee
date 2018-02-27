@@ -170,11 +170,11 @@ newFrame = (frame) ->
         netAddr = frame[8] * 256 + frame[9]
         netAddrStr = netAddr.toString 16
         srcAddr = arr2hex frame, 10, 18
-        log 'AT-rx-ND', {frameId, ATcmd, status, netAddr: netAddrStr, srcAddr}
+        # log 'AT-rx-ND', {frameId, ATcmd, status, netAddr: netAddrStr, srcAddr}
         return
       cmdData = (if frameId is 0 then [] else frame.slice 8, -1)
-      log 'AT-rx', {frameId, ATcmd, status, \
-                    netAddr: netAddrStr, srcAddr}, '\n', dumpArrAsHex cmdData
+      # log 'AT-rx', {frameId, ATcmd, status, \
+                    # netAddr: netAddrStr, srcAddr}, '\n', dumpArrAsHex cmdData
 
     when 0x8B  # Transmit Status
       frameId    = frame[4]
@@ -251,11 +251,11 @@ newFrame = (frame) ->
         when 0x8031
           startIdx   = rxData[2]
           numEntries = rxData[3]
-          log 'EX-rx-LQI', rxFields, {
-            status: statusByCode rxData[0]
-            totalEntryCount: rxData[1]
-            startIdx, numEntries
-          }
+          # log 'EX-rx-LQI', rxFields, {
+          #   status: statusByCode rxData[0]
+          #   totalEntryCount: rxData[1]
+          #   startIdx, numEntries
+          # }
           for i in [0...numEntries]
             entry = rxData[4+i*22...4+(i+1)*22]
             extPan  = arr2hexLE entry[0.. 7]
@@ -264,7 +264,7 @@ newFrame = (frame) ->
             bits    = arr2hexLE entry[18..19]
             depth   = entry[20]
             LQI     = entry[21]
-            log 'LQI(' + (startIdx + i) + ')', {extPan, extAddr, netAddr, bits, depth, LQI}
+            # log 'LQI(' + (startIdx + i) + ')', {extPan, extAddr, netAddr, bits, depth, LQI}
         # else
           # log 'EX-rx other', rxFields, dumpArrAsHex rxData
 
