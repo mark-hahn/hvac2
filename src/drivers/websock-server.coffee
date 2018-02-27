@@ -20,7 +20,7 @@ html        = require('../www/js/index-html')()
 lightsHtml  = require('../www/js/lights-html')()
 ceilHtml    = require('../www/js/ceil-html')()
 moment      = require 'moment'
-# alexaReq     = require('../js/echo').alexaReq
+alexaReq     = require('../js/echo').alexaReq
 fileServer  = new nodeStatic.Server 'www', cache: 0
 connections = []
 
@@ -103,18 +103,14 @@ module.exports =
 srvr = http.createServer (req, res) ->
   log 'req:', req.url
 
-  # if req.method == 'POST' and req.url[0..4] == '/echo'
-  #   body = ''
-  #   req.on 'data', (data) =>
-  #     body += data;
-  #     if body.length > 1e6
-  #         request.connection.destroy();
-  #   req.on 'end', () =>
-  #     alexaRes = alexaReq body
-  #     res.writeHead 200, "Content-Type": "text/json"
-  #     res.end alexaRes
-  #   log "getting post data"
-  #   return
+  if req.method == 'POST' and req.url[0..4] == '/echo'
+    body = ''
+    req.on 'data', (data) =>
+      body += data
+    req.on 'end', () =>
+      alexaReq body, res
+    log "getting post data"
+    return
 
   if req.url.length > 1 and req.url[-1..-1] is '/'
     req.url = req.url[0..-2]
