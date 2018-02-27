@@ -17,11 +17,12 @@ modules = [
   './lighting'
   './logging'
   './scroll'
+  # './echo'
   './debug'
 ]
 
 for module in modules
   if noNet and module in ['./xbee', './timing']
     continue
-  # log 'starting', module
+  log 'starting', module
   require(module).init?()

@@ -35,9 +35,7 @@ if $isdev; then
 fi
 
 #export DEBUG=*
-#if $isdev
-#  then node js/main.js hvac dev
- # else nohup node js/main.js hvac     >> ~/logs/$hvaclog 2>&1 &
-#fi
-
-nohup node js/main.js hvac >> ~/logs/$hvaclog 2>&1 &
+if $isdev
+  then node js/main.js hvac dev
+  else nohup node js/main.js hvac     >> ~/logs/$hvaclog 2>&1 &
+fi

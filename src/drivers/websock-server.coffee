@@ -20,6 +20,7 @@ html        = require('../www/js/index-html')()
 lightsHtml  = require('../www/js/lights-html')()
 ceilHtml    = require('../www/js/ceil-html')()
 moment      = require 'moment'
+# alexaReq     = require('../js/echo').alexaReq
 fileServer  = new nodeStatic.Server 'www', cache: 0
 connections = []
 
@@ -101,27 +102,35 @@ module.exports =
 
 srvr = http.createServer (req, res) ->
   log 'req:', req.url
+
+  # if req.method == 'POST' and req.url[0..4] == '/echo'
+  #   body = ''
+  #   req.on 'data', (data) =>
+  #     body += data;
+  #     if body.length > 1e6
+  #         request.connection.destroy();
+  #   req.on 'end', () =>
+  #     alexaRes = alexaReq body
+  #     res.writeHead 200, "Content-Type": "text/json"
+  #     res.end alexaRes
+  #   log "getting post data"
+  #   return
+
   if req.url.length > 1 and req.url[-1..-1] is '/'
     req.url = req.url[0..-2]
   req.url = switch req.url[0..4]
     when '/hvac' then page = 'hvac';   req.url[5...] or '/'
     when '/ceil' then page = 'ceil';   req.url[5...] or '/'
     when '/ligh' then page = 'lights'; req.url[7...] or '/'
-    when '/echo' then page = 'echo';   req.url[5...] or '/'
     when '/scro' then req.url
     else page = 'lights'; req.url[7...] or '/'  # ''
 
   if not req.url
     log req.url, 'not found, page:', page
     res.writeHead 404, "Content-Type": "text/plain"
+
     res.end req.url + ' not found, page:' + page
     return
-
-  if page is 'echo'
-      log 'echo: ' + req.url
-      res.writeHead 200, "Content-Type": "text/json"
-      res.end '{"hello":"world"}'
-      return
 
   if req.url is '/'
     res.writeHead 200, "Content-Type": "text/html"
