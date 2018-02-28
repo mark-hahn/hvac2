@@ -1,16 +1,17 @@
+{log, logObj} = require('./log') 'LIGHTS'
 
 request = require 'request'
 
 exports.alexaReq = (alexaApp) =>
-
-  bulbs =
-     all           : "tvall"
-    'front left'   : 'frontLeft'
-    'front middle' : 'frontMiddle'
-    'front right'  : 'frontRight'
-    'back left'    : 'backLeft'
-    'back middle'  : 'backMiddle'
+  bulbs = {
+     all           : 'tvall',
+    'front left'   : 'frontLeft',
+    'front middle' : 'frontMiddle',
+    'front right'  : 'frontRight',
+    'back left'    : 'backLeft',
+    'back middle'  : 'backMiddle',
     'back right'   : 'backRight'
+  }
 
   alexaApp.intent "tv_light",
       utterances: [
@@ -25,7 +26,7 @@ exports.alexaReq = (alexaApp) =>
         when 'off' then 0
         when 'dim' then 32
         when 'on'  then 255
-      # log {bulb,level}
+      # log bulbs, req.slot('light'), {bulb,level}
       url = "http://hahnca.com/lights/ajax?json=" +
               JSON.stringify {bulb, cmd:'moveTo', val:{level}}
       # log url
@@ -57,10 +58,10 @@ exports.alexaReq = (alexaApp) =>
           level = modeLevels.linda[i]
           url = "http://hahnca.com/lights/ajax?json=" +
                      JSON.stringify({bulb:bulb, cmd:'moveTo', val:{level}});
-          console.log url
+          # log url
           request url, (error, res2, body) =>
             if (error || res2.statusCode != 200)
-              console.log "intent tv_light_mode_linda error", res2.statusCode, error
+              log "intent tv_light_mode_linda error", res2.statusCode, error
               res.say "error " + res2.statusCode
               return
         res.say("ok");
@@ -73,10 +74,10 @@ exports.alexaReq = (alexaApp) =>
           level = modeLevels.mark[i]
           url = "http://hahnca.com/lights/ajax?json=" +
                      JSON.stringify({bulb:bulb, cmd:'moveTo', val:{level}});
-          console.log url
+          # log url
           request url, (error, res2, body) =>
             if (error || res2.statusCode != 200)
-              console.log "intent tv_light_mode_mark error", res2.statusCode, error
+              log "intent tv_light_mode_mark error", res2.statusCode, error
               res.say "error " + res2.statusCode
               return
         res.say("ok");
