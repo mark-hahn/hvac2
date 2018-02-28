@@ -146,6 +146,11 @@ srvr = http.createServer (req, res) ->
     res.end()
     return
 
+  if page is 'hvac' and req.url[0..4] is '/roomStats'
+    res.writeHead 200, "Content-Type": "text/json"
+    res.end JSON.stringify tstatByRoom
+    return
+
   if req.url is '/ceil'
     res.writeHead 200, "Content-Type": "text/html"
     res.end ceilHtml

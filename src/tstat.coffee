@@ -35,8 +35,8 @@ check = (name) ->
         else 0
       $['tstat_' + name] {mode, fan, delta}
     return
-        
-  if name in ['airIntake', 'outside'] 
+
+  if name in ['airIntake', 'outside']
     if temps.airIntake and temps.outside
       diff = temps.airIntake - temps.outside
       delta = switch
@@ -46,7 +46,7 @@ check = (name) ->
       # log 'diff', diff, temps.outside, temps.airIntake, delta
       $.tstat_extAirIn delta
     return
-    
+
   if name is 'acReturn'
     if temps.acReturn?
       delta = switch
@@ -55,28 +55,27 @@ check = (name) ->
         else 0
       $.tstat_freeze delta
     return
-    
+
 module.exports =
-  init: -> 
+  init: ->
     $.react 'ws_tstat_data', ->
       {type, room, mode, fan, setpoint} = @ws_tstat_data
       modes[room]     = mode
       fans[room]      = fan
       setpoints[room] = setpoint
       check room
-        
+
     names = rooms.concat 'airIntake', 'outside', 'acReturn'
-    
+
     for name in names then do (name) =>
       obsName = 'temp_' + name
       $.react obsName, ->
         temps[name] = $[obsName]
         check name
-        
+
       if name isnt 'airIntake'
         nameOut = switch name
-          when 'outside'  then 'extAirIn' 
+          when 'outside'  then 'extAirIn'
           when 'acReturn' then 'freeze'
           else name
         $.output 'tstat_' + nameOut
-

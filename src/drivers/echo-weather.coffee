@@ -54,7 +54,7 @@ exports.alexaReq = (alexaApp, getAppName) =>
     else
       "and there has been #{row.rain} inches of rain since #{row.firstRain}"
 
-    res.say "the roof temperature is #{row.outTemp} degrees, " +
+    res.say "the temperature is #{row.outTemp} degrees, " +
             "the humidity is #{row.outHumidity} percent, "   +
             "the wind is gusting at #{row.windGust} miles per hour, " + rainMsg
 
