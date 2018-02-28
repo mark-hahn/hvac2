@@ -1,63 +1,16 @@
 
-{log, logObj} = require('./log') 'TVLIGHTS'
 request = require 'request'
 
-bulbs =
-  'front left'   : 'frontLeft'
-  'front middle' : 'frontMiddle'
-  'front right'  : 'frontRight'
-  'back left'    : 'backLeft'
-  'back middle'  : 'backMiddle'
-  'back right'   : 'backRight'
+exports.alexaReq = (alexaApp) =>
 
-module.exports = (alexaApp) =>
-  alexaApp.intent("number", {
-      "slots": { "numberslot": "AMAZON.NUMBER" },
-      "utterances": ["say the number {-|numberslot}"]
-    }, (request, response) =>
-      # log request, response
-      number = request.slot "numberslot"
-      response.say "You asked for the number " + number
-    )
-
-  alexaApp.intent "tv_lights_all_on",
-      "utterances": ["all on"]
-    , (req, res) =>
-      url = "http://hahnca.com/lights/ajax?json=" +
-                 JSON.stringify {bulb:'tvall', cmd:'moveTo', val:{level:255}}
-      # log url
-      request url, (error, res2, body) =>
-        if error || res2.statusCode != 200
-          log "intent tv_lights_all_on error", res2.statusCode, error
-          res.say "error " + res2.statusCode
-          return;
-      res.say "ok"
-
-  alexaApp.intent "tv_lights_all_dim",
-      "utterances": ["all dim"]
-    , (req, res) =>
-      url = "http://hahnca.com/lights/ajax?json=" +
-                 JSON.stringify {bulb:'tvall', cmd:'moveTo', val:{level:32}}
-      # log url
-      request url, (error, res2, body) =>
-        if error || res2.statusCode != 200
-          log "intent tv_lights_all_dim error", res2.statusCode, error
-          res.say "error " + res2.statusCode
-          return;
-      res.say "ok"
-
-  alexaApp.intent "tv_lights_all_off",
-      "utterances": ["all off"]
-    , (req, res) =>
-      url = "http://hahnca.com/lights/ajax?json=" +
-                 JSON.stringify {bulb:'tvall', cmd:'moveTo', val:{level:0}}
-      # log url
-      request url, (error, res2, body) =>
-        if error || res2.statusCode != 200
-          log "intent tv_lights_all_off error", res2.statusCode, error
-          res.say "error " + res2.statusCode
-          return;
-      res.say "ok"
+  bulbs =
+     all           : "tvall"
+    'front left'   : 'frontLeft'
+    'front middle' : 'frontMiddle'
+    'front right'  : 'frontRight'
+    'back left'    : 'backLeft'
+    'back middle'  : 'backMiddle'
+    'back right'   : 'backRight'
 
   alexaApp.intent "tv_light",
       utterances: [
@@ -82,3 +35,48 @@ module.exports = (alexaApp) =>
           res.say "error " + res2.statusCode
           return;
       res.say "ok"
+
+  modeBulbs = [
+    'frontLeft',
+    'frontMiddle',
+    'frontRight',
+    'backLeft',
+    'backMiddle',
+    'backRight'
+  ]
+  modeLevels = {
+    linda: [0,0,0,255,0,255]
+    mark:  [255,0,255,0,0,255]
+  }
+
+  alexaApp.intent "tv_light_mode_linda",
+      utterances : ["mode linda"]
+    , (req, res) =>
+        for i in [0..6]
+          bulb = modeBulbs[i]
+          level = modeLevels.linda[i]
+          url = "http://hahnca.com/lights/ajax?json=" +
+                     JSON.stringify({bulb:bulb, cmd:'moveTo', val:{level}});
+          console.log url
+          request url, (error, res2, body) =>
+            if (error || res2.statusCode != 200)
+              console.log "intent tv_light_mode_linda error", res2.statusCode, error
+              res.say "error " + res2.statusCode
+              return
+        res.say("ok");
+
+  alexaApp.intent "tv_light_mode_mark",
+      utterances : ["mode mark"]
+    , (req, res) =>
+        for i in [0..6]
+          bulb = modeBulbs[i]
+          level = modeLevels.mark[i]
+          url = "http://hahnca.com/lights/ajax?json=" +
+                     JSON.stringify({bulb:bulb, cmd:'moveTo', val:{level}});
+          console.log url
+          request url, (error, res2, body) =>
+            if (error || res2.statusCode != 200)
+              console.log "intent tv_light_mode_mark error", res2.statusCode, error
+              res.say "error " + res2.statusCode
+              return
+        res.say("ok");
