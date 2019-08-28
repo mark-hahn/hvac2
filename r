@@ -1,10 +1,5 @@
 #   -*-  grammar-ext: sh  -*-
 
-if [ $LOCATION != "server" ]; then
-  echo "hvac can only run on the server"
-  exit
-fi
-
 if [ $(pwd) == "/root/dev/apps/hvac2" ]; then isdev=true; else isdev=false; fi
 
 if $isdev

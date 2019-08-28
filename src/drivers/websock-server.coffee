@@ -20,7 +20,10 @@ html        = require('../www/js/index-html')()
 lightsHtml  = require('../www/js/lights-html')()
 ceilHtml    = require('../www/js/ceil-html')()
 moment      = require 'moment'
-alexaReq     = require('../js/echo').alexaReq
+alexaReq    = require('../js/echo').alexaReq
+{Webhook}   = require('jovo-framework');
+bodyParser  = require('body-parser');
+jsonParser  = bodyParser.json();
 fileServer  = new nodeStatic.Server 'www', cache: 0
 connections = []
 
@@ -101,7 +104,7 @@ module.exports =
         conn.connection.write tstatByRoom.tvRoom
 
 srvr = http.createServer (req, res) ->
-  # log 'req:', req.url
+  log 'req:', req.url
 
   if req.method == 'POST' and req.url[0..4] == '/echo'
     body = ''
@@ -112,6 +115,15 @@ srvr = http.createServer (req, res) ->
     # log "getting post data"
     return
 
+  # if req.method == 'POST' and req.url[0..4] == '/echo'
+  #   body = ''
+  #   req.on 'data', (data) =>
+  #     body += data
+  #   req.on 'end', () =>
+  #     alexaReq body, res
+  #   # log "getting post data"
+  #   return
+
   if req.url.length > 1 and req.url[-1..-1] is '/'
     req.url = req.url[0..-2]
   req.url = switch req.url[0..4]
@@ -120,6 +132,8 @@ srvr = http.createServer (req, res) ->
     when '/ligh' then page = 'lights'; req.url[7...] or '/'
     when '/scro' then req.url
     else page = 'lights'; req.url[7...] or '/'  # ''
+
+  log {page, req: req.url}
 
   if not req.url
     log req.url, 'not found, page:', page
@@ -146,7 +160,7 @@ srvr = http.createServer (req, res) ->
     res.end()
     return
 
-  if page is 'hvac' and req.url[0..4] is '/roomStats'
+  if page is 'hvac' and req.url is '/roomStats'
     res.writeHead 200, "Content-Type": "text/json"
     res.end JSON.stringify tstatByRoom
     return
