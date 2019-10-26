@@ -1,9 +1,4 @@
 #   -*-  grammar-ext: sh  -*-
 
-if [ $LOCATION != "server" ]; then 
-  echo "k can only run on the server"
-  exit
-fi
-
 echo "killing all hvac apps"
 kill $(pgrep -f "hvac") 2> /dev/null  

@@ -36,7 +36,7 @@
     "serialport": "^7.1.5",
     "sprintf-js": "^1.0.3",
     "sprintf.js": "^0.1.4",
-    "sqlite3": "^4.0.6",
+    "sqlite3": "^4.1.0",
     "teacup": "^2.0.0",
     "tplink-lightbulb": "^1.4.1",
     "underscore": "^1.8.3",
