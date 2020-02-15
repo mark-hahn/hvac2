@@ -1,10 +1,5 @@
 #   -*-  grammar-ext: sh  -*-
 
-if [ $LOCATION != "server" ]; then
-  echo "rel can only run on the server"
-  exit
-fi
-
 if [ $(pwd) != "/root/apps/hvac" ]; then
   echo "rel can only run in /root/apps/hvac"
   exit

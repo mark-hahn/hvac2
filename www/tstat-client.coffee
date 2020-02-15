@@ -10,7 +10,7 @@ log = (args...) -> console.log 'TSTAT:', args...
 updateMS  = 10000
 delayMS   = 0
 blinkMS   = 200
-    
+
 curRoom = localStorage?.getItem('room') ? 'tvRoom'
 # rooms   = ['tvRoom', 'Sewing', 'master', 'guest']
 

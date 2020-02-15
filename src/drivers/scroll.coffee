@@ -13,23 +13,27 @@ gnuPlot  = require 'gnuplot'
 readline = require 'linebyline'
 rimraf   = require 'rimraf'
 Stream   = require 'stream'
+fetch    = require 'node-fetch'
 
 trimDelayHrs = 48
 rightPad     = 0.01
 hyst = 0.25
 
+rawDataUrl = 'http://www.findu.com/cgi-bin/wx.cgi?call=EW4725'
+
 ############### append to plotline files on every change #############
 trimmingOldFileCount = 0
 
-rooms        = ['tvRoom', 'kitchen', 'master', 'guest']
-lastSetWrite = {tvRoom:0,     kitchen:0,     master:0,     guest: 0   }
-lastSetpoint = {tvRoom:null,  kitchen:null,  master:null,  guest:null }
-lastMode     = {tvRoom:'off', kitchen:'off', master:'off', guest:'off'}
-  
+rooms        = ['tvRoom', 'kitchen', 'master', 'guest', 'outside']
+lastSetWrite = {tvRoom:0,     kitchen:0,     master:0,     guest: 0,   outside:0  }
+lastSetpoint = {tvRoom:null,  kitchen:null,  master:null,  guest:null, outside:null }
+lastMode     = {tvRoom:'off', kitchen:'off', master:'off', guest:'off',outside:'off'}
+
 pfx = '/tmp/hvac-gnuplot-'
 path = (room, data, sfx = 'txt') -> pfx + data + '-' + room + '.' + sfx
 
 color = (room, idxType) ->
+  if room is 'outside' then return 16
   for r, idx in rooms
     if r is room then break
   idx * 3 + idxType
@@ -62,13 +66,30 @@ writeSetpoints = (room, setpoint=lastSetpoint[room], mode=lastMode[room]) ->
 
 writeTemp = (self, room, temp) =>
   if trimmingOldFileCount then return
-  active = (self.timing_dampers?[room] and 
-           (self.timing_hvac?.heat or self.timing_hvac?.cool))
+  active = true
+  if self?
+    active = (self.timing_dampers?[room] and 
+             (self.timing_hvac?.heat or self.timing_hvac?.cool))
   if active? and temp?
     filePath = path room, 'temp', 'txt'
     lineColor = color room, (if active then 2 else 1)
     line = unixTime() + ' ' + temp + ' ' + lineColor + '    # temp-' + room
     fs.appendFileSync filePath, line + '\n'
+
+setInterval -> 
+  fetch(rawDataUrl)
+    .then (res)  -> res.text()
+    .then (text) -> 
+      rows = text.split '<tr>'
+      row2 = rows[2]
+      cols = row2.split '<td'
+      exec = /\s(\d\d)\s/.exec cols[2]
+      outsideTemp = +exec[1]
+      if outsideTemp is lastSetpoint.outside then return
+      lastSetpoint.outside = outsideTemp
+      writeTemp null, 'outside', outsideTemp
+      log outsideTemp
+, 600e3
 
 $.react 'temp_tvRoom', 'temp_kitchen', 'temp_master', 'temp_guest',
         'ws_tstat_data', 'timing_hvac', 'timing_dampers'
@@ -97,7 +118,7 @@ $.react 'temp_tvRoom', 'temp_kitchen', 'temp_master', 'temp_guest',
 
 txtPfx  = '/tmp/hvac-gnuplot-'; 
 allTxtFiles = []
-for room in ['guest', 'kitchen', 'master', 'tvRoom']
+for room in ['guest', 'kitchen', 'master', 'tvRoom', 'outside']
   allTxtFiles.push txtPfx + 'setpointHi-' + room + '.txt'
   allTxtFiles.push txtPfx + 'setpointLo-' + room + '.txt'
   allTxtFiles.push txtPfx +       'temp-' + room + '.txt'
@@ -136,11 +157,10 @@ for room in ['guest', 'kitchen', 'master', 'tvRoom']
   cmd.push cmdPfx + 'setpointHi-' + room + cmdSfx
 for room in ['guest', 'kitchen', 'master', 'tvRoom']
   cmd.push cmdPfx + 'setpointLo-' + room + cmdSfx
-for room in ['guest', 'kitchen', 'master', 'tvRoom']
+for room in ['guest', 'kitchen', 'master', 'tvRoom', 'outside']
   cmd.push cmdPfx +       'temp-' + room + cmdSfx
 plotCmd = cmd.join ',  '
 
-  
 ############## create output SVG file to serve ############
 module.exports = (timeSpanHrs, res) ->
   
@@ -172,6 +192,7 @@ module.exports = (timeSpanHrs, res) ->
       .set 'linetype 13 lc rgb "#ffffff"' # - blank (white)
       .set 'linetype 14 lc rgb "#cccccc"' # - major grid
       .set 'linetype 15 lc rgb "#eeeeee"' # - minor grid
+      .set 'linetype 16 lc rgb "#cccc00"' # - outside temp
       .set 'title "HVAC Scroll Plot"'
       .set 'key off'
       .set 'label "`date "+%m/%d %l:%M %P"`" right at graph 1,1.03 font "arial,18"'
@@ -187,8 +208,8 @@ module.exports = (timeSpanHrs, res) ->
       .set 'grid xtics mxtics ytics mytics lt 14, lt 15'
       .plot plotCmd, end: yes
       .pipe res
-          
     return 
+
     
   log 'skipping gnuplot while trimming', trimmingOldFileCount
   cb 'skipping gnuplot while trimming'

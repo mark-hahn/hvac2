@@ -210,9 +210,14 @@ primus.on 'connection', (connection) ->
     switch data.type
 
       when 'setStatVar'
-        {room, variable, setData} = data
+        {room, variable, setData, setHeatAbs} = data
         if variable is 'setpoint' and tstatByRoom[room]
-          tstatByRoom[room].setpoint += (if setData is 'up' then +0.5 else -0.5)
+          if setHeatAbs and tstatByRoom['master'] is 'heat'
+            tstatByRoom[room].setpoint =  setData
+            tstatByRoom[room].mode     = 'heat'
+            # log "setAbs", tstatByRoom[room]
+          else
+            tstatByRoom[room].setpoint += (if setData is 'up' then +0.5 else -0.5)
           $.ws_tstat_data tstatByRoom[room]
           if room is 'master'
             masterSetpoint = tstatByRoom[room].setpoint
