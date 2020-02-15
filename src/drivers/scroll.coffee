@@ -77,20 +77,12 @@ writeTemp = (self, room, temp) =>
     line = unixTime() + ' ' + temp + ' ' + lineColor + '    # temp-' + room
     fs.appendFileSync filePath, line + '\n'
 
-setInterval -> 
-  fetch(rawDataUrl)
-    .then (res)  -> res.text()
-    .then (text) -> 
-      rows = text.split '<tr>'
-      row2 = rows[2]
-      cols = row2.split '<td'
-      exec = /\s(\d\d)\s/.exec cols[2]
-      outsideTemp = +exec[1]
-      if outsideTemp is lastSetpoint.outside then return
-      lastSetpoint.outside = outsideTemp
-      writeTemp null, 'outside', outsideTemp
-      log outsideTemp
-, 600e3
+$.react 'weewx_data', ->
+  outsideTemp = @weewx_data.outTemp
+  if outsideTemp is lastSetpoint.outside then return
+  lastSetpoint.outside = outsideTemp
+  writeTemp null, 'outside', outsideTemp
+  log 'weewx_data', outsideTemp
 
 $.react 'temp_tvRoom', 'temp_kitchen', 'temp_master', 'temp_guest',
         'ws_tstat_data', 'timing_hvac', 'timing_dampers'
