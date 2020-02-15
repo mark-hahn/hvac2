@@ -15,7 +15,7 @@ rimraf   = require 'rimraf'
 Stream   = require 'stream'
 fetch    = require 'node-fetch'
 
-trimDelayHrs = 48
+trimDelayHrs = 7*24
 rightPad     = 0.01
 hyst = 0.25
 
@@ -25,10 +25,10 @@ filesDir = '/root/hvac-scroll/'
 ############### append to plotline files on every change #############
 trimmingOldFileCount = 0
 
-rooms        = ['tvRoom', 'kitchen', 'master', 'guest', 'outside']
-lastSetWrite = {tvRoom:0,     kitchen:0,     master:0,     guest: 0,   outside:0  }
-lastSetpoint = {tvRoom:null,  kitchen:null,  master:null,  guest:null, outside:null }
-lastMode     = {tvRoom:'off', kitchen:'off', master:'off', guest:'off',outside:'off'}
+rooms        = ['tvRoom', 'kitchen', 'master', 'guest']
+lastSetWrite = {tvRoom:0,     kitchen:0,     master:0,     guest: 0  }
+lastSetpoint = {tvRoom:null,  kitchen:null,  master:null,  guest:null}
+lastMode     = {tvRoom:'off', kitchen:'off', master:'off', guest:'off'}
 
 pfx = filesDir + 'hvac-gnuplot-'
 path = (room, data, sfx = 'txt') -> pfx + data + '-' + room + '.' + sfx
@@ -77,12 +77,13 @@ writeTemp = (self, room, temp) =>
     line = unixTime() + ' ' + temp + ' ' + lineColor + '    # temp-' + room
     fs.appendFileSync filePath, line + '\n'
 
+lastOutsideTemp = 0
+
 $.react 'weewx_data', ->
   outsideTemp = @weewx_data.outTemp
-  if outsideTemp is lastSetpoint.outside then return
-  lastSetpoint.outside = outsideTemp
+  if outsideTemp is lastOutsideTemp then return
+  lastOutsideTemp = outsideTemp
   writeTemp null, 'outside', outsideTemp
-  log 'weewx_data', outsideTemp
 
 $.react 'temp_tvRoom', 'temp_kitchen', 'temp_master', 'temp_guest',
         'ws_tstat_data', 'timing_hvac', 'timing_dampers'
@@ -139,7 +140,7 @@ do trimFiles = ->
       fs.renameSync newfile, file
       trimmingOldFileCount--
   
-setInterval trimFiles, 4*60*60*1e3
+setInterval trimFiles, 24*60*60*1e3
 
 
 ############## plot command ############
@@ -185,7 +186,7 @@ module.exports = (timeSpanHrs, res) ->
       .set 'linetype 13 lc rgb "#ffffff"' # - blank (white)
       .set 'linetype 14 lc rgb "#cccccc"' # - major grid
       .set 'linetype 15 lc rgb "#eeeeee"' # - minor grid
-      .set 'linetype 16 lc rgb "#cccc00"' # - outside temp
+      .set 'linetype 16 lc rgb "#dddd00"' # - outside temp
       .set 'title "HVAC Scroll Plot"'
       .set 'key off'
       .set 'label "`date "+%m/%d %l:%M %P"`" right at graph 1,1.03 font "arial,18"'
