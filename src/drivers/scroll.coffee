@@ -20,6 +20,7 @@ rightPad     = 0.01
 hyst = 0.25
 
 rawDataUrl = 'http://www.findu.com/cgi-bin/wx.cgi?call=EW4725'
+filesDir = '/root/hvac-scroll/'
 
 ############### append to plotline files on every change #############
 trimmingOldFileCount = 0
@@ -29,7 +30,7 @@ lastSetWrite = {tvRoom:0,     kitchen:0,     master:0,     guest: 0,   outside:0
 lastSetpoint = {tvRoom:null,  kitchen:null,  master:null,  guest:null, outside:null }
 lastMode     = {tvRoom:'off', kitchen:'off', master:'off', guest:'off',outside:'off'}
 
-pfx = '/tmp/hvac-gnuplot-'
+pfx = filesDir + 'hvac-gnuplot-'
 path = (room, data, sfx = 'txt') -> pfx + data + '-' + room + '.' + sfx
 
 color = (room, idxType) ->
@@ -116,7 +117,7 @@ $.react 'temp_tvRoom', 'temp_kitchen', 'temp_master', 'temp_guest',
 
 ############## trim old data ##############
 
-txtPfx  = '/tmp/hvac-gnuplot-'; 
+txtPfx  = filesDir + 'hvac-gnuplot-'; 
 allTxtFiles = []
 for room in ['guest', 'kitchen', 'master', 'tvRoom', 'outside']
   allTxtFiles.push txtPfx + 'setpointHi-' + room + '.txt'
@@ -150,7 +151,7 @@ setInterval trimFiles, 4*60*60*1e3
 
 
 ############## plot command ############
-cmdPfx  = '"/tmp/hvac-gnuplot-'; 
+cmdPfx  = '"' + filesDir + 'hvac-gnuplot-'; 
 cmdSfx = '.txt" using 1:2:3 with lines lc variable'
 cmd = []
 for room in ['guest', 'kitchen', 'master', 'tvRoom']
