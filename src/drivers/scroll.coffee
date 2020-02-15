@@ -205,7 +205,9 @@ module.exports = (timeSpanHrs, res) ->
       .set 'mxtics ' + majorMinorTickRatio
       .set 'format x "%l:%M %p"'
       .set 'ytics 1 scale 0.01'
+      .set 'y2tics 1 scale 0.01'
       .set 'mytics 2'
+      .set 'y2label'
       .set 'grid xtics mxtics ytics mytics lt 14, lt 15'
       .plot plotCmd, end: yes
       .pipe res
