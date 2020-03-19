@@ -16,10 +16,12 @@ primus.on 'open', ->
 
   primus.on 'data', (data) ->
     # log 'received', data
-    if window.wsockRecv  and data.type isnt 'ceil'
+    if window.wsockRecv   and data.type isnt 'ceil'
       wsockRecv data
-    if window.ceilWsRecv and data.type is 'ceil'
+    if window.ceilWsRecv  and data.type is 'ceil'
       ceilWsRecv data
+    if window.tvtabWsRecv and data.type is 'tvtab'
+      tvtabWsRecv data
 
   primus.on 'error', (err) ->
     log 'ERROR:', err

@@ -24,22 +24,3 @@ $ ->
       variable: 'setpoint'
       setData:   dir
     )
-  lastTime = ''
-  autoSetTvRoom = false
-  setInterval ->
-    if (time = moment().format 'h:mm') isnt lastTime
-      $('#time').text time
-      lastTime = time
-      if (new Date().getHours()) is 7
-        if not autoSetTvRoom
-          autoSetTvRoom = true
-          window.wsockSend?(
-            type:       'setStatVar'
-            room:       'tvRoom'
-            variable:   'setpoint'
-            setHeatAbs:  true
-            setData:     70.5
-          )
-      else
-        autoSetTvRoom = false
-  , 1e3

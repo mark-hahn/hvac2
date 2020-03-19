@@ -19,6 +19,7 @@ scroll      = require '../js/scroll'
 html        = require('../www/js/index-html')()
 lightsHtml  = require('../www/js/lights-html')()
 ceilHtml    = require('../www/js/ceil-html')()
+tvtabHtml   = require('../www/js/tvtab-html')()
 moment      = require 'moment'
 alexaReq    = require('../js/echo').alexaReq
 {Webhook}   = require('jovo-framework');
@@ -34,6 +35,7 @@ tstatByRoom = {}
 $.output 'ws_tstat_data', 'light_cmd'
 
 masterSetpoint = null
+tvRoomSetpoint = null
 seq = 0
 
 writeCodes = (room) ->
@@ -71,6 +73,32 @@ writeCeil = ->
         windGust:       '' + Math.round wxdata.windGust    ? '0'
         windGustDir:    '' + Math.round wxdata.windGustDir ? '0'
 
+writeTvtab = ->
+  # sysCode =
+  #   $.log_modeCode_sys + $.log_extAirCode + $.log_counts + ''
+  # masterCode =
+  #   $.log_modeCode_master + $.log_reqCode_master + $.log_actualCode_master + ' ' +
+  #   $.log_elapsedCode_master
+  sysCode =
+    $.log_extAirCode + $.log_counts + ''
+  tvRoomCode =
+    $.log_reqCode_tvRoom + $.log_actualCode_tvRoom + ' ' + $.log_elapsedCode_tvRoom
+  for conn in connections
+    if (wxdata = $.weewx_data)
+      conn.connection.write
+        type:          'tvtab'
+        tvRoom:         $.temp_tvRoom?.toFixed(1) ? '----'
+        tvRoomSetpoint: (if tvRoomSetpoint then tvRoomSetpoint.toFixed 1 else '----')
+        tvRoomCode:     tvRoomCode.toUpperCase().replace 'V', 'v'
+        sysCode:        sysCode.toUpperCase()
+        outTemp:        '' + Math.round wxdata.outTemp     ? '0'
+        outHumidity:    '' + Math.round wxdata.outHumidity ? '0'
+        rain:           '' + Math.round (wxdata.rain ? 0) * 100
+        windSpeed:      '' + Math.round wxdata.windSpeed   ? '0'
+        windDir:        '' + Math.round wxdata.windDir     ? '0'
+        windGust:       '' + Math.round wxdata.windGust    ? '0'
+        windGustDir:    '' + Math.round wxdata.windGustDir ? '0'
+
 module.exports =
   init: ->
     for room in rooms then do (room) =>
@@ -92,6 +120,12 @@ module.exports =
           'log_elapsedCode_master',
           'log_sysMode', 'log_modeCode_sys', 'log_extAirCode',
           'weewx_data', 'log_counts', writeCeil
+
+    $.react 'temp_tvRoom',
+          'log_modeCode_tvRoom', 'log_reqCode_tvRoom', 'log_actualCode_tvRoom',
+          'log_elapsedCode_tvRoom',
+          'log_sysMode', 'log_modeCode_sys', 'log_extAirCode',
+          'weewx_data', 'log_counts', writeTvtab
 
     $.react 'inst_remote', ->
       {remote, btn, action} = $.inst_remote
@@ -126,12 +160,13 @@ srvr = http.createServer (req, res) ->
 
   if req.url.length > 1 and req.url[-1..-1] is '/'
     req.url = req.url[0..-2]
+
   req.url = switch req.url[0..4]
-    when '/hvac' then page = 'hvac';   req.url[5...] or '/'
-    when '/ceil' then page = 'ceil';   req.url[5...] or '/'
-    when '/ligh' then page = 'lights'; req.url[7...] or '/'
+    when '/hvac' then page = 'hvac';  req.url[5...] or '/'
+    when '/ceil' then page = 'ceil';  req.url[5...] or '/'
+    when '/tvta' then page = 'tvtab'; req.url[6...] or '/'
     when '/scro' then req.url
-    else page = 'lights'; req.url[7...] or '/'  # ''
+    else page = 'hvac';  req.url[5...] or '/'  # ''
 
   log {page, req: req.url}
 
@@ -147,17 +182,8 @@ srvr = http.createServer (req, res) ->
     res.end switch page
       when 'hvac'   then html
       when 'ceil'   then ceilHtml
-      when 'lights' then lightsHtml
+      when 'tvtab'  then tvtabHtml
       else ''
-    return
-
-  if page is 'lights' and req.url[0..4] is '/ajax'
-    # res.writeHead 200, "Content-Type": "text/html"
-    light_cmd = JSON.parse url.parse(req.url, yes).query.json
-    light_cmd.__ = seq++
-    # log light_cmd
-    $.light_cmd light_cmd
-    res.end()
     return
 
   if page is 'hvac' and req.url is '/roomStats'
@@ -168,7 +194,11 @@ srvr = http.createServer (req, res) ->
   if req.url is '/ceil'
     res.writeHead 200, "Content-Type": "text/html"
     res.end ceilHtml
-    # log 'ceil-req:', req.url
+    return
+
+  if req.url is '/tvtab'
+    res.writeHead 200, "Content-Type": "text/html"
+    res.end tvtabHtml
     return
 
   if req.url[0..6] is '/usage/'
@@ -222,6 +252,10 @@ primus.on 'connection', (connection) ->
           if room is 'master'
             masterSetpoint = tstatByRoom[room].setpoint
             writeCeil()
+          if room is 'tvRoom'
+            tvRoomSetpoint = tstatByRoom[room].setpoint
+            writeTvtab()
+            
           for conn in connections when conn.id isnt connId and tstatByRoom[data.room]
             conn.connection.write tstatByRoom[data.room]
 
@@ -231,6 +265,9 @@ primus.on 'connection', (connection) ->
         if data.room is 'master'
           masterSetpoint = (if data.mode in ['cool', 'heat'] then data.setpoint)
           writeCeil()
+        if data.room is 'tvRoom'
+          tvRoomSetpoint = (if data.mode in ['cool', 'heat'] then data.setpoint)
+          writeTvtab()
         for conn in connections when conn.id isnt connId and tstatByRoom[data.room]
           conn.connection.write tstatByRoom[data.room]
 
@@ -242,6 +279,9 @@ primus.on 'connection', (connection) ->
             if tstat.room is 'master'
               masterSetpoint = (if tstat.mode in ['cool', 'heat'] then tstat.setpoint)
               writeCeil()
+            if tstat.room is 'tvRoom'
+              tvRoomSetpoint = (if tstat.mode in ['cool', 'heat'] then tstat.setpoint)
+              writeTvtab()
           if tempsByRoom[room] then connection.write tempsByRoom[room]
           writeCodes room
 
