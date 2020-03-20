@@ -1,5 +1,8 @@
 #   -*-  grammar-ext: sh  -*-
 
+ka
+ka
+
 if [ $(pwd) == "/root/dev/apps/hvac2" ]; then isdev=true; else isdev=false; fi
 
 if $isdev

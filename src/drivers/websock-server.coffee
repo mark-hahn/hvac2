@@ -47,6 +47,15 @@ writeCodes = (room) ->
       room: room
       codes: codes.toUpperCase().replace 'V', 'v'
 
+fmtInches = (inches) ->
+  hundredths = inches*100
+  if hundredths < 100 
+    txt = '' + hundredths
+    if txt.length < 2 then txt = '0' + txt
+    return ".#{txt}"
+  else
+    return (hundredths/100).toFixed 1
+
 writeCeil = ->
   # sysCode =
   #   $.log_modeCode_sys + $.log_extAirCode + $.log_counts + ''
@@ -67,18 +76,20 @@ writeCeil = ->
         sysCode:        sysCode.toUpperCase()
         outTemp:        '' + Math.round wxdata.outTemp     ? '0'
         outHumidity:    '' + Math.round wxdata.outHumidity ? '0'
-        rain:           '' + Math.round (wxdata.rain ? 0) * 100
+        rain:           '' + fmtInches (wxdata.rain ? 0)
         windSpeed:      '' + Math.round wxdata.windSpeed   ? '0'
         windDir:        '' + Math.round wxdata.windDir     ? '0'
         windGust:       '' + Math.round wxdata.windGust    ? '0'
         windGustDir:    '' + Math.round wxdata.windGustDir ? '0'
 
+modeChar = (tstat) ->
+  mode = tstat?.mode
+  if mode and (mode is 'cool' or mode is 'heat')
+    return ':'
+  else
+    return '.' 
+
 writeTvtab = ->
-  # sysCode =
-  #   $.log_modeCode_sys + $.log_extAirCode + $.log_counts + ''
-  # masterCode =
-  #   $.log_modeCode_master + $.log_reqCode_master + $.log_actualCode_master + ' ' +
-  #   $.log_elapsedCode_master
   sysCode =
     $.log_extAirCode + $.log_counts + ''
   tvRoomCode =
@@ -89,11 +100,17 @@ writeTvtab = ->
         type:          'tvtab'
         tvRoom:         $.temp_tvRoom?.toFixed(1) ? '----'
         tvRoomSetpoint: (if tvRoomSetpoint then tvRoomSetpoint.toFixed 1 else '----')
+        master_mode_ch:  modeChar $.tstat_master
+        kitchen_mode_ch: modeChar $.tstat_kitchen
+        guest_mode_ch:   modeChar $.tstat_guest
+        master:         $.temp_master?.toFixed(0)
+        kitchen:        $.temp_kitchen?.toFixed(0)
+        guest:          $.temp_guest?.toFixed(0)
         tvRoomCode:     tvRoomCode.toUpperCase().replace 'V', 'v'
         sysCode:        sysCode.toUpperCase()
         outTemp:        '' + Math.round wxdata.outTemp     ? '0'
         outHumidity:    '' + Math.round wxdata.outHumidity ? '0'
-        rain:           '' + Math.round (wxdata.rain ? 0) * 100
+        rain:           '' + fmtInches (wxdata.rain ? 0)
         windSpeed:      '' + Math.round wxdata.windSpeed   ? '0'
         windDir:        '' + Math.round wxdata.windDir     ? '0'
         windGust:       '' + Math.round wxdata.windGust    ? '0'
@@ -121,21 +138,13 @@ module.exports =
           'log_sysMode', 'log_modeCode_sys', 'log_extAirCode',
           'weewx_data', 'log_counts', writeCeil
 
-    $.react 'temp_tvRoom',
+    $.react 'temp_tvRoom', 
+          'tstat_master','tstat_kitchen','tstat_guest',
           'log_modeCode_tvRoom', 'log_reqCode_tvRoom', 'log_actualCode_tvRoom',
           'log_elapsedCode_tvRoom',
           'log_sysMode', 'log_modeCode_sys', 'log_extAirCode',
           'weewx_data', 'log_counts', writeTvtab
 
-    $.react 'inst_remote', ->
-      {remote, btn, action} = $.inst_remote
-      if btn < 7 or not tstatByRoom.tvRoom or action isnt 'click' or
-         remote not in ['lightsRemote1', 'lightsRemote2']
-        return
-      tstatByRoom.tvRoom.setpoint += (if btn is 7 then +0.5 else -0.5)
-      $.ws_tstat_data tstatByRoom.tvRoom
-      for conn in connections
-        conn.connection.write tstatByRoom.tvRoom
 
 srvr = http.createServer (req, res) ->
   log 'req:', req.url
@@ -241,6 +250,7 @@ primus.on 'connection', (connection) ->
 
       when 'setStatVar'
         {room, variable, setData, setHeatAbs} = data
+
         if variable is 'setpoint' and tstatByRoom[room]
           if setHeatAbs and tstatByRoom['master'].mode is 'heat'
             tstatByRoom[room].setpoint =  setData
@@ -248,6 +258,7 @@ primus.on 'connection', (connection) ->
             log "setAbs", tstatByRoom[room]
           else
             tstatByRoom[room].setpoint += (if setData is 'up' then +0.5 else -0.5)
+
           $.ws_tstat_data tstatByRoom[room]
           if room is 'master'
             masterSetpoint = tstatByRoom[room].setpoint

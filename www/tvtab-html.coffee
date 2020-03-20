@@ -1,7 +1,7 @@
 
 util = require 'util'
 
-{render, doctype, html, head, title, base, body, div, script} = require 'teacup'
+{render, doctype, html, head, title, base, body, div, script, raw, text} = require 'teacup'
 
 module.exports = ->
   render ->
@@ -11,57 +11,77 @@ module.exports = ->
         title 'tvtab'
         base href:"http://hahnca.com/tvtab/"
       body style:'background-color:black; color:white;
-                  font-size:320px; 
+                  font-size:200px; 
                   font-family:tahoma', ->
 # outer rim
-        div style:'width:1570px; height:760px;  
+        div style:'width:800px; height:1280px;  
                    position:relative; border:1px solid red;', ->
-# top half
-          div onClick:'bumpTemp("up")', \
-              style:'width:100%; height:300px; position:relative;', ->
-  # temp                       
-           div '#tvRoom', style:'width:820px; text-align:right;  height: 400px;
-                                position:relative; top:-40px; '
-  # setpoint container         
-           div style:'position:absolute; top:0px; right:30px; font-size:250px;', ->
-    # setpoint                        
-             div '#tvRoomSetpoint', style:'top:-20px; width:100%; 
-                                           position: relative;'
-# main divider             
-          div '#divider', style:'width:100%; height:6px; margin:0; background-color:#ccc;'
-          
-# bot half
-          div onClick:'bumpTemp("down")', \
-              style:'position:relative; width:100%; height:300px; top:0px;', ->
-  # time            
-           div '#time', style:'height:400px; width:820px; text-align:right; top:-40px;
-                               position:relative;'
-           div '#divider', style:'position:absolute; top:-300px; left:857px; height:750px; 
-                                  width:6px; margin:0; background-color:#ccc;'
-  # outside temp         
-           div '#wx1', style:'position:absolute; top:-20px; right:350px; 
-                             font-size:220px; width:350px; height:450px;', ->
-              div '#outTemp', style:'position:absolute; top:0px;      right:20px;'
-              div '#rain',    style:'position:absolute; bottom:-25px; right:20px;'
-              
-           div '#wx2', style:'position:absolute; top:-20px; right:0; 
-                             font-size:220px; width:350px; height:450px;', ->
-              div '#outHumidity', style:'position:absolute; top:0px;      right:20px;'
-              div '#windGust',    style:'position:absolute; bottom:-25px; right:20px;'
-                                     
-# bottom divider                            
-          div '#divider', style:'width:55%; height:6px; 
-                                 margin:0; background-color:#ccc;'
+# time
+          div '#time', style:'width:100%; text-align:center;  top:35px;  padding-bottom:50px;
+                            position:relative;'
+# date
+          div style:'font-size:150px', ->
+            div '#date', style:'width:100%; text-align:center; position:relative; padding-bottom:50px; padding-top: 30px;'
             
-          div '#codes', style:'position:relative; font-size: 130px;
-                               width: 800px; height:150px;
-                               font-family: Arial, sans-serif;', ->
-            
-              div '#sysCode', style: 'position: absolute; left:35px; top: 0;'
-									                    
-              div '#tvRoomCode', style: 'position: absolute; right:0; top: 0; 
-                                         text-align: center;'
+# divider 
+          div '.divider', style:'width:100%; height:2px; margin-top:20px; margin-bottom:20px; background-color:#ccc;'
 
+          div style:'font-size:130px; display:flex; justify-content: space-around; width:800px; margin-top: 30px; height:185px', ->
+# temp                
+            div style:'display:flex', ->      
+              div '#tvRoom'
+              div style:'font-size:80px', ->
+                raw '&#176;'
+# setpoint                        
+            div style:'display:flex', ->      
+              div '#tvRoomSetpoint'
+              div style:'font-size:80px', ->
+                raw '&#176;'
+# divider 
+          div '.divider', style:'width:100%; height:2px; margin-top:20px; margin-bottom:20px; background-color:#ccc;'
+
+# other rooms
+          div style:'font-size:80px; display:flex; justify-content: space-around; width:800px; position:relative; top:10px; height: 110px; padding-bottom:50px; padding-top: 30px;', ->
+            div style:'display:flex', ->      
+              text 'M'
+              div '#master_mode_ch'
+              div '#master'
+              div style:'font-size:60px', ->
+                raw '&#176;'
+            div style:'display:flex', ->      
+              text 'S'
+              div '#kitchen_mode_ch'
+              div '#kitchen'
+              div style:'font-size:60px', ->
+                raw '&#176;'
+            div style:'display:flex', ->      
+              text 'G'
+              div '#guest_mode_ch'
+              div '#guest'
+              div style:'font-size:60px', ->
+                raw '&#176;'
+
+# divider 
+          div '.divider', style:'width:100%; height:2px; margin-top:20px; margin-bottom:20px; background-color:#ccc;'
+
+# weather
+          div style:'font-size:90px; display:flex; justify-content: space-around; width:800px;     margin-top: 30px; height:200px', ->
+            div style:'display:flex', ->      
+              div '#outTemp'
+              div style:'font-size:80px', ->
+                raw '&#176;'
+            div style:'display:flex', ->      
+              div '#outHumidity'
+              div style:'font-size:50px; position:relative; top:10px;', ->
+                raw '%'
+            div style:'display:flex', ->      
+              div '#windGust'
+              div style:'font-size: 30px; position: relative; top: 10px; left: 2px;', ->
+                text 'mph'
+            div style:'display:flex', ->      
+              div '#rain'
+              div style:'font-size:50px; position: relative; top: 10px; ', ->
+                raw '"'
         script src: '/ceil/js/jquery-2.1.4.js'
         script src: '/ceil/js/moment.js'
         script src: '/ceil/js/primus.js'

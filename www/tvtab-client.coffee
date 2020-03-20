@@ -11,6 +11,7 @@ $ ->
   window.tvtabWsRecv = (data) ->
     if data.type is 'tvtab' then log 'recv tvtab', data
     for name, value of data
+      # console.log {name, value}
       $('#' + name).text value
 
   do tryWs = ->
@@ -20,8 +21,12 @@ $ ->
   lastTime = ''
   autoSetTvRoom = false
   setInterval ->
-    if (time = moment().format 'h:mm') isnt lastTime
+    date = new Date()
+
+    if (time = moment(date).format 'h:mm') isnt lastTime
       $('#time').text time
+      $('#date').text moment(date).format 'ddd M/D'
+
       lastTime = time
       if (new Date().getHours()) is 7
         if not autoSetTvRoom
