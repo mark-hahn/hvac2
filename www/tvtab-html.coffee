@@ -41,22 +41,19 @@ module.exports = ->
           div '.divider', style:'width:100%; height:2px; margin-top:20px; margin-bottom:20px; background-color:#ccc;'
 
 # other rooms
-          div style:'font-size:80px; display:flex; justify-content: space-around; width:800px; position:relative; top:10px; height: 110px; padding-bottom:50px; padding-top: 30px;', ->
+          div style:'font-size:120px; display:flex; justify-content: space-around; width:800px; position:relative; top:10px; height: 110px; padding-bottom:50px; padding-top: 30px;', ->
             div style:'display:flex', ->      
               text 'M'
-              div '#master_mode_ch'
               div '#master'
               div style:'font-size:60px', ->
                 raw '&#176;'
             div style:'display:flex', ->      
               text 'S'
-              div '#kitchen_mode_ch'
               div '#kitchen'
               div style:'font-size:60px', ->
                 raw '&#176;'
             div style:'display:flex', ->      
               text 'G'
-              div '#guest_mode_ch'
               div '#guest'
               div style:'font-size:60px', ->
                 raw '&#176;'
@@ -65,7 +62,7 @@ module.exports = ->
           div '.divider', style:'width:100%; height:2px; margin-top:20px; margin-bottom:20px; background-color:#ccc;'
 
 # weather
-          div style:'font-size:90px; display:flex; justify-content: space-around; width:800px;     margin-top: 30px; height:200px', ->
+          div style:'font-size:130px; display:flex; justify-content: space-around; width:800px;     margin-top: 30px; height:200px', ->
             div style:'display:flex', ->      
               div '#outTemp'
               div style:'font-size:80px', ->

@@ -48,13 +48,10 @@ writeCodes = (room) ->
       codes: codes.toUpperCase().replace 'V', 'v'
 
 fmtInches = (inches) ->
-  hundredths = inches*100
-  if hundredths < 100 
-    txt = '' + hundredths
-    if txt.length < 2 then txt = '0' + txt
-    return ".#{txt}"
-  else
-    return (hundredths/100).toFixed 1
+  inches = +inches
+  if inches >= 1    then return inches.toFixed(1)
+  if inches >= 0.01 then return inches.toFixed(2).slice(1)
+  '0'
 
 writeCeil = ->
   # sysCode =
@@ -82,39 +79,27 @@ writeCeil = ->
         windGust:       '' + Math.round wxdata.windGust    ? '0'
         windGustDir:    '' + Math.round wxdata.windGustDir ? '0'
 
-modeChar = (tstat) ->
+modeUnder = (tstat) ->
   mode = tstat?.mode
-  if mode and (mode is 'cool' or mode is 'heat')
-    return ':'
-  else
-    return '.' 
+  (mode and (mode is 'cool' or mode is 'heat'))
 
 writeTvtab = ->
-  sysCode =
-    $.log_extAirCode + $.log_counts + ''
-  tvRoomCode =
-    $.log_reqCode_tvRoom + $.log_actualCode_tvRoom + ' ' + $.log_elapsedCode_tvRoom
   for conn in connections
     if (wxdata = $.weewx_data)
       conn.connection.write
         type:          'tvtab'
         tvRoom:         $.temp_tvRoom?.toFixed(1) ? '----'
-        tvRoomSetpoint: (if tvRoomSetpoint then tvRoomSetpoint.toFixed 1 else '----')
-        master_mode_ch:  modeChar $.tstat_master
-        kitchen_mode_ch: modeChar $.tstat_kitchen
-        guest_mode_ch:   modeChar $.tstat_guest
+        tvRoomSetpoint: (if tvRoomSetpoint then tvRoomSetpoint.toFixed 1 else '----') 
+        master_under:   modeUnder $.tstat_master
+        kitchen_under:  modeUnder $.tstat_kitchen
+        guest_under:    modeUnder $.tstat_guest
         master:         $.temp_master?.toFixed(0)
         kitchen:        $.temp_kitchen?.toFixed(0)
         guest:          $.temp_guest?.toFixed(0)
-        tvRoomCode:     tvRoomCode.toUpperCase().replace 'V', 'v'
-        sysCode:        sysCode.toUpperCase()
         outTemp:        '' + Math.round wxdata.outTemp     ? '0'
         outHumidity:    '' + Math.round wxdata.outHumidity ? '0'
         rain:           '' + fmtInches (wxdata.rain ? 0)
-        windSpeed:      '' + Math.round wxdata.windSpeed   ? '0'
-        windDir:        '' + Math.round wxdata.windDir     ? '0'
         windGust:       '' + Math.round wxdata.windGust    ? '0'
-        windGustDir:    '' + Math.round wxdata.windGustDir ? '0'
 
 module.exports =
   init: ->

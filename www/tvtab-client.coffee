@@ -11,8 +11,26 @@ $ ->
   window.tvtabWsRecv = (data) ->
     if data.type is 'tvtab' then log 'recv tvtab', data
     for name, value of data
-      # console.log {name, value}
+      console.log {name, value}
       $('#' + name).text value
+      if name is 'master'
+        ele = document.getElementById 'master'
+        if data.master_under
+          ele.style['text-decoration'] = "underline"
+        else
+          ele.style['text-decoration'] = ""
+      if name is 'kitchen'
+        ele = document.getElementById 'kitchen'
+        if data.kitchen_under
+          ele.style['text-decoration'] = "underline"
+        else
+          ele.style['text-decoration'] = ""
+      if name is 'guest'
+        ele = document.getElementById 'guest'
+        if data.guest_under
+          ele.style['text-decoration'] = "underline"
+        else
+          ele.style['text-decoration'] = ""
 
   do tryWs = ->
     if not window.wsockSend then setTimeout tryWs, 100
