@@ -42,13 +42,13 @@ module.exports = ->
            div '#wx1', style:'position:absolute; top:-20px; right:350px; 
                              font-size:220px; width:350px; height:450px;', ->
               div '#outTemp', style:'position:absolute; top:0px;      right:20px;'
-              div '#rain',    style:'position:absolute; bottom:-25px; right:20px;'
-              
+              div '#windGust',    style:'position:absolute; bottom:-25px; right:20px;'
+               
            div '#wx2', style:'position:absolute; top:-20px; right:0; 
                              font-size:220px; width:350px; height:450px;', ->
               div '#outHumidity', style:'position:absolute; top:0px;      right:20px;'
-              div '#windGust',    style:'position:absolute; bottom:-25px; right:20px;'
-                                     
+              div '#rain',    style:'position:absolute; bottom:-25px; right:20px;'
+                                   
 # bottom divider                            
           div '#divider', style:'width:55%; height:6px; 
                                  margin:0; background-color:#ccc;'

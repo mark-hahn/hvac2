@@ -1,5 +1,17 @@
 {
     "favorites.resources": [
         "src/control.coffee"
-    ]
+    ],
+    "emeraldwalk.runonsave": {
+      "commands": [
+        {
+          "match": "\\.coffee$",
+          "isAsync": true,
+          "cmd": "coffee -co js src/*.coffee & coffee -co js src/drivers/*.coffee & coffee -co www/js www/*.coffee",
+          "useShortcut": false,
+          "silent": false
+        },
+      ]
+    }
+  
 }
