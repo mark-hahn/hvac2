@@ -1,7 +1,6 @@
 ###
     tvtab-client.coffee
-    runs in browser
-    shows on tv room laptop
+    runs in browser on tv room tablet
     talks to websocket
 ###
 
@@ -16,18 +15,6 @@ $ ->
       if name is 'master'
         ele = document.getElementById 'master'
         if data.master_under
-          ele.style['text-decoration'] = "underline"
-        else
-          ele.style['text-decoration'] = ""
-      if name is 'kitchen'
-        ele = document.getElementById 'kitchen'
-        if data.kitchen_under
-          ele.style['text-decoration'] = "underline"
-        else
-          ele.style['text-decoration'] = ""
-      if name is 'guest'
-        ele = document.getElementById 'guest'
-        if data.guest_under
           ele.style['text-decoration'] = "underline"
         else
           ele.style['text-decoration'] = ""

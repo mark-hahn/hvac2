@@ -65,6 +65,25 @@ writeCeil = ->
     $.log_reqCode_master + $.log_actualCode_master + ' ' + $.log_elapsedCode_master
   for conn in connections
     if (wxdata = $.weewx_data)
+      windDeg = Math.round wxdata.windGustDir
+      if      windDeg <  12 then windGustDir = 'N'
+      else if windDeg <  34 then windGustDir = 'NNE'
+      else if windDeg <  57 then windGustDir = 'NE'
+      else if windDeg <  79 then windGustDir = 'ENE'
+      else if windDeg < 102 then windGustDir = 'E'
+      else if windDeg < 124 then windGustDir = 'ESE'
+      else if windDeg < 147 then windGustDir = 'SE'
+      else if windDeg < 169 then windGustDir = 'SSE'
+      else if windDeg < 192 then windGustDir = 'S'
+      else if windDeg < 214 then windGustDir = 'SSW'
+      else if windDeg < 237 then windGustDir = 'SW'
+      else if windDeg < 259 then windGustDir = 'WSW'
+      else if windDeg < 282 then windGustDir = 'W'
+      else if windDeg < 304 then windGustDir = 'WNW'
+      else if windDeg < 327 then windGustDir = 'NW'
+      else if windDeg < 349 then windGustDir = 'NNW'
+      else                       windGustDir = 'N'
+
       conn.connection.write
         type:          'ceil'
         master:         $.temp_master?.toFixed(1) ? '----'
@@ -77,7 +96,7 @@ writeCeil = ->
         windSpeed:      '' + Math.round wxdata.windSpeed   ? '0'
         windDir:        '' + Math.round wxdata.windDir     ? '0'
         windGust:       '' + Math.round wxdata.windGust    ? '0'
-        windGustDir:    '' + Math.round wxdata.windGustDir ? '0'
+        windGustDir:    windGustDir
 
 modeUnder = (tstat) ->
   mode = tstat?.mode
@@ -86,6 +105,24 @@ modeUnder = (tstat) ->
 writeTvtab = ->
   for conn in connections
     if (wxdata = $.weewx_data)
+      windDeg = Math.round wxdata.windGustDir ? 0
+      if      windDeg <  12 then windGustDir = 'N'
+      else if windDeg <  34 then windGustDir = 'NNE'
+      else if windDeg <  57 then windGustDir = 'NE'
+      else if windDeg <  79 then windGustDir = 'ENE'
+      else if windDeg < 102 then windGustDir = 'E'
+      else if windDeg < 124 then windGustDir = 'ESE'
+      else if windDeg < 147 then windGustDir = 'SE'
+      else if windDeg < 169 then windGustDir = 'SSE'
+      else if windDeg < 192 then windGustDir = 'S'
+      else if windDeg < 214 then windGustDir = 'SSW'
+      else if windDeg < 237 then windGustDir = 'SW'
+      else if windDeg < 259 then windGustDir = 'WSW'
+      else if windDeg < 282 then windGustDir = 'W'
+      else if windDeg < 304 then windGustDir = 'WNW'
+      else if windDeg < 327 then windGustDir = 'NW'
+      else if windDeg < 349 then windGustDir = 'NNW'
+      else                       windGustDir = 'N'
       conn.connection.write
         type:          'tvtab'
         tvRoom:         $.temp_tvRoom?.toFixed(1) ? '----'
@@ -100,6 +137,7 @@ writeTvtab = ->
         outHumidity:    '' + Math.round wxdata.outHumidity ? '0'
         rain:           '' + fmtInches (wxdata.rain ? 0)
         windGust:       '' + Math.round wxdata.windGust    ? '0'
+        windGustDir:    windGustDir
 
 module.exports =
   init: ->
