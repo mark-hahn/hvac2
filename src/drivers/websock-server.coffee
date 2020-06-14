@@ -66,7 +66,8 @@ writeCeil = ->
   for conn in connections
     if (wxdata = $.weewx_data)
       windDeg = Math.round wxdata.windGustDir
-      if      windDeg <  12 then windGustDir = 'N'
+      if !wxdata.windGust   then windGustDir = '---'
+      else if windDeg <  12 then windGustDir = 'N'
       else if windDeg <  34 then windGustDir = 'NNE'
       else if windDeg <  57 then windGustDir = 'NE'
       else if windDeg <  79 then windGustDir = 'ENE'
