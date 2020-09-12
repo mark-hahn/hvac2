@@ -7,7 +7,7 @@ if [ $(pwd) == "/root/dev/apps/hvac2" ]; then isdev=true; else isdev=false; fi
 
 if $isdev
   then
-    export hvaclog="hvac-debug.log"
+    export hvaclog="hvac.log"
     echo "killing dev hvac app"
     kill $(pgrep -f "hvac dev") 2> /dev/null
     echo "Running hvac2 in debug mode"

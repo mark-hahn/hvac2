@@ -1,4 +1,4 @@
-{log} = require('./log') ' WIFI'
+{log} = require('./log') 'LIGHT'
 
 {noNet} = require './global'
 if noNet then return

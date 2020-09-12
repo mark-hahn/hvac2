@@ -6,14 +6,14 @@ console.log ''
 
 modules = [
   './xbee',
-  './wifi',
+  './wifi-lights',
   './wx-station'
   './temp'
   './websock-server'
   './tstat'
   './control'
   './timing'
-  './insteon'
+  './wifi-relays'
   './lighting'
   './logging'
   './scroll'

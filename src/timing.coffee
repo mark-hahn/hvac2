@@ -144,5 +144,3 @@ module.exports =
       modes[ws.room]  = ws.mode
       qcs[ws.room]    = ws.qc
       check()
-
-      

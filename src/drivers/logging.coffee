@@ -2,7 +2,7 @@
   src/drivers/logging.coffee
 ###
 
-{log, logObj} = require('./log') 'LOGNG'
+{log, logObj} = require('./log') '  LOG'
 
 {noNet} = require './global'
 if noNet then return
@@ -76,12 +76,12 @@ $.react '*', (name) ->
   $.log_sysMode ltr (if @ctrl_sysMode isnt 'off' then @ctrl_sysMode), yes
   ltr modeCode_sys,  yes
   str ' '
-  ltr extAirCode
-  int @temp_airIntake
-  str '-'
+  # ltr extAirCode
+  # int @temp_airIntake
+  # str '-'
   int @weewx_data?.outTemp
   str ' '
-  int @temp_acReturn, 3
+  int @temp_acReturn, 2
   
   sysActive = $.timing_hvac?.cool or $.timing_hvac?.heat
   

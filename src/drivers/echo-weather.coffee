@@ -1,4 +1,4 @@
-{log, logObj} = require('./log') 'WEATHER'
+{log, logObj} = require('./log') 'WEATH'
 
 sqlite3 = require "better-sqlite3"
 

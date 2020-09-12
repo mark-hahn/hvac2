@@ -10,12 +10,12 @@ module.exports = ->
       head ->
         title 'ceil'
         base href:"http://hahnca.com/ceil/"
-      body style:'background-color:black; color:white;
+      body style:'background-color:black; color:#444;
                   font-size:320px; 
                   font-family:tahoma', ->
 # outer rim
         div style:'width:1570px; height:760px;  
-                   position:relative; border:1px solid red;', ->
+                   position:relative', ->
 # top half
           div onClick:'bumpTemp("up")', \
               style:'width:100%; height:300px; position:relative;', ->
@@ -28,7 +28,7 @@ module.exports = ->
              div '#masterSetpoint', style:'top:-20px; width:100%; 
                                            position: relative;'
 # main divider             
-          div '#divider', style:'width:100%; height:6px; margin:0; background-color:#ccc;'
+          div '.divider', style:'width:100%; height:6px; margin:0; background-color:#444;'
           
 # bot half
           div onClick:'bumpTemp("down")', \
@@ -36,8 +36,8 @@ module.exports = ->
   # time            
            div '#time', style:'height:400px; width:820px; text-align:right; top:-40px;
                                position:relative;'
-           div '#divider', style:'position:absolute; top:-300px; left:857px; height:750px; 
-                                  width:6px; margin:0; background-color:#ccc;'
+           div '.divider', style:'position:absolute; top:-300px; left:857px; height:750px; 
+                                  width:6px; margin:0; background-color:#444;'
   # outside temp         
            div '#wx1', style:'position:absolute; top:-20px; right:350px; 
                              font-size:220px; width:350px; height:450px;', ->
@@ -50,8 +50,8 @@ module.exports = ->
               div '#rain',    style:'position:absolute; bottom:-25px; right:20px;'
                                    
 # bottom divider                            
-          div '#divider', style:'width:55%; height:6px; 
-                                 margin:0; background-color:#ccc;'
+          div '.divider', style:'width:55%; height:6px; 
+                                 margin:0; background-color:#444;'
             
           div '#codes', style:'position:relative; font-size: 130px;
                                width: 800px; height:150px;
@@ -64,6 +64,7 @@ module.exports = ->
 
         script src: 'js/jquery-2.1.4.js'
         script src: 'js/moment.js'
+        script src: 'js/suncalc.js'
         script src: 'js/primus.js'
         script src: 'js/ceil-client.js'
         script src: 'js/websock-client.js'

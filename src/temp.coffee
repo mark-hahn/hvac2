@@ -60,8 +60,8 @@ module.exports =
         {analogData} = $[obsName]
         volts  = (analogData[0] / 1024) * 1.2
         if room is 'closet'
-          temp = ((voltsAtZeroC - volts ) / voltsPerC) * 9/5 + 32
-          emitSrc.emit 'airIntake', temp
+          # temp = ((voltsAtZeroC - volts ) / voltsPerC) * 9/5 + 32
+          # emitSrc.emit 'airIntake', temp
           volts = (analogData[1] / 1024) * 1.2
           temp =  (voltsAtZeroC - volts) / voltsPerC
           emitSrc.emit 'acReturn', temp
