@@ -22,7 +22,8 @@ lastThaw    = no
 
 sysMode = 'O'
 
-$.output 'ctrl_dampers', 'ctrl_hvac', 'ctrl_sysMode', 'ctrl_thaw'
+$.output 'ctrl_dampers', 'ctrl_hvac', 'ctrl_active',
+         'ctrl_sysMode', 'ctrl_thaw'
       
 check = ->
   fanCount = heatCount = coolCount = 0
@@ -102,7 +103,8 @@ check = ->
   lastThaw   = thaw
 
   $.ctrl_dampers dampers
-  $.ctrl_hvac hvac
+  $.ctrl_hvac    hvac
+  $.ctrl_active  active
   
 module.exports =
   init: -> 

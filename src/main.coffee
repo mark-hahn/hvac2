@@ -17,7 +17,6 @@ modules = [
   './lighting'
   './logging'
   './scroll'
-  './echo'
   './debug'
 ]
 

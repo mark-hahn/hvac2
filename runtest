@@ -1,0 +1,16 @@
+#   -*-  grammar-ext: sh  -*-
+
+echo "killing test hvac app"
+kill $(pgrep -f "hvac test") 2> /dev/null
+echo "Running hvac2 in test mode"
+cd /root/dev/apps/hvac2
+
+set -e
+
+coffee -co /root/dev/apps/imprea/js /root/dev/apps/imprea/src/*.coffee
+coffee -co js src/*.coffee
+coffee -co js src/drivers/*.coffee
+coffee -co www/js www/*.coffee
+
+#export DEBUG=*
+node js/main.js hvac test

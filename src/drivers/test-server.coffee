@@ -133,15 +133,7 @@ writeTvtab = ->
         windGust:       '' + windGust
         windGustDir:         windGustDir
 
-masterWasActive = false;
-now = Date.now();
-masterOnTime  = now;
-masterOffTime = now;
-masterOnDuration  = 0;
-masterOffDuration = 0;
-
 writeMbtab = ->
-  now = Date.now();
   for conn in connections
     if (wxdata = $.weewx_data)
       deg225 = 45/2
@@ -160,23 +152,8 @@ writeMbtab = ->
       windGust = Math.round wxdata.windGust
       if windGust == 0 then windGustDir = '--'
 
-      masterActive = $.ctrl_active['master']
-      if masterActive and not masterWasActive
-        masterOffDuration = (now - masterOffTime) / 60000
-        masterOnTime = now;
-
-      if not masterActive and masterWasActive
-        masterOnDuration = (now - masterOnTime) / 60000
-        masterOffTime = now;
-      
-      masterWasActive = masterActive
-
       conn.connection.write
         type:          'mbtab'
-
-        masterOnOff:   masterOnDuration.toFixed(1) + '/' +
-                       masterOffDuration.toFixed(1)
-
         master:         $.temp_master?.toFixed(1) ? '----'
         masterSetpoint: (if masterSetpoint then masterSetpoint.toFixed 1 else '----') 
 
@@ -186,7 +163,7 @@ writeMbtab = ->
 
         tvRoom:         $.temp_tvRoom?.toFixed(0)
         kitchen:        $.temp_kitchen?.toFixed(0)
-        guest:          $.temp_guest?.toFixed(0)
+        tvRoom:         $.temp_guest?.toFixed(0)
 
         outTemp:        '' + Math.round wxdata.outTemp     ? '0'
         outHumidity:    '' + Math.round wxdata.outHumidity ? '0'
@@ -211,7 +188,7 @@ module.exports =
       , -> writeCodes room
 
     $.react 'temp_master', 
-          'tstat_tvRoom', 'tstat_kitchen', 'tstat_guest', 'ctrl_active', 
+          'tstat_tvRoom', 'tstat_kitchen', 'tstat_guest',
           'log_modeCode_master', 'log_reqCode_master', 'log_actualCode_master',
           'log_elapsedCode_master',
           'log_sysMode', 'log_modeCode_sys', 'log_extAirCode',

@@ -73,8 +73,8 @@ module.exports = ->
                 raw '"'
 
                 
-        script src: '/ceil/js/jquery-2.1.4.js'
-        script src: '/ceil/js/moment.js'
-        script src: '/ceil/js/primus.js'
-        script src: '/ceil/js/tvtab-client.js'
-        script src: '/ceil/js/websock-client.js'
+        script src: '/tvtab/js/jquery-2.1.4.js'
+        script src: '/tvtab/js/moment.js'
+        script src: '/tvtab/js/primus.js'
+        script src: '/tvtab/js/tvtab-client.js'
+        script src: '/tvtab/js/websock-client.js'
