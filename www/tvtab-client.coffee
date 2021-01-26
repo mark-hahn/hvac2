@@ -41,7 +41,7 @@ $ ->
             room:       'tvRoom'
             variable:   'setpoint'
             setHeatAbs:  true
-            setData:     71
+            setData:     71.5
           )
       else
         autoSetTvRoom = false

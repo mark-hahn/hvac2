@@ -21,6 +21,7 @@ db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (er
            'FROM archive ORDER BY dateTime DESC LIMIT 1', (err, data) ->
       {dateTime, outTemp, outHumidity,
        windSpeed, windDir, windGust, windGustDir} = data
+      # console.log data
       if err
         clearInterval interval
         log 'Error reading weewx db', err
@@ -35,6 +36,7 @@ db = new sqlite3.Database '/var/lib/weewx/weewx.sdb', sqlite3.OPEN_READONLY, (er
             log 'Error reading weewx db rain', err
             db.close()
             return
+
           lastRain  = 0
           totalRain = 0
           for row in rainData

@@ -9,6 +9,7 @@
 port = (if noNet then 2339 else 1339)
 
 fs          = require 'fs'
+util        = require 'util'
 url         = require 'url'
 $           = require('imprea')()
 http        = require 'http'
@@ -194,6 +195,52 @@ writeMbtab = ->
         windGust:       '' + windGust
         windGustDir:         windGustDir
 
+ifttt = (cmd,roomIn,temp) ->
+  console.log('iftt:', {cmd,roomIn,temp})
+
+  [roomPfx, roomSfx] = roomIn.split('%20');
+  room = null
+  if      roomPfx is 'living' then room = 'tvRoom'
+  else if roomPfx is 'master' then room = 'master'
+  else return
+
+  setData = null
+
+  if cmd is 'set' 
+    if temp < 60 or temp > 90 then return
+    mode = null
+    if roomSfx
+      if      roomSfx is 'heat' or
+              roomSfx is 'heater' then mode = 'heat'
+      else if roomSfx is 'ac'   or
+              roomSfx is 'cool'   then mode = 'cool'
+      else return
+    setData = 
+      room:      room
+      setpoint: +temp
+    if mode then setData.mode = mode
+  else if cmd is 'off'
+    setData = 
+      room:  room
+      mode: 'off'
+  else return
+  
+  Object.assign tstatByRoom[room], setData
+
+  console.log 'ifttt:', util.inspect tstatByRoom[room]
+  $.ws_tstat_data tstatByRoom[room]
+
+  if room is 'master'
+    masterSetpoint = tstatByRoom[room].setpoint
+    writeMbtab()
+
+  if room is 'tvRoom'
+    tvRoomSetpoint = tstatByRoom[room].setpoint
+    writeTvtab()
+    
+  for conn in connections
+    conn.connection.write tstatByRoom[room]
+
 module.exports =
   init: ->
     for room in rooms then do (room) =>
@@ -235,6 +282,7 @@ srvr = http.createServer (req, res) ->
     when '/tvta' then page = 'tvtab'; req.url[6...] or '/'
     when '/mbta' then page = 'mbtab'; req.url[6...] or '/'
     when '/scro' then req.url
+    when '/iftt' then req.url
     else page = 'hvac';  req.url[5...] or '/'  # ''
 
   log {page, req: req.url}
@@ -285,6 +333,13 @@ srvr = http.createServer (req, res) ->
     timespan = req.url[8...] or '8'
     res.writeHead 200, "Content-Type": "image/svg+xml"
     scroll +timespan, res, ->
+    return
+
+  if req.url[0..5] is '/ifttt'
+    [x,y,cmd,room,temp] = req.url.split('/')
+    ifttt(cmd,room,temp)
+    res.writeHead 200, "Content-Type": "text/plain"
+    res.end 'done'
     return
 
   req.addListener('end', ->
