@@ -196,19 +196,27 @@ writeMbtab = ->
         windGustDir:         windGustDir
 
 ifttt = (cmd,roomIn,temp) ->
-  console.log('iftt:', {cmd,roomIn,temp})
+  console.log('iftt:', {cmd, roomIn, temp})
+
+  if temp then temp = +temp
+
+  if cmd not in ['set','half', 'off'] or
+        (cmd in ['set','half'] and (temp < 60 or temp > 90))
+    return
 
   [roomPfx, roomSfx] = roomIn.split('%20');
+
   room = null
-  if      roomPfx is 'living' then room = 'tvRoom'
-  else if roomPfx is 'master' then room = 'master'
+  if      roomPfx is 'living'           then room = 'tvRoom'
+  else if roomPfx is 'kids'             then room = 'kitchen'
+  else if roomPfx is 'sewing'           then room = 'kitchen'
+  else if roomPfx in ['master','guest'] then room =  roomPfx
   else return
 
+  mode    = null
   setData = null
 
-  if cmd is 'set' 
-    if temp < 60 or temp > 90 then return
-    mode = null
+  if cmd in ['set','half']
     if roomSfx
       if      roomSfx is 'heat' or
               roomSfx is 'heater' then mode = 'heat'
@@ -216,13 +224,16 @@ ifttt = (cmd,roomIn,temp) ->
               roomSfx is 'cool'   then mode = 'cool'
       else return
     setData = 
-      room:      room
-      setpoint: +temp
+      room:     room
+      setpoint: temp
     if mode then setData.mode = mode
+    if cmd is 'half' then setData.setpoint += 0.5
+
   else if cmd is 'off'
     setData = 
       room:  room
       mode: 'off'
+      
   else return
   
   Object.assign tstatByRoom[room], setData
