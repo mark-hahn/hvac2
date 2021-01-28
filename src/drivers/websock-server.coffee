@@ -27,6 +27,7 @@ bodyParser  = require('body-parser');
 jsonParser  = bodyParser.json();
 fileServer  = new nodeStatic.Server 'www', cache: 0
 connections = []
+lastActiveMode = null
 
 rooms = ['tvRoom', 'kitchen', 'master', 'guest']
 tempsByRoom = {}
@@ -37,6 +38,10 @@ $.output 'ws_tstat_data', 'light_cmd'
 masterSetpoint = null
 tvRoomSetpoint = null
 seq = 0
+
+setLastActiveMode = (mode) ->
+  if mode in ['heat', 'cool'] then lastActiveMode = mode
+  return mode
 
 writeCodes = (room) ->
   codes = '' + $.log_modeCode_sys + $.log_extAirCode +
@@ -204,7 +209,7 @@ ifttt = (cmd,roomIn,temp) ->
         (cmd in ['set','half'] and (temp < 60 or temp > 90))
     return
 
-  [roomPfx, roomSfx] = roomIn.split('%20');
+  [roomPfx] = roomIn.split('%20');
 
   room = null
   if      roomPfx is 'living'           then room = 'tvRoom'
@@ -217,17 +222,11 @@ ifttt = (cmd,roomIn,temp) ->
   setData = null
 
   if cmd in ['set','half']
-    if roomSfx
-      if      roomSfx is 'heat' or
-              roomSfx is 'heater' then mode = 'heat'
-      else if roomSfx is 'ac'   or
-              roomSfx is 'cool'   then mode = 'cool'
-      else return
     setData = 
       room:     room
       setpoint: temp
-    if mode then setData.mode = mode
-    if cmd is 'half' then setData.setpoint += 0.5
+    if lastActiveMode then setData.mode = lastActiveMode
+    if cmd is 'half'  then setData.setpoint += 0.5
 
   else if cmd is 'off'
     setData = 
@@ -398,6 +397,7 @@ primus.on 'connection', (connection) ->
 
       when 'tstat'
         tstatByRoom[data.room] = data
+        setLastActiveMode(data.mode)
         $.ws_tstat_data data
         if data.room is 'master'
           masterSetpoint = (if data.mode in ['cool', 'heat'] then data.setpoint)
