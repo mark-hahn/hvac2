@@ -130,7 +130,7 @@ writeTvtab = ->
       conn.connection.write
         type:          'tvtab'
         tvRoom:         $.temp_tvRoom?.toFixed(1) ? '----'
-        tvRoomSetpoint: (if tvRoomSetpoint then tvRoomSetpoint.toFixed 1 else '----') 
+        tvRoomSetpoint: if tvRoomSetpoint then tvRoomSetpoint.toFixed 1 else '----'
         master_under:   modeUnder $.tstat_master
         master:         $.temp_master?.toFixed(0)
         outTemp:        '' + Math.round wxdata.outTemp     ? '0'
@@ -202,7 +202,6 @@ writeMbtab = ->
 
 ifttt = (cmd,roomIn,temp) ->
   console.log('iftt:', {cmd, roomIn, temp})
-
   if temp then temp = +temp
 
   if cmd not in ['set','half', 'off'] or
@@ -218,6 +217,10 @@ ifttt = (cmd,roomIn,temp) ->
   else if roomPfx in ['master','guest'] then room =  roomPfx
   else return
 
+  if not tstatByRoom[room] 
+    console.log "no tstatByRoom", room, util.inspect tstatByRoom
+    tstatByRoom[room] = {}
+
   mode    = null
   setData = null
 
@@ -230,8 +233,9 @@ ifttt = (cmd,roomIn,temp) ->
 
   else if cmd is 'off'
     setData = 
-      room:  room
-      mode: 'off'
+      room:     room
+      mode:    'off'
+      setpoint: null
       
   else return
   
